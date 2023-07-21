@@ -2,11 +2,14 @@
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
+import Link from "next/link";
 
 const Dashboard = ({user, journeys}) => {
   
   return(
+    <>
 <p>Hello {user.nickname} - there are {journeys.length} journeys in the database.</p>
+</>
   )
 }
 
@@ -15,8 +18,8 @@ export default Dashboard;
 // export default Dashboard;
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ req, res }) => {
-    const auth0User = getSession(req, res);
-    await dbConnect()
+    const auth0User = await getSession(req, res);
+    const db = await dbConnect()
 
     // Fetch the user from the db (by email)
    // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
@@ -36,10 +39,15 @@ const result = await Journey.find({})
     return journey
   })
 
+  // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
+  // if (!user) {
+  //    user = db.user.create(auth0User?.user);
+  // } 
     return {
       props: {
         // dbUser: user,
         user: (await auth0User).user,
+        // user: user,
         journeys: journeys
       },
     };

@@ -1,5 +1,8 @@
 'use client';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGear } from '@fortawesome/free-solid-svg-icons'
 
 export default function Index() {
   const { user, error, isLoading } = useUser();
@@ -11,6 +14,25 @@ export default function Index() {
     return (
       <div>
         Welcome {user.name}! <a href="/api/auth/logout">Logout</a>
+
+        <div className="navbar">
+        <div className="app-title">Train 11+</div>
+        <div className="navbar-toggle" /*onClick={toggleLinks}*/>
+          <span className="toggle-icon"></span>
+        </div>
+        <div className=''/*{`navbar-links ${showLinks ? "show" : ""}`}*/>
+          <Link href="/">Home</Link>
+          <Link href="/new">New System</Link>
+          <Link href="/settings"><FontAwesomeIcon icon={faGear} /></Link>
+        </div>
+
+        <img
+          id="title"
+          src=""
+          alt=""
+        ></img>
+        
+      </div>
       </div>
     );
   }
