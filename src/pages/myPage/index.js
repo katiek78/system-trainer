@@ -2,13 +2,14 @@
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
+import System from "@/models/System";
 import Link from "next/link";
 
-const Dashboard = ({user, journeys}) => {
+const Dashboard = ({user, journeys, systems}) => {
   
   return(
     <>
-<p>Hello {user.nickname} - there are {journeys.length} journeys in the database.</p>
+<p>Hello {user.nickname} - there are {journeys.length} journeys and {systems.length} systems in the database.</p>
 </>
   )
 }
@@ -19,7 +20,7 @@ export default Dashboard;
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ req, res }) => {
     const auth0User = await getSession(req, res);
-    const db = await dbConnect()
+   await dbConnect()
 
     // Fetch the user from the db (by email)
    // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
@@ -39,6 +40,14 @@ const result = await Journey.find({})
     return journey
   })
 
+  const result2 = await System.find({})
+  const systems = result2.map((doc) => {
+    //const journey = doc.toObject()
+    const system = JSON.parse(JSON.stringify(doc));
+    system._id = system._id.toString()
+    return system
+  })
+
   // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
   // if (!user) {
   //    user = db.user.create(auth0User?.user);
@@ -46,9 +55,10 @@ const result = await Journey.find({})
     return {
       props: {
         // dbUser: user,
-        user: (await auth0User).user,
+        user: (auth0User).user,
         // user: user,
-        journeys: journeys
+        journeys: journeys,
+        systems: systems
       },
     };
   },

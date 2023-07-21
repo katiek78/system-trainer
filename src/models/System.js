@@ -30,4 +30,4 @@ const SystemSchema = new mongoose.Schema({
  
 })
 
-export default mongoose.models.Journey || mongoose.model('System', SystemSchema)
+export default mongoose.models.System || mongoose.model('System', SystemSchema)
