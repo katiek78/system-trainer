@@ -1,12 +1,12 @@
 
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
-import Word from "@/models/Word";
+import Journey from "@/models/Journey";
 
-const Dashboard = ({user, words}) => {
+const Dashboard = ({user, journeys}) => {
   
   return(
-<p>Hello {user.nickname} - there are {words.length} words in the database.</p>
+<p>Hello {user.nickname} - there are {journeys.length} journeys in the database.</p>
   )
 }
 
@@ -28,18 +28,19 @@ export const getServerSideProps = withPageAuthRequired({
     // } 
 
 /* find all the data in our database */
-const result = await Word.find({})
-const words = result.map((doc) => {
-  const word = doc.toObject()
-  word._id = word._id.toString()
-  return word
-})
+const result = await Journey.find({})
+  const journeys = result.map((doc) => {
+    //const journey = doc.toObject()
+    const journey = JSON.parse(JSON.stringify(doc));
+    journey._id = journey._id.toString()
+    return journey
+  })
 
     return {
       props: {
         // dbUser: user,
         user: (await auth0User).user,
-        words: words
+        journeys: journeys
       },
     };
   },
