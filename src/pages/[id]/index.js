@@ -9,7 +9,10 @@ const SystemPage = ({user, system}) => {
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{system.name}</h1>
-    <p className="font-mono">Bla bla</p>
+    {system.imageSets.length > 0 && system.imageSets.map(imageSet =>
+    <p>{imageSet.name}</p>)
+    }
+    {!system.imageSets.length > 0 && <p>You have not added any image sets to your system.</p>}
     
   </div>
 
