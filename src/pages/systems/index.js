@@ -13,7 +13,9 @@ const SystemsPage = ({user, systems}) => {
     <h1 className="py-2 font-mono text-4xl">My systems</h1>
     <p className="font-mono">Hi {user.nickname} - there are {systems.length} systems in the database.</p>
     {systems.length > 0 && systems.map(system => <p className="font-semibold"> <Link href="/[id]/" as={`/${system._id}/`} legacyBehavior>{system.name}</Link></p>)}
-    
+    <Link href="/new"><button className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Add new system
+        </button></Link>
   </div>
 
 </>
