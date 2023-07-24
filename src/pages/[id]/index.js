@@ -14,6 +14,10 @@ const SystemPage = ({user, system}) => {
     }
     {!system.imageSets.length > 0 && <p>You have not added any image sets to your system.</p>}
     
+
+    <button className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Add an image set
+        </button>
   </div>
 
 </>
