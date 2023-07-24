@@ -1,6 +1,6 @@
 
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
-//import dbConnect from "@/lib/dbConnect";
+import dbConnect from "@/lib/dbConnect";
 import MemoSystem from "@/models/MemoSystem";
 import Link from "next/link";
 
@@ -25,7 +25,7 @@ export default SystemsPage;
 export const getServerSideProps = withPageAuthRequired({
     getServerSideProps: async ({ req, res }) => {
     const auth0User = await getSession(req, res);
-   // const db = await dbConnect()
+     const db = await dbConnect()
 
     // Fetch the user from the db (by email)
     // let user = await SiteUser.findOne({ where: { email: auth0User?.user.email } });
