@@ -1,9 +1,10 @@
 
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
-import dbConnect from "@/lib/dbConnect";
+//import dbConnect from "@/lib/dbConnect";
 import MemoSystem from "@/models/MemoSystem";
+import Link from "next/link";
 
-const Dashboard = ({user, systems}) => {
+const SystemsPage = ({user, systems}) => {
   //let user = useUser(); //should we be using this instead?
   
   return(
@@ -11,7 +12,7 @@ const Dashboard = ({user, systems}) => {
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">My systems</h1>
     <p className="font-mono">Hi {user.nickname} - there are {systems.length} systems in the database.</p>
-    {systems.length > 0 && systems.map(system => <p className="font-semibold">{system.name}</p>)}
+    {systems.length > 0 && systems.map(system => <p className="font-semibold"> <Link href="/[id]/" as={`/${system._id}/`} legacyBehavior>{system.name}</Link></p>)}
     
   </div>
 
@@ -19,13 +20,12 @@ const Dashboard = ({user, systems}) => {
   )
 }
 
-export default Dashboard;
+export default SystemsPage;
 
-// export default Dashboard;
 export const getServerSideProps = withPageAuthRequired({
     getServerSideProps: async ({ req, res }) => {
     const auth0User = await getSession(req, res);
-    const db = await dbConnect()
+   // const db = await dbConnect()
 
     // Fetch the user from the db (by email)
     // let user = await SiteUser.findOne({ where: { email: auth0User?.user.email } });
