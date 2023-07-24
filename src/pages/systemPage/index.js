@@ -5,6 +5,7 @@ import MemoSystem from "@/models/MemoSystem";
 
 const Dashboard = ({user, systems}) => {
   //let user = useUser(); //should we be using this instead?
+  
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
