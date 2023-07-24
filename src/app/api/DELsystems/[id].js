@@ -1,5 +1,5 @@
 import dbConnect from '../../../lib/dbConnect'
-import System from '@/models/System'
+import System from '@/models/MemoSystem'
 
 export default async function handler(req, res) {
   const {

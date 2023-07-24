@@ -1,5 +1,5 @@
 import dbConnect from '../../../lib/dbConnect'
-import System from '@/models/System'
+import MemoSystem from '@/models/MemoSystem'
 
 export default async function handler(req, res) {
   const { method } = req
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'GET':
       try {
-        const systems = await System.find({}) /* find all the data in our database */
+        const systems = await MemoSystem.find({}) /* find all the data in our database */
         res.status(200).json({ success: true, data: sytems })
       } catch (error) {
         res.status(400).json({ success: false })
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       break
     case 'POST':
       try {
-        const system = await System.create(
+        const system = await MemoSystem.create(
           req.body
         ) /* create a new model in the database */
         res.status(201).json({ success: true, data: system })

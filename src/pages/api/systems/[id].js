@@ -1,5 +1,5 @@
 import dbConnect from '../../../lib/dbConnect'
-import System from '@/models/System'
+import MemoSystem from '@/models/MemoSystem'
 
 export default async function handler(req, res) {
   const {
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'GET' /* Get a model by its ID */:
       try {
-        const system = await System.findById(id)
+        const system = await MemoSystem.findById(id)
         if (!system) {
           return res.status(400).json({ success: false })
         }
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     case 'PUT' /* Edit a model by its ID */:
       try {
-        const system = await System.findByIdAndUpdate(id, req.body, {
+        const system = await MemoSystem.findByIdAndUpdate(id, req.body, {
           new: true,
           runValidators: true,
         })
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
     case 'DELETE' /* Delete a model by its ID */:
       try {
-        const deletedSystem = await System.deleteOne({ _id: id })
+        const deletedSystem = await MemoSystem.deleteOne({ _id: id })
         if (!deletedSystem) {
           return res.status(400).json({ success: false })
         }

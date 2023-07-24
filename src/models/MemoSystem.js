@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /* JourneySchema will correspond to a collection in your MongoDB database. */
-const SystemSchema = new mongoose.Schema({
+const MemoSystemSchema = new mongoose.Schema({
   name: {
     /* The name of this system */
 
@@ -30,4 +30,4 @@ const SystemSchema = new mongoose.Schema({
  
 })
 
-export default mongoose.models.System || mongoose.model('System', SystemSchema)
+export default mongoose.models.MemoSystem || mongoose.model('MemoSystem', MemoSystemSchema)
