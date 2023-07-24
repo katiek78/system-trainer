@@ -7,7 +7,13 @@ const Dashboard = ({user, systems}) => {
   //let user = useUser(); //should we be using this instead?
   return(
     <>
-<p className="font-mono">Hello {user.nickname} - you have {systems.length} systems in the database.</p>
+    <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
+    <h1 className="py-2 font-mono text-4xl">My systems</h1>
+    <p className="font-mono">Hi {user.nickname} - there are {systems.length} systems in the database.</p>
+    {systems.length > 0 && systems.map(system => <p className="font-semibold">{system.name}</p>)}
+    
+  </div>
+
 </>
   )
 }

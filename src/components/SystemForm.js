@@ -97,15 +97,15 @@ const SystemForm = ({ formId, systemForm, forNewSystem = true }) => {
 
   return (
     <>
-      <form id={formId} onSubmit={handleSubmit}>
+      <form className ="rounded pt-6 pb-8 mb-4" id={formId} onSubmit={handleSubmit}>
         <label htmlFor="name">Name</label>
-        <input
+        <input className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           type="text"
           maxLength="60"
           name="name"
           value={form.name}
           onChange={handleChange}
-          required
+          required          
         />
 
         {/* <label htmlFor="meaning">Meaning</label>
@@ -133,7 +133,7 @@ const SystemForm = ({ formId, systemForm, forNewSystem = true }) => {
         <option value="other">other</option>
         </select> */}
 
-        <button type="submit" className="btn">
+        <button type="submit" className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Submit
         </button>
       </form>

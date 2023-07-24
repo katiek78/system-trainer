@@ -8,7 +8,11 @@ import MemoSystem from "@/models/MemoSystem";
 const Dashboard = ({user, journeys, systems}) => {
   return(
     <>
-<p className="font-mono">Hello {user.nickname} - there are {journeys.length} journeys and {systems.length} systems in the database.</p>
+    <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
+    <h1 className="py-2 font-mono text-4xl">My systems</h1>
+    <p className="font-mono">Hello {user.nickname} - there are {journeys.length} journeys and {systems.length} systems in the database.</p>
+  </div>
+
 </>
   )
 }
