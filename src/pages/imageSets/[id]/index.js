@@ -194,11 +194,11 @@ const ImageSetPage = ({user, imageSet}) => {
         </div>
 
         <div className="flex flex-row basis-2/3">        
-            <div>
-            <FontAwesomeIcon className={isListView ? "text-black " : "text-white hover:text-gray-700 hover:cursor-pointer"} onClick={handleToggleListView} icon={faList} size="3x" />
+            <div className="">
+            <FontAwesomeIcon className={isListView ? "px-3 rounded bg-white text-black text-6xl" : "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer"} onClick={handleToggleListView} icon={faList} size="3x" />
             </div>
-            <div className="ml-4">
-            <FontAwesomeIcon className={isListView || isEditable ? "text-white hover:text-gray-700 hover:cursor-pointer" : "text-black"} onClick={handleToggleListView} icon={faGrip} size="3x" />        
+            <div className="ml-2">
+            <FontAwesomeIcon className={isListView || isEditable ? "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer" : "px-3 rounded bg-white text-black text-6xl"} onClick={handleToggleListView} icon={faGrip} size="3x" />        
             </div>
         </div>
     </div>
