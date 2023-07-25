@@ -1,20 +1,20 @@
 
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
-import MemoSystem from "@/models/MemoSystem";
+import ImageSet from "@/models/ImageSet";
 import Link from "next/link";
 
-const SystemsPage = ({user, systems}) => {
+const ImageSetsPage = ({user, imageSets}) => {
   //let user = useUser(); //should we be using this instead?
   
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">My systems</h1>
-    <p className="font-mono">Hi {user.nickname} - there are {systems.length} systems in the database.</p>
-    {systems.length > 0 && systems.map(system => <p className="font-semibold"> <Link href="/[id]/" as={`/${system._id}/`} legacyBehavior>{system.name}</Link></p>)}
-    <Link href="/new"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
-          Add new system
+    <h1 className="py-2 font-mono text-4xl">My image sets</h1>
+    <p className="font-mono">Hi {user.nickname} - there are {imageSets.length} image sets in the database.</p>
+    {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/[id]/" as={`/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
+    <Link href="/newImageSet"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Add new image set
         </button></Link>
   </div>
 
@@ -22,7 +22,7 @@ const SystemsPage = ({user, systems}) => {
   )
 }
 
-export default SystemsPage;
+export default ImageSetsPage;
 
 export const getServerSideProps = withPageAuthRequired({
     getServerSideProps: async ({ req, res }) => {
@@ -50,11 +50,11 @@ export const getServerSideProps = withPageAuthRequired({
 //     return journey
 //   })
 
-  const result2 = await MemoSystem.find({})
-  const systems = result2.map((doc) => {   
-    const system = JSON.parse(JSON.stringify(doc));
-    system._id = system._id.toString()
-    return system
+  const result2 = await ImageSet.find({})
+  const imageSets = result2.map((doc) => {   
+    const imageSet = JSON.parse(JSON.stringify(doc));
+    imageSet._id = imageSet._id.toString()
+    return imageSet
   })
 
   // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
@@ -67,7 +67,7 @@ export const getServerSideProps = withPageAuthRequired({
         user: (auth0User).user,
         // user: user,  //EVENTUALLY THIS
        
-        systems: systems
+        imageSets: imageSets
       },
     };
   },

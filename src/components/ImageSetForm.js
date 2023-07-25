@@ -38,7 +38,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
       const { data } = await res.json()
 
       mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
-      router.push({pathname: `/systems/${id}`})
+      router.push({pathname: `/imageSets/${id}`})
     } catch (error) {
       setMessage('Failed to update image set')
     }
@@ -63,7 +63,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
         throw new Error(res.status)
       }
 
-      router.push({pathname: `/systems/${id}`})
+      router.push({pathname: `/imageSets`})
     } catch (error) {
       setMessage('Failed to add image set')
     }
@@ -80,7 +80,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
     })
   }
 
-  /* Makes sure system info is filled */
+  /* Makes sure image set info is filled */
   const formValidate = () => {
     let err = {}
     if (!form.name) err.name = 'Name is required'
@@ -93,7 +93,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
     
     const errs = formValidate()
     if (Object.keys(errs).length === 0) {
-      forNewSystem ? postData(form) : putData(form)
+      forNewSet ? postData(form) : putData(form)
     } else {
       setErrors({ errs })
     }

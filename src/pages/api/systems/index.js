@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     case 'GET':
       try {
         const systems = await MemoSystem.find({}) /* find all the data in our database */
-        res.status(200).json({ success: true, data: sytems })
+        res.status(200).json({ success: true, data: systems })
       } catch (error) {
         res.status(400).json({ success: false })
       }

@@ -9,21 +9,9 @@ const MemoSystemSchema = new mongoose.Schema({
     required: [true, 'Please provide a name for this system.'],
     maxlength: [60, 'Name cannot be more than 60 characters'],
   },
-  sequence: [
+  imageSets: [ //array of IDs of imageSets included in this system
     String
-  ],
-  imageSets: [
-    new mongoose.Schema({
-    name: { type: String},
-    images: [
-        /* List of images */
-        new mongoose.Schema({
-          name: { type: String},
-          imageItem: {type: String},      
-        })
-      ],
-    }),
-  ],
+  ],  
   userId: {
     type: String,    
   }
