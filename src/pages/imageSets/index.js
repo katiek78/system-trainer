@@ -12,7 +12,7 @@ const ImageSetsPage = ({user, imageSets}) => {
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">My image sets</h1>
     <p className="font-mono">Hi {user.nickname} - there are {imageSets.length} image sets in the database.</p>
-    {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/[id]/" as={`/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
+    {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
     <Link href="/newImageSet"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new image set
         </button></Link>
