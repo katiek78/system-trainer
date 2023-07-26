@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 import dbConnect from "@/lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faEdit, faGrip, faList } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faDumbbell, faEdit, faGrip, faList } from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 
@@ -170,11 +170,26 @@ const ImageSetPage = ({user, imageSet}) => {
         setIsListView(!isListView);
     }
 
+    const handleTraining = () => {
+        console.log("training")
+    }
+
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
     <div className="flex flex-row">
+       
+
+        <div className={isEditable ? "invisible flex flex-row basis-1/3" : "flex flex-row basis-1/3"}>        
+            <div className="">
+            <FontAwesomeIcon className={isListView ? "px-3 rounded bg-white text-black text-6xl" : "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer"} onClick={handleToggleListView} icon={faList} size="3x" />
+            </div>
+            <div className="ml-2">
+            <FontAwesomeIcon className={isListView ? "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer" : "px-3 rounded bg-white text-black text-6xl"} onClick={handleToggleListView} icon={faGrip} size="3x" />        
+            </div>
+        </div>
+
         <div className="basis-1/3">
         {isEditable ? 
         <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer" onClick={handleSubmitImageForm} icon={faCheck} size="3x" />
@@ -182,13 +197,10 @@ const ImageSetPage = ({user, imageSet}) => {
         }
         </div>
 
-        <div className={isEditable ? "invisible flex flex-row basis-2/3" : "flex flex-row basis-2/3"}>        
-            <div className="">
-            <FontAwesomeIcon className={isListView ? "px-3 rounded bg-white text-black text-6xl" : "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer"} onClick={handleToggleListView} icon={faList} size="3x" />
-            </div>
-            <div className="ml-2">
-            <FontAwesomeIcon className={isListView ? "px-3 text-gray-100 hover:text-gray-700 hover:cursor-pointer" : "px-3 rounded bg-white text-black text-6xl"} onClick={handleToggleListView} icon={faGrip} size="3x" />        
-            </div>
+        <div className="basis-1/3">
+        {!isEditable && 
+        <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer" onClick={handleTraining} icon={faDumbbell} size="3x" />        
+        }
         </div>
     </div>
    
