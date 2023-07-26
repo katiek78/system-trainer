@@ -201,7 +201,7 @@ const ImageSetPage = ({user, imageSet}) => {
             return <>
             <div className="col-span-1">{img.name}</div>
             <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
-            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
+            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
             </>
         } else return <>
         <div className="col-span-1">{img.name}</div>
@@ -216,13 +216,13 @@ const ImageSetPage = ({user, imageSet}) => {
 
     {!isListView &&
     
-        <div className="flex flex-wrap justify-between">
+        <div className="flex flex-wrap">
     {/* Create a card for each imageItem */}
     {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img) => (
       <>
 
-      <div class="group m-2 h-40 w-80 [perspective:1000px]">
-    <div class="relative h-full w-full rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+      <div class="group [perspective:1000px]">
+    <div class="relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
       <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white">
       <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.name}</h1>         
