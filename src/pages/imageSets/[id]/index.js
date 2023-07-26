@@ -21,12 +21,14 @@ const ImageSetPage = ({user, imageSet}) => {
     const [isListView, setIsListView] = useState(true);
     const [isEditable, setIsEditable] = useState(false);
   
-    const [imageForm, setImageForm] = useState({             
+    const [imageForm, setImageForm] = useState({      
+        name: imageSet.name,       
         images: imageSet.images      
       })
     const [populateForm, setPopulateForm] = useState({     
       setType: 'other'      
     })
+    const [title, setTitle] = useState(imageSet.name)
 
     const renderPageNumbers = () => {   
         let div = [];
@@ -47,7 +49,7 @@ const ImageSetPage = ({user, imageSet}) => {
         
         const { id } = router.query
         try {
-          setImageForm({images: imageArray})
+          setImageForm({...imageForm, images: imageArray})
           const res = await fetch(`/api/imageSets/${id}`, {
             method: 'PUT',
             headers: {
@@ -84,7 +86,7 @@ const ImageSetPage = ({user, imageSet}) => {
              Accept: contentType,
              'Content-Type': contentType,
            },
-           body: JSON.stringify({...imageSet, images: imageForm.images}),
+           body: JSON.stringify({...imageSet, name: imageForm.name, images: imageForm.images}),
          })
    
          // Throw error with status code in case Fetch API req failed
@@ -132,6 +134,11 @@ const ImageSetPage = ({user, imageSet}) => {
     })
   }
 
+  const handleChangeTitle = (e) => {
+    setImageForm({...imageForm, name: e.target.value})    
+  }
+
+
 //   /* Makes sure image set info is filled */
 //   const formValidate = () => {
 //     let err = {}
@@ -166,7 +173,7 @@ const ImageSetPage = ({user, imageSet}) => {
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-5xl">{imageSet.name}</h1> 
+    <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
     <div className="flex flex-row">
         <div className="basis-1/3">
         {isEditable ? 
