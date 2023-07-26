@@ -209,50 +209,10 @@ const ImageSetPage = ({user, imageSet}) => {
 
     {!isListView &&
     
-
         <div className="flex flex-wrap justify-between">
     {/* Create a card for each imageItem */}
     {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img) => (
       <>
-      
-      {/* <div className="m-20 group w-200 h-150 [perspective:500px]">      
-     
-        <div className="" key={img._id}>
-        
-          <div className="relative h-full w-full rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-            <h5 className="absolute inset-0 h-full w-full rounded-xl bg-black/80 px-12 text-center text-slate-200 [transform:rotateY(180deg)] [backface-visibility:hidden]">{img.name}</h5>            
-           
-          </div>
-          <div className="inline-block w-200 h-100 [overflow:hidden] border-1.25 border-slate-50 rounded-2xl m-10 relative text-lg shadow-slate-700 absolute w-full h-full flip-card-back [backface-visibility:hidden]">
-            <h5 className="m-0 meaning">{img.imageItem}</h5>
-            <h5><ConfidenceLevel recentAttempts={word.recentAttempts} /></h5>
-            <h5><TrafficLights recentAttempts={word.recentAttempts} /></h5> 
-           
-          
-            <div className='buttons'>
-            <Link href="/[id]/edit" as={`/${img._id}/edit`} legacyBehavior><FontAwesomeIcon className='btn' icon={faEdit} /></Link>
-                     
-            </div>
-           
-          </div>
-        </div>
-       
-        </div>   */}
-
-        
-  {/* <div class="group h-40 w-80 [perspective:1000px]">
-    <div class="relative h-full w-full rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-      <div class="absolute inset-0">
-        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src="https://images.unsplash.com/photo-1562583489-bf23ec64651d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80')" alt="" />
-      </div>
-      <div class="absolute inset-0 h-full w-full rounded-xl bg-black/80 px-12 text-center text-slate-200 [transform:rotateY(180deg)] [backface-visibility:hidden]">
-        <div class="flex min-h-full flex-col items-center justify-center">
-          <h1 class="text-3xl font-bold">{img.imageItem}</h1>         
-        </div>
-      </div>
-    </div>
-  </div>
-      */}
 
       <div class="group m-2 h-40 w-80 [perspective:1000px]">
     <div class="relative h-full w-full rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
@@ -265,7 +225,7 @@ const ImageSetPage = ({user, imageSet}) => {
          <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.imageItem}</h1>         
         </div> 
-        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src="https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')" alt="" />
+        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={img.URL && img.URL.length > 0 ? img.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
       </div>
     </div>
   </div>
