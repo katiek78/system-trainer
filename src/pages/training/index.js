@@ -15,12 +15,25 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const [imageSet, setImageSet] = useState({});
   const [randImage, setRandImage] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isFrontSide, setIsFrontSide] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
     setImageSet(getImageSet(imageSetID));
     setIsLoading(false);
-  }, [imageSetID])
+  }, [imageSetID]);
+
+  const toggleRotate = (e) => {
+   // let list = e.target.classList
+    //list.toggle('[transform:rotateY(180deg)]')
+    //let cards = document.getElementsByClassName("card-flip");
+    
+    document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
+   // list.toggle('[transform:rotateY(180deg)]')
+    // group-hover[transform:rotateY(180deg)]
+
+    setIsFrontSide(!isFrontSide);
+  }
 
   const getImageSet = async (id) => {
     //get image set from DB
@@ -47,6 +60,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
         //get random image from set
         const randIndex = Math.floor(Math.random() * imageSet.images.length);
         setRandImage(imageSet.images[randIndex]);
+        if (!isFrontSide) toggleRotate();        
   }
 
   return(
@@ -61,7 +75,25 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
     {!randImage.name && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
     {randImage.name &&
-    <div className="flex flex-col justify-center items-center">{randImage.name}
+    <div className="flex flex-col justify-center items-center">
+
+      <div class="group [perspective:1000px]">
+        <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl">
+          <div id="card-front" onClick={(e) => toggleRotate(e)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
+          <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
+              <h1 class="text-3xl font-bold">{randImage.name}</h1>         
+            </div> 
+          </div>
+          <div id="card-back" onClick={(e) => toggleRotate(e)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
+            <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
+              <h1 class="text-3xl font-bold">{randImage.imageItem}</h1>         
+            </div> 
+            <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
+          </div>
+        </div>
+      </div>
+
+
     <button onClick={handleNextImage} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Next</button>
     </div>
     }
