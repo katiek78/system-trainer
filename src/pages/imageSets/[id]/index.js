@@ -171,7 +171,7 @@ const ImageSetPage = ({user, imageSet}) => {
     }
 
     const handleTraining = () => {
-        router.push("/training")
+        router.push("/training?imageSet=" + imageSet._id)
     }
 
     return(
