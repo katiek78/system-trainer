@@ -1,6 +1,6 @@
 
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
-import { useState, useEffect} from "react";
+import { useState, useEffect, useRef} from "react";
 import { useRouter } from "next/router";
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
@@ -16,22 +16,26 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const [randImage, setRandImage] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFrontSide, setIsFrontSide] = useState(true);
+  const [isStarted, setIsStarted] = useState(false);
+  // const isStartedRef = useRef(isStarted);
+
+  // const setIsStarted = data => {
+  //   isStartedRef.current = data;
+  //   _setIsStarted(data);
+  // };
 
   useEffect(() => {
     setIsLoading(true);
     setImageSet(getImageSet(imageSetID));
     setIsLoading(false);
+
   }, [imageSetID]);
 
-  const toggleRotate = (e) => {
-   // let list = e.target.classList
-    //list.toggle('[transform:rotateY(180deg)]')
-    //let cards = document.getElementsByClassName("card-flip");
-    
-    document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
-   // list.toggle('[transform:rotateY(180deg)]')
-    // group-hover[transform:rotateY(180deg)]
-
+  const toggleRotate = (toFront = false) => {
+    if ((toFront && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
+          document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
+        }
+  
     setIsFrontSide(!isFrontSide);
   }
 
@@ -42,26 +46,41 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
       headers: {
         Accept: contentType,
         'Content-Type': contentType,
-      },
-      //body: JSON.stringify({...imageSet, images: imageArray}),
+      },     
     })
-    const data = await res.json();
-    console.log(data);
+    const data = await res.json();   
     setImageSet(data.data);
   }
 
   const handleStartTraining = () => {
     //get random image from set
     const randIndex = Math.floor(Math.random() * imageSet.images.length);
-    setRandImage(imageSet.images[randIndex]);
+    setRandImage(imageSet.images[randIndex]);   
+    setIsStarted(true);
+
+    function handleKeyDown(e) {           
+        if (e.keyCode === 39) getNextImage();
+        if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();      
+    }
+
+     //document.addEventListener('keydown', handleKeyDown);
+     document.addEventListener('keydown', handleKeyDown)
+    //document.removeEventListener('keydown', handleKeyDown)
   }
 
-  const handleNextImage = () => {
-        //get random image from set
-        const randIndex = Math.floor(Math.random() * imageSet.images.length);
-        setRandImage(imageSet.images[randIndex]);
-        if (!isFrontSide) toggleRotate();        
+  const handleNextImage = (e) => {        
+             e.preventDefault();
+             getNextImage();     
   }
+
+  const getNextImage = () => {
+    //get random image from set    
+    const randIndex = Math.floor(Math.random() * imageSet.images.length);
+    setRandImage(imageSet.images[randIndex]);
+    console.log(isFrontSide)
+    toggleRotate(true);     
+  }
+
 
   return(
     <>
@@ -73,18 +92,18 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     <>
     <div className="flex flex-col justify-center items-center">
     <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
-    {!randImage.name && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
+    {imageSet?.images?.length > 0 && !randImage.name && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
     {randImage.name &&
     <div className="flex flex-col justify-center items-center">
 
       <div class="group [perspective:1000px]">
         <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl">
-          <div id="card-front" onClick={(e) => toggleRotate(e)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
+          <div id="card-front" onClick={toggleRotate}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
           <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{randImage.name}</h1>         
             </div> 
           </div>
-          <div id="card-back" onClick={(e) => toggleRotate(e)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
+          <div id="card-back" onClick={toggleRotate}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{randImage.imageItem}</h1>         
             </div> 
@@ -94,7 +113,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
       </div>
 
 
-    <button onClick={handleNextImage} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Next</button>
+    <button onClick={(e) => handleNextImage(e)} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Next</button>
     </div>
     }
     </div>
