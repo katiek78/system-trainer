@@ -8,6 +8,7 @@ import ImageSet from "@/models/ImageSet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faEdit, faGrip, faList } from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
+import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 
 const ImageSetPage = ({user, imageSet}) => {
     const router = useRouter()    
@@ -42,30 +43,7 @@ const ImageSetPage = ({user, imageSet}) => {
       }
 
     const putDataPopulate = async (populateForm) => {
-         //get the array that we want to populate the image set with
-        let imageArray = [];
-        switch(populateForm.setType) {
-            case '2d':
-                for (let i = 0; i < 100; i++) {
-                    const twoDigitValue = i.toString().padStart(2, '0');
-                    imageArray.push({ name: twoDigitValue, imageItem: '' });
-                }
-                break;
-            case '3d':
-                for (let i = 0; i < 1000; i++) {
-                    const threeDigitValue = i.toString().padStart(3, '0');
-                    imageArray.push({ name: threeDigitValue, imageItem: '' });
-                    }
-                break;
-            case '4d':
-                for (let i = 0; i < 10000; i++) {
-                    const fourDigitValue = i.toString().padStart(4, '0');
-                    imageArray.push({ name: fourDigitValue, imageItem: '' });
-                    }
-                break;
-            case 'other':
-            default:
-        }
+        const imageArray = getPopulatedImageArray(populateForm.setType);
         
         const { id } = router.query
         try {

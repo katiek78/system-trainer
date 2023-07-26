@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { mutate } from 'swr'
+import { getPopulatedImageArray } from '@/lib/getPopulatedImageArray'
 
 const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
   const router = useRouter()
@@ -46,7 +47,12 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
 
   /* The POST method adds a new entry in the mongodb database. */
   const postData = async (form) => {
+    //populate set
+    const imageArray = getPopulatedImageArray(form.setType);
+    form.images = imageArray;
+    
     const { setType, ...formDataToStore } = form;
+
 
     try {
       const res = await fetch('/api/imageSets', {
