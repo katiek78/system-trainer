@@ -48,19 +48,19 @@ const ImageSetPage = ({user, imageSet}) => {
             case '2d':
                 for (let i = 0; i < 100; i++) {
                     const twoDigitValue = i.toString().padStart(2, '0');
-                    imageArray.push({ name: twoDigitValue });
+                    imageArray.push({ name: twoDigitValue, imageItem: '' });
                 }
                 break;
             case '3d':
                 for (let i = 0; i < 1000; i++) {
                     const threeDigitValue = i.toString().padStart(3, '0');
-                    imageArray.push({ name: threeDigitValue });
+                    imageArray.push({ name: threeDigitValue, imageItem: '' });
                     }
                 break;
             case '4d':
                 for (let i = 0; i < 10000; i++) {
                     const fourDigitValue = i.toString().padStart(4, '0');
-                    imageArray.push({ name: fourDigitValue });
+                    imageArray.push({ name: fourDigitValue, imageItem: '' });
                     }
                 break;
             case 'other':
@@ -88,6 +88,7 @@ const ImageSetPage = ({user, imageSet}) => {
     
           mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
           refreshData(router);          
+          
         } catch (error) {
           setMessage('Failed to add images to set')
         }
@@ -115,8 +116,9 @@ const ImageSetPage = ({user, imageSet}) => {
    
          const { data } = await res.json()
    
-         mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
-         refreshData(router);
+   //      mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
+     //    refreshData(router);
+         console.log(imageSet);
        } catch (error) {
          setMessage('Failed to update images')
        }
@@ -134,8 +136,7 @@ const ImageSetPage = ({user, imageSet}) => {
         //     } else if (isWordType) {                      
         //       updatedForm.words[wordIndex].wordType = value;
         //     } else  updatedForm.words[wordIndex].meaning = value;
-        //   }
-        
+        //   }        
         setImageForm(updatedForm);
     }
 
@@ -174,6 +175,7 @@ const ImageSetPage = ({user, imageSet}) => {
 
     const handleToggleEditable = () => {
         setIsEditable(!isEditable);
+        setIsListView(true);
     }
 
     const handleToggleListView = () => {
@@ -208,7 +210,7 @@ const ImageSetPage = ({user, imageSet}) => {
     <div className="mt-3 w-full grid grid-cols-2 gap-y-1">
     {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => {
         if (isEditable) {
-            return <><div className="col-span-1">{img.name}</div><div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem && img.imageItem.length > 0 ? img.imageItem : ""} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div></>
+            return <><div className="col-span-1">{img.name}</div><div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div></>
         } else return <><div className="col-span-1">{img.name}</div><div className="col-span-1">{img.imageItem || '<none entered>'}</div></>
       })
     }
@@ -265,13 +267,16 @@ const ImageSetPage = ({user, imageSet}) => {
 
       <div class="group m-2 h-40 w-80 [perspective:1000px]">
     <div class="relative h-full w-full rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-      <div class="absolute inset-0">
-        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src="https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')" alt="" />
+      <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white">
+      <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <h1 class="text-3xl font-bold">{img.name}</h1>         
+        </div> 
       </div>
-      <div class="absolute inset-0 h-full w-full rounded-xl bg-black/80 px-12 text-center text-slate-200 [transform:rotateY(180deg)] [backface-visibility:hidden]">
-        <div class="flex min-h-full flex-col items-center justify-center">
+      <div class="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">
+         <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.imageItem}</h1>         
-        </div>
+        </div> 
+        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src="https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')" alt="" />
       </div>
     </div>
   </div>
