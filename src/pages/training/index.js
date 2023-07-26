@@ -3,23 +3,23 @@ import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 import MemoSystem from "@/models/MemoSystem";
+import ImageSet from "@/models/ImageSet";
 // import SiteUser from "@/models/SiteUser";
 
-const Dashboard = ({user, journeys, systems}) => {
+const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">My systems</h1>
-    <p className="font-mono">Hello {user.nickname} - there are {journeys.length} journeys and {systems.length} systems in the database.</p>
+    <h1 className="py-2 font-mono text-4xl">Training Center</h1>
+    <p className="font-mono">Hello {user.nickname} - there are {journeys.length} journeys, {imageSets.length} image sets and {systems.length} systems in the database.</p>
   </div>
 
 </>
   )
 }
 
-export default Dashboard;
+export default TrainingCenter;
 
-// export default Dashboard;
 export const getServerSideProps = withPageAuthRequired({
     getServerSideProps: async ({ req, res }) => {
     const auth0User = await getSession(req, res);
@@ -53,6 +53,13 @@ const result = await Journey.find({})
     return system
   })
 
+  const result3 = await ImageSet.find({})
+  const imageSets = result3.map((doc) => {   
+    const imageSet = JSON.parse(JSON.stringify(doc));
+    imageSet._id = imageSet._id.toString()
+    return imageSet
+  })
+
   // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
   // if (!user) {
   //    user = db.user.create(auth0User?.user);
@@ -63,6 +70,7 @@ const result = await Journey.find({})
         // user: (auth0User).user,
         user: user,  //EVENTUALLY THIS
         journeys: journeys,
+        imageSets: imageSets,
         systems: systems
       },
     };
