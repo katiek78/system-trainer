@@ -3,21 +3,49 @@ import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
 import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { refreshData } from "@/lib/refreshData";
+import { useState } from "react";
+import { useRouter } from "next/router";
 
 const ImageSetsPage = ({user, imageSets}) => {
   //let user = useUser(); //should we be using this instead?
-  
+
+    const [errors, setErrors] = useState({})
+    const [message, setMessage] = useState('')
+    const router = useRouter();
+    
+    const handleDelete = async (id) => {
+        const confirmed = window.confirm('Are you sure you want to delete this set?');
+        if (confirmed) {
+            //remove it from our word set so it disappears from the view 
+            //setFilterData(filterData.filter(word => word._id !== id));
+
+            //remove it from the database
+            try {
+                await fetch(`/api/imageSets/${id}`, {
+                method: 'Delete',
+                })
+                refreshData(router);
+            } catch (error) {
+                setMessage('Failed to delete the set.')
+            }
+        }
+    }
+
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">My image sets</h1>
     <p className="font-mono">Hi {user.nickname} - there are {imageSets.length} image sets in the database.</p>
-    {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
+    {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> 
+    <FontAwesomeIcon className="ml-5 cursor-pointer" onClick={() => handleDelete(imageSet._id)} icon={faTrash} size="1x" /></p>)}
     <Link href="/newImageSet"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new image set
         </button></Link>
   </div>
-
+    <div>{message}</div>
 </>
   )
 }
