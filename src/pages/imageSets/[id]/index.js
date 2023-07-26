@@ -109,12 +109,15 @@ const ImageSetPage = ({user, imageSet}) => {
         const name = target.name
        
         const updatedForm = { ...imageForm };
-        const thisIndex = name.slice(8);        
-        updatedForm.images[thisIndex].imageItem = value;
-        //     } else if (isWordType) {                      
-        //       updatedForm.words[wordIndex].wordType = value;
-        //     } else  updatedForm.words[wordIndex].meaning = value;
-        //   }        
+        const isURL = name.includes("URL");
+        let thisIndex;        
+        if (isURL) {
+            thisIndex = name.slice(6);
+            updatedForm.images[thisIndex].URL = value;
+        } else {
+            thisIndex = name.slice(8);
+            updatedForm.images[thisIndex].imageItem = value;     
+        }
         setImageForm(updatedForm);
     }
 
@@ -185,11 +188,19 @@ const ImageSetPage = ({user, imageSet}) => {
     <div>{renderPageNumbers()}</div>
 
     {isListView &&
-    <div className="mt-3 w-full grid grid-cols-2 gap-y-1">
+    <div className="mt-3 w-full grid grid-cols-3 gap-y-10">
     {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => {
         if (isEditable) {
-            return <><div className="col-span-1">{img.name}</div><div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div></>
-        } else return <><div className="col-span-1">{img.name}</div><div className="col-span-1">{img.imageItem || '<none entered>'}</div></>
+            return <>
+            <div className="col-span-1">{img.name}</div>
+            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
+            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
+            </>
+        } else return <>
+        <div className="col-span-1">{img.name}</div>
+        <div className="col-span-1">{img.imageItem || '<none entered>'}</div>
+        <div className="col-span-1">{img.URL && img.URL.length && <img className='h-8' src={img.URL}></img>}</div>
+        </>
       })
     }
     
@@ -201,7 +212,7 @@ const ImageSetPage = ({user, imageSet}) => {
 
         <div className="flex flex-wrap justify-between">
     {/* Create a card for each imageItem */}
-    {imageSet.images.map((img) => (
+    {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img) => (
       <>
       
       {/* <div className="m-20 group w-200 h-150 [perspective:500px]">      
@@ -298,7 +309,8 @@ const ImageSetPage = ({user, imageSet}) => {
       </>
     }
 
-    {/* Display select box with possible types and a button Populate Set */}
+<div>{message}</div>
+
     {/* Add a button to add an image manually */}
   </div>
 
