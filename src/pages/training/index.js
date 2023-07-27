@@ -6,6 +6,7 @@ import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 import MemoSystem from "@/models/MemoSystem";
 import ImageSet from "@/models/ImageSet";
+import TrafficLights from "@/components/TrafficLights";
 // import SiteUser from "@/models/SiteUser";
 
 const TrainingCenter = ({user, journeys, imageSets, systems}) => {
@@ -105,7 +106,8 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
           </div>
           <div id="card-back" onClick={toggleRotate}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-              <h1 class="text-3xl font-bold">{randImage.imageItem}</h1>         
+              <h1 class="text-3xl font-bold">{randImage.imageItem}</h1>    
+              <h5><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>     
             </div> 
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
