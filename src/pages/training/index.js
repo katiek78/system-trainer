@@ -7,6 +7,9 @@ import Journey from "@/models/Journey";
 import MemoSystem from "@/models/MemoSystem";
 import ImageSet from "@/models/ImageSet";
 import TrafficLights from "@/components/TrafficLights";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
+
 // import SiteUser from "@/models/SiteUser";
 
 const TrainingCenter = ({user, journeys, imageSets, systems}) => {
@@ -71,6 +74,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
 
   const handleNextImage = (e) => {        
              e.preventDefault();
+             e.target.blur();
              getNextImage();     
   }
 
@@ -82,6 +86,13 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     toggleRotate(true);     
   }
 
+  const handleCorrect = () => {
+    console.log("correct");
+  }
+
+  const handleIncorrect = () => {
+    console.log("incorrect");
+  }
 
   return(
     <>
@@ -113,9 +124,10 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
           </div>
         </div>
       </div>
-
-
-    <button onClick={(e) => handleNextImage(e)} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Next</button>
+    
+      <FontAwesomeIcon className='cursor-pointer h-10 w-40 btn bg-green-400 hover:bg-green-500 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={handleCorrect} icon={faCheck} />
+      <FontAwesomeIcon className='cursor-pointer h-10 w-40 btn bg-red-400 hover:bg-red-500 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={handleIncorrect} icon={faXmark} />  
+      <button onClick={(e) => handleNextImage(e)} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Next</button>
     </div>
     }
     </div>
