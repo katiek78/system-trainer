@@ -8,7 +8,7 @@ import MemoSystem from "@/models/MemoSystem";
 import ImageSet from "@/models/ImageSet";
 import TrafficLights from "@/components/TrafficLights";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faXmark, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 // import SiteUser from "@/models/SiteUser";
 
@@ -22,14 +22,13 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const [randImage, setRandImage] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFrontSide, setIsFrontSide] = useState(true);
-  const [isStarted, setIsStarted] = useState(false);
-  // const isStartedRef = useRef(isStarted);
+  // const [isStarted, setIsStarted] = useState(false);
+  const [isEditable, setIsEditable] = useState(false);
 
-  // const setIsStarted = data => {
-  //   isStartedRef.current = data;
-  //   _setIsStarted(data);
-  // };
-
+  const [form, setForm] = useState({
+    imageItem: ''   
+  })
+  
   useEffect(() => {
     setIsLoading(true);
     setImageSet(getImageSet(imageSetID));
@@ -38,10 +37,11 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   }, [imageSetID]);
 
   const toggleRotate = (toFront = false) => {
+    console.log("rotate toggled" + toFront)
     if ((toFront && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
           document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
         }
-  
+    console.log(isFrontSide)
     setIsFrontSide(!isFrontSide);
   }
 
@@ -58,26 +58,38 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     setImageSet(data.data);
   }
 
+  function handleKeyDown(e) { 
+    e.stopPropagation(); 
+    if (document.getElementsByName('imageItem').length > 0) {
+      console.log("special key down thing called")   
+      if (e.keyCode === 13) console.log("pressed return on input")
+    } else {
+      console.log("normal key down thing called")         
+      if (e.keyCode === 39) getNextImage();
+      if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();  
+  }    
+}
+
+  
+
   const handleStartTraining = () => {
     //get random image from set
     const randIndex = Math.floor(Math.random() * imageSet.images.length);
     setRandImage(imageSet.images[randIndex]);   
-    setIsStarted(true);
-
-    function handleKeyDown(e) {           
-        if (e.keyCode === 39) getNextImage();
-        if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();      
-    }
+    setForm({imageItem: randImage.imageItem});
+    // setIsStarted(true);
 
      //document.addEventListener('keydown', handleKeyDown);
+     
      document.addEventListener('keydown', handleKeyDown)
-    //document.removeEventListener('keydown', handleKeyDown)
+     
   }
 
   const handleNextImage = (e) => {        
              e.preventDefault();
              e.target.blur();
              getNextImage();     
+             
   }
 
   const getNextImage = () => {
@@ -85,7 +97,26 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     const randIndex = Math.floor(Math.random() * imageSet.images.length);
     setRandImage(imageSet.images[randIndex]);    
     toggleRotate(true);     
-    console.log(imageSet.images.filter(img => img.recentAttempts?.length > 0))
+    setIsEditable(false);
+    setForm({imageItem: imageSet.images[randIndex].imageItem});
+    //console.log(imageSet.images.filter(img => img.recentAttempts?.length > 0))
+  }
+
+//   function handleKeyDownEdit(k) {      
+//     console.log("special key down thing called")
+//    // k.stopPropagation();        
+//     if (k.keyCode === 13) console.log("pressed return on input");      
+// }
+
+  const handleEdit = (e) => {
+    //Now entering editable mode
+    e.stopPropagation();
+    setIsEditable(true);
+        
+   //document.addEventListener('keydown', handleKeyDown);
+  //  document.removeEventListener('keydown', handleKeyDown, true);
+  //  console.log("normal key down thing should be off now");
+  //  document.addEventListener('keydown', handleKeyDownEdit)
   }
 
   const handleCorrect = (id) => {    
@@ -112,7 +143,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     el._id === thisImage._id ? { ...el, recentAttempts: thisImage.recentAttempts } : el
     )
     
-    console.log(updatedImages);
+    //console.log(updatedImages);
 
     //get updated imageSet
     const updatedImageSet = {...imageSet, images: updatedImages};
@@ -146,6 +177,67 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
    
   }
 
+  const handleSubmitEdit = async (e) => {
+    e.stopPropagation();
+
+    setIsEditable(false); 
+    // document.removeEventListener('keydown', handleKeyDownEdit, true);
+    // document.addEventListener('keydown', handleKeyDown)
+    
+    const thisImage = randImage;
+   
+    thisImage.imageItem = form.imageItem;
+
+    const updatedImages = imageSet.images.map((el) =>
+    el._id === thisImage._id ? { ...el, imageItem:thisImage.imageItem } : el
+    )
+    
+    //get updated imageSet
+    const updatedImageSet = {...imageSet, images: updatedImages};
+    
+    try {
+            
+      const res = await fetch(`/api/imageSets/${imageSetID}`, {
+        method: 'PUT',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+        body: JSON.stringify(updatedImageSet),
+      })
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status)
+      }
+      const { data } = await res.json()
+
+
+    
+      mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation         
+     // setImageSet(data);    
+        
+
+    } catch (error) {
+      setMessage('Failed to save training data')
+    }
+     
+    //   refreshData();
+   
+   
+  }
+
+  const handleEditChange = (e) => {
+    e.stopPropagation();
+    const target = e.target
+    const value = target.value
+    const name = target.name
+
+    setForm({
+      ...form,
+      [name]: value,
+    })
+  }
 
   return(
     <>
@@ -163,16 +255,18 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
 
       <div class="group [perspective:1000px]">
         <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl">
-          <div id="card-front" onClick={toggleRotate}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
+          <div id="card-front" onClick={() => toggleRotate(false)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
           <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{randImage.name}</h1>         
             </div> 
           </div>
-          <div id="card-back" onClick={toggleRotate}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
+          <div id="card-back" onClick={() => toggleRotate(false)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-              <h1 class="text-3xl font-bold">{randImage.imageItem}</h1>    
-              <h5><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>     
+              <h1 class="text-3xl font-bold">{isEditable ? <div><input name='imageItem' onChange={handleEditChange} onClick={(e) => e.stopPropagation()} className='text-black w-44 rounded-xl absolute top-2 left-1' value={form.imageItem}></input>{randImage.name}</div> : randImage.imageItem}</h1>                  
+              <h5><TrafficLights recentAttempts={randImage.recentAttempts} /></h5> 
+              
             </div> 
+            {isEditable ? <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white' icon={faCheck} onClick={handleSubmitEdit} /> : <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white' icon={faEdit} onClick={handleEdit} />}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
         </div>
