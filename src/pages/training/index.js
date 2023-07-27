@@ -15,6 +15,8 @@ import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const router = useRouter();
   const contentType = 'application/json'
+
+  const [message, setMessage] = useState('');
   const imageSetID = router.query.imageSet;
   const [imageSet, setImageSet] = useState({});
   const [randImage, setRandImage] = useState({});
@@ -81,18 +83,69 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const getNextImage = () => {
     //get random image from set    
     const randIndex = Math.floor(Math.random() * imageSet.images.length);
-    setRandImage(imageSet.images[randIndex]);
-    console.log(isFrontSide)
+    setRandImage(imageSet.images[randIndex]);    
     toggleRotate(true);     
+    console.log(imageSet.images.filter(img => img.recentAttempts?.length > 0))
   }
 
-  const handleCorrect = () => {
-    console.log("correct");
+  const handleCorrect = (id) => {    
+    addToRecentAttempts(true, id);        
+    getNextImage();
   }
 
-  const handleIncorrect = () => {
-    console.log("incorrect");
+  const handleIncorrect = (id) => {
+    addToRecentAttempts(false, id);        
+    getNextImage();
   }
+
+  const addToRecentAttempts = async (isCorrect) => {
+    const thisImage = randImage;
+    //create the property if it doesn't exist
+    if (!thisImage.recentAttempts) thisImage.recentAttempts = [];
+
+    //cap at 6 attempts
+    if (thisImage.recentAttempts.length === 6) thisImage.recentAttempts.shift();
+  
+    thisImage.recentAttempts.push(isCorrect ? 1 : 0);
+
+    const updatedImages = imageSet.images.map((el) =>
+    el._id === thisImage._id ? { ...el, recentAttempts: thisImage.recentAttempts } : el
+    )
+    
+    console.log(updatedImages);
+
+    //get updated imageSet
+    const updatedImageSet = {...imageSet, images: updatedImages};
+    
+    try {
+            
+      const res = await fetch(`/api/imageSets/${imageSetID}`, {
+        method: 'PUT',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+        body: JSON.stringify(updatedImageSet),
+      })
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status)
+      }
+      const { data } = await res.json()
+
+      mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation         
+     // setImageSet(data);       
+
+    } catch (error) {
+      setMessage('Failed to save training data')
+    }
+     
+    //   refreshData();
+   
+   
+  }
+
 
   return(
     <>
@@ -133,6 +186,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     </div>
     </>
     }
+    <div>{}</div>
   </div>
 
 </>
