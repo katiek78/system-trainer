@@ -9,7 +9,11 @@ const ImageSetSchema = new mongoose.Schema({
           name: { type: String},
           imageItem: {type: String},  
           phonetics: {type: String},
-          URL: {type: String}    
+          URL: {type: String},
+          recentAttempts: {
+            type: [Number],
+            default: []
+          } 
         })
       ],
 })
