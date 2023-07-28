@@ -55,14 +55,15 @@ const TrainingCenter = ({user, imageSet}) => {
   }, [needNewCard]);
 
   const toggleRotate = (e, toFront = false) => {
-       
-    if (toFront || (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path')) {   //if it's called in getNextImage or is not triggered via the button, then we consider toggle
- 
-    if ((toFront && document.querySelectorAll('.card-flip').length > 0 && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
-          document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
-        }
+       if (!isEditable) {
+          if (toFront || (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path')) {   //if it's called in getNextImage or is not triggered via the button, then we consider toggle
+      
+          if ((toFront && document.querySelectorAll('.card-flip').length > 0 && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
+                document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
+              }
 
-      }
+            }
+    }
   }
 
   // const getImageSet = async (id) => {
@@ -306,7 +307,7 @@ const TrainingCenter = ({user, imageSet}) => {
     <div>
     <p>Which words do you want to train?</p>
 
-    <select id="selSet" className="w-full rounded-md" id="selSet" onChange={handleChangeSelect}>
+    <select id="selSet" className="w-full rounded-md" onChange={handleChangeSelect}>
       <option value="all">All 🌍</option>
       {confidenceLabels.map((label, i) => <option value={i}>{label}</option>)}      
     </select>
@@ -319,7 +320,7 @@ const TrainingCenter = ({user, imageSet}) => {
       <div class="group [perspective:1000px]">
         <div class="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl"> 
           <div id="card-front" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
-          <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <div class="flex-col rounded-xl px-12 bg-white text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{randImage.name}</h1>
             </div>
           </div>
