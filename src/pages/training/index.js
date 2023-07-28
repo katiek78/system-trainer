@@ -281,7 +281,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
               <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
-            {isEditable ? <></>: <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white' icon={faEdit} onClick={handleEdit} />}
+            {isEditable ? <></>: <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white h-8' icon={faEdit} onClick={handleEdit} />}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
         </div>
