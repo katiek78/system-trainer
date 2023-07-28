@@ -11,6 +11,7 @@ import ConfidenceLevel from "@/components/ConfidenceLevel";
 import QuickEditForm from "@/components/QuickEditForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLevel";
 
 // import SiteUser from "@/models/SiteUser";
 
@@ -27,28 +28,26 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   // const [isStarted, setIsStarted] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
 
-  // const [form, setForm] = useState({
-  //   imageItem: 'default'
-  // })
+  const [filteredData, setFilteredData] = useState(imageSet.images);
+// let filteredData = [];
 
   useEffect(() => {
     setIsLoading(true);
     setImageSet(getImageSet(imageSetID));
+   // setFilteredData(imageSet)
     setIsLoading(false);
+
 
   }, [imageSetID]);
 
   const toggleRotate = (e, toFront = false) => {
-    console.log("toggleRotated called with " + toFront);
-    if (e) console.log(e.target.tagName)
+       
     if (toFront || (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path')) {   //if it's called in getNextImage or is not triggered via the button, then we consider toggle
-
-    console.log("consider toggle")
+ 
     if ((toFront && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
           document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
         }
-    // console.log("we are toggling and isFrontSide was previously set to " + isFrontSide) //seems to be always true??
-    // setIsFrontSide(!isFrontSide);
+
       }
   }
 
@@ -76,7 +75,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   //     if (e.keyCode === 13) handleSubmitEdit(e, formItem);
   //   } else {
     
-  if (e.keyCode === 39) getNextImage();
+  if (e.keyCode === 39) moveNextImage();
   //     // if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();
  // }
 }
@@ -85,33 +84,37 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
 
   const handleStartTraining = () => {
     //get random image from set
-    const randIndex = Math.floor(Math.random() * imageSet.images.length);
-    setRandImage(imageSet.images[randIndex]);
-    // setForm({imageItem: randImage.imageItem});
-    // setIsStarted(true);
-
-     //document.addEventListener('keydown', handleKeyDown);
-
+    // const randIndex = Math.floor(Math.random() * imageSet.images.length);
+    // setRandImage(imageSet.images[randIndex]);
+    
      document.addEventListener('keydown', handleKeyDown)
+     getImage()
 
   }
 
   const handleNextImage = (e) => {
              e.preventDefault();
              e.target.blur();
-             getNextImage();
-
+             moveNextImage();
   }
 
-  const getNextImage = () => {
-    //get random image from set
-    const randIndex = Math.floor(Math.random() * imageSet.images.length);
-    setRandImage(imageSet.images[randIndex]);
+
+  const getImage = () => {
+ //get random image from set
+ const randIndex = Math.floor(Math.random() * imageSet.images.length);
+ setRandImage(imageSet.images[randIndex]);
+//  const randIndex = Math.floor(Math.random() * filteredData.length);
+//  console.log(randIndex + " from " + filteredData.length)
+//  setRandImage(filteredData[randIndex])
+  }
+
+  const moveNextImage = () => {
+    console.log("now in move next image")
+    console.log(filteredData);
+    getImage();
     toggleRotate(null, true);
     setIsEditable(false);
-    // setForm({imageItem: imageSet.images[randIndex].imageItem});
-    //console.log("getting nexte image and form.imageItem is " + form.imageItem)  //shows previous one but that's to be expected
-    //console.log(imageSet.images.filter(img => img.recentAttempts?.length > 0))
+   
   }
 
 //   function handleKeyDownEdit(k) {
@@ -134,13 +137,13 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const handleCorrect = (e) => {
     e.stopPropagation();
     addToRecentAttempts(true);
-    getNextImage();
+    moveNextImage();
   }
 
   const handleIncorrect = (e) => {
     e.stopPropagation();
     addToRecentAttempts(false);
-    getNextImage();
+    moveNextImage();
   }
 
   const addToRecentAttempts = async (isCorrect) => {
@@ -253,6 +256,17 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     // })
   }
 
+  const handleChangeSelect = () => {
+    const level = document.getElementById("selSet").value;   
+    //setImageGroup(level);
+    console.log(level)
+     if (level === 'all') {
+       setFilteredData(imageSet.images);
+     } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(level)));
+    moveNextImage();
+    console.log(filteredData) //appears to be fine
+  }
+
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -263,6 +277,16 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     <>
     <div className="flex flex-col justify-center items-center">
     <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
+
+    <div>
+    <p>Which words do you want to train?</p>
+
+    <select id="selSet" className="w-full rounded-md" id="selSet" onChange={handleChangeSelect}>
+      <option value="all">All 🌍</option>
+      {confidenceLabels.map((label, i) => <option value={i}>{label}</option>)}      
+    </select>
+    </div>
+
     {imageSet?.images?.length > 0 && !randImage.name && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
     {randImage.name &&
     <div className="flex flex-col justify-center items-center">
