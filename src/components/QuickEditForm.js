@@ -53,7 +53,7 @@ return(
     <form onSubmit={(e) => handleClickSubmit(e, formItem)}><input name='imageItem' 
     onChange={(e) => handleEditChange(e)} 
     onClick={(e) => handleClickForm(e)} 
-    className='text-black w-44 rounded-xl absolute top-2 left-1' 
+    className='text-black w-44 rounded-xl absolute top-6 left-1' 
     value={formItem}></input>{name}
     <button type="submit"><FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white' icon={faCheck}  /> </button>
     </form>
