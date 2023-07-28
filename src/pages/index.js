@@ -37,7 +37,7 @@ export default function Index() {
   }
 
   return <div>
-<h1>System Trainer app</h1>
+<h1 className="text-lg flex flex-col">System Trainer app</h1>
 <a href="/api/auth/signup">Sign up</a>
 <a href="/api/auth/login">Log in</a>
 </div>;
