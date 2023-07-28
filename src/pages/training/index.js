@@ -3,8 +3,8 @@ import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import { useState, useEffect, useRef} from "react";
 import { useRouter } from "next/router";
 import dbConnect from "@/lib/dbConnect";
-import Journey from "@/models/Journey";
-import MemoSystem from "@/models/MemoSystem";
+// import Journey from "@/models/Journey";
+// import MemoSystem from "@/models/MemoSystem";
 import ImageSet from "@/models/ImageSet";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
@@ -15,54 +15,67 @@ import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLeve
 
 // import SiteUser from "@/models/SiteUser";
 
-const TrainingCenter = ({user, journeys, imageSets, systems}) => {
+const TrainingCenter = ({user, imageSet}) => {
   const router = useRouter();
   const contentType = 'application/json'
 
   const [message, setMessage] = useState('');
   const imageSetID = router.query.imageSet;
-  const [imageSet, setImageSet] = useState({});
+  //const [imageSet, setImageSet] = useState({});
   const [randImage, setRandImage] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   // const [isFrontSide, setIsFrontSide] = useState(true);
-  // const [isStarted, setIsStarted] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
-
+  const [imageGroup, setImageGroup] = useState('all');
   const [filteredData, setFilteredData] = useState(imageSet.images);
+  const [needNewCard, setNeedNewCard] = useState(false);
 // let filteredData = [];
 
   useEffect(() => {
     setIsLoading(true);
-    setImageSet(getImageSet(imageSetID));
-   // setFilteredData(imageSet)
+    const filterData = () => {
+
+      if (imageGroup === 'all') {
+        setFilteredData(imageSet.images);
+      } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup)));
+    }
+
+    filterData();
+  
+   if (filteredData.length) {
+    getImage();
+    toggleRotate(null, true);
+    setIsEditable(false);
+    setMessage('');
+  } else setMessage('There are no cards of this type! Choose another.');
+    setNeedNewCard(false);
     setIsLoading(false);
-
-
-  }, [imageSetID]);
+  }, [needNewCard]);
 
   const toggleRotate = (e, toFront = false) => {
        
     if (toFront || (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path')) {   //if it's called in getNextImage or is not triggered via the button, then we consider toggle
  
-    if ((toFront && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
+    if ((toFront && document.querySelectorAll('.card-flip').length > 0 && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
           document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
         }
 
       }
   }
 
-  const getImageSet = async (id) => {
-    //get image set from DB
-    const res = await fetch(`/api/imageSets/${id}`, {
-      method: 'GET',
-      headers: {
-        Accept: contentType,
-        'Content-Type': contentType,
-      },
-    })
-    const data = await res.json();
-    setImageSet(data.data);
-  }
+  // const getImageSet = async (id) => {
+  //   //get image set from DB
+  //   const res = await fetch(`/api/imageSets/${id}`, {
+  //     method: 'GET',
+  //     headers: {
+  //       Accept: contentType,
+  //       'Content-Type': contentType,
+  //     },
+  //   })
+  //   const data = await res.json();
+  //   setImageSet(data.data);
+  // }
 
   function handleKeyDown(e) {
    e.stopPropagation();
@@ -75,7 +88,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   //     if (e.keyCode === 13) handleSubmitEdit(e, formItem);
   //   } else {
     
-  if (e.keyCode === 39) moveNextImage();
+  if (e.keyCode === 39)  setNeedNewCard(true);
   //     // if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();
  // }
 }
@@ -88,34 +101,37 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     // setRandImage(imageSet.images[randIndex]);
     
      document.addEventListener('keydown', handleKeyDown)
-     getImage()
+    // getImage()
+    setNeedNewCard(true)
+    setIsStarted(true)
 
   }
 
   const handleNextImage = (e) => {
              e.preventDefault();
              e.target.blur();
-             moveNextImage();
+             setNeedNewCard(true);
   }
 
 
   const getImage = () => {
  //get random image from set
- const randIndex = Math.floor(Math.random() * imageSet.images.length);
- setRandImage(imageSet.images[randIndex]);
-//  const randIndex = Math.floor(Math.random() * filteredData.length);
-//  console.log(randIndex + " from " + filteredData.length)
-//  setRandImage(filteredData[randIndex])
+ const randIndex = Math.floor(Math.random() * filteredData.length);
+ setRandImage(filteredData[randIndex])
+ console.log(getConfidenceLevel(randImage.recentAttempts))
   }
 
-  const moveNextImage = () => {
-    console.log("now in move next image")
-    console.log(filteredData);
-    getImage();
-    toggleRotate(null, true);
-    setIsEditable(false);
+  // const moveNextImage = () => {
+  //   console.log("now in move next image")
+  //   if(filteredData.length === 0) {
+  //     alert("No cards of this type.")
+  //     return
+  //   }
+  //   getImage();
+  //   toggleRotate(null, true);
+  //   setIsEditable(false);
    
-  }
+  // }
 
 //   function handleKeyDownEdit(k) {
 //     console.log("special key down thing called")
@@ -137,13 +153,13 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const handleCorrect = (e) => {
     e.stopPropagation();
     addToRecentAttempts(true);
-    moveNextImage();
+    setNeedNewCard(true);
   }
 
   const handleIncorrect = (e) => {
     e.stopPropagation();
     addToRecentAttempts(false);
-    moveNextImage();
+    setNeedNewCard(true);
   }
 
   const addToRecentAttempts = async (isCorrect) => {
@@ -151,10 +167,11 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     //create the property if it doesn't exist
     if (!thisImage.recentAttempts) thisImage.recentAttempts = [];
 
-    //cap at 6 attempts
-    if (thisImage.recentAttempts.length === 6) thisImage.recentAttempts.shift();
+    //cap at 7 attempts
+    if (thisImage.recentAttempts.length === 7) thisImage.recentAttempts.shift();
 
     thisImage.recentAttempts.push(isCorrect ? 1 : 0);
+
 
     const updatedImages = imageSet.images.map((el) =>
     el._id === thisImage._id ? { ...el, recentAttempts: thisImage.recentAttempts } : el
@@ -182,14 +199,20 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
       }
       const { data } = await res.json()
 
-      mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation
-     // setImageSet(data);
+     // mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation
+      //setImageSet(data);
+      imageSet.images = updatedImages;
+
+      const level = document.getElementById("selSet").value;   
+      setImageGroup(level)
+      //setNeedNewCard(true);
 
     } catch (error) {
-      setMessage('Failed to save training data')
+      setMessage(error + 'Failed to save training data')
     }
 
     //   refreshData();
+    
 
 
   }
@@ -259,11 +282,12 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
   const handleChangeSelect = () => {
     const level = document.getElementById("selSet").value;   
     //setImageGroup(level);
-    console.log(level)
-     if (level === 'all') {
-       setFilteredData(imageSet.images);
-     } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(level)));
-    moveNextImage();
+    // console.log(level)
+    //  if (level === 'all') {
+    //    setFilteredData(imageSet.images);
+    //  } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(level)));
+    setImageGroup(level)
+    setNeedNewCard(true);
     console.log(filteredData) //appears to be fine
   }
 
@@ -271,7 +295,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">Training Center</h1>
-    <p className="font-mono">Hello {user.nickname} - there are {journeys.length} journeys, {imageSets.length} image sets and {systems.length} systems in the database.</p>
+    <p className="font-mono">Hello {user.nickname} - there are {imageSet.images.length} images in this set.</p>
 
     {imageSet && !isLoading &&
     <>
@@ -287,8 +311,8 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     </select>
     </div>
 
-    {imageSet?.images?.length > 0 && !randImage.name && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
-    {randImage.name &&
+    {!isStarted && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
+    {isStarted &&
     <div className="flex flex-col justify-center items-center">
 
       <div class="group [perspective:1000px]">
@@ -320,7 +344,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     </div>
     </>
     }
-    <div>{}</div>
+    <div>{message}</div>
   </div>
 
 </>
@@ -330,8 +354,11 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
 export default TrainingCenter;
 
 export const getServerSideProps = withPageAuthRequired({
-    getServerSideProps: async ({ req, res }) => {
-    const auth0User = await getSession(req, res);
+    getServerSideProps: async (ctx) => {
+      
+      const id = ctx.query.imageSet
+      {/* const id = req.params.imageSet; */}
+    const auth0User = await getSession(ctx.req, ctx.res);
     await dbConnect()
 
     // Fetch the user from the db (by email)
@@ -348,7 +375,7 @@ export const getServerSideProps = withPageAuthRequired({
 
 
 /* find all the data in our database */
-const result = await Journey.find({})
+{/* const result = await Journey.find({})
   const journeys = result.map((doc) => {
     const journey = JSON.parse(JSON.stringify(doc));
     journey._id = journey._id.toString()
@@ -367,22 +394,16 @@ const result = await Journey.find({})
     const imageSet = JSON.parse(JSON.stringify(doc));
     imageSet._id = imageSet._id.toString()
     return imageSet
-  })
+  }) */}
 
-  // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
-  // if (!user) {
-  //    user = db.user.create(auth0User?.user);
-  // }
-    return {
-      props: {
-        // dbUser: user,
-        // user: (auth0User).user,
-        user: user,  //EVENTUALLY THIS
-        journeys: journeys,
-        imageSets: imageSets,
-        systems: systems
-      },
-    };
-  },
+
+  /* find this image set */
+  const result = await ImageSet.findOne({_id: id})
+  const imageSetToPass = JSON.parse(JSON.stringify(result))
+
+
+  return { props: { user: user, imageSet: imageSetToPass} }
+
+}
 })
 
