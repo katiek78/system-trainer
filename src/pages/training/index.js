@@ -7,6 +7,7 @@ import Journey from "@/models/Journey";
 import MemoSystem from "@/models/MemoSystem";
 import ImageSet from "@/models/ImageSet";
 import TrafficLights from "@/components/TrafficLights";
+import ConfidenceLevel from "@/components/ConfidenceLevel";
 import QuickEditForm from "@/components/QuickEditForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark, faEdit } from "@fortawesome/free-solid-svg-icons";
@@ -41,6 +42,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
     console.log("toggleRotated called with " + toFront);
     if (e) console.log(e.target.tagName)
     if (toFront || (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'svg' && e.target.tagName !== 'path')) {   //if it's called in getNextImage or is not triggered via the button, then we consider toggle
+
     console.log("consider toggle")
     if ((toFront && document.querySelectorAll('.card-flip')[0].classList.contains("[transform:rotateY(180deg)]")) || !toFront) {
           document.querySelectorAll('.card-flip').forEach(card => card.classList.toggle('[transform:rotateY(180deg)]'));
@@ -276,6 +278,7 @@ const TrainingCenter = ({user, journeys, imageSets, systems}) => {
             <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" name={randImage.name} imageItem={randImage.imageItem} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
               <h5><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>
+              <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
             {isEditable ? <></>: <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white' icon={faEdit} onClick={handleEdit} />}
