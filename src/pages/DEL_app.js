@@ -1,12 +1,12 @@
-import React from 'react';
-import { UserProvider } from '@auth0/nextjs-auth0';
+// import React from 'react';
+// import { UserProvider } from '@auth0/nextjs-auth0';
 
-export default function App({ Component, pageProps }) {
-  return (
-    <UserProvider>
-      <Component {...pageProps} />
-    </UserProvider>
-  );
-}
+// export default function App({ Component, pageProps }) {
+//   return (
+//     <UserProvider>
+//       <Component {...pageProps} />
+//     </UserProvider>
+//   );
+// }
 
-//This caused an Expected string or something error
+// //This caused an Expected string or something error
