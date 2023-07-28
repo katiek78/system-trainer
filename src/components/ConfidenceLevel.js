@@ -2,7 +2,9 @@ import { confidenceColours, getConfidenceLevel } from "../utilities/confidenceLe
 
 const ConfidenceLevel = ({ recentAttempts }) => {
     const bgColour = confidenceColours[getConfidenceLevel(recentAttempts)];
-    return <div className={bgColour + " absolute top-0 w-full pl-10 h-4 rounded-t-xl"} />;
+    console.log(getConfidenceLevel(recentAttempts))
+    console.log(bgColour)
+    return <div className="absolute top-0 w-full pl-10 h-4 rounded-t-xl" style={{backgroundColor: bgColour}} />;
   }
 
 export default ConfidenceLevel

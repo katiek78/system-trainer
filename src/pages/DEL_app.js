@@ -8,3 +8,5 @@ export default function App({ Component, pageProps }) {
     </UserProvider>
   );
 }
+
+//This caused an Expected string or something error
