@@ -10,7 +10,7 @@ import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import QuickEditForm from "@/components/QuickEditForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faXmark, faEdit, faImage } from "@fortawesome/free-solid-svg-icons";
 import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLevel";
 
 // import SiteUser from "@/models/SiteUser";
@@ -30,6 +30,7 @@ const TrainingCenter = ({user, imageSet}) => {
   const [imageGroup, setImageGroup] = useState('all');
   const [filteredData, setFilteredData] = useState(imageSet.images);
   const [needNewCard, setNeedNewCard] = useState(false);
+  const [field, setField] = useState('imageItem')
 // let filteredData = [];
 
   useEffect(() => {
@@ -139,10 +140,11 @@ const TrainingCenter = ({user, imageSet}) => {
 //     if (k.keyCode === 13) console.log("pressed return on input");
 // }
 
-  const handleEdit = (e) => {
+  const handleEdit = (e, field) => {
     //Now entering editable mode
     e.stopPropagation();
     setIsEditable(true);
+    setField(field);
 
    //document.addEventListener('keydown', handleKeyDown);
   //  document.removeEventListener('keydown', handleKeyDown, true);
@@ -217,18 +219,28 @@ const TrainingCenter = ({user, imageSet}) => {
 
   }
 
-  const handleSubmitEdit = async (e, imageItem) => {
+  const handleSubmitEdit = async (e, field, item) => {
     e.stopPropagation();
     e.preventDefault();
    // not toggled yet
     setIsEditable(false);
     const thisImage = randImage;
-    randImage.imageItem = imageItem;
+    let updatedImages = [];
+
+    if (field === 'imageItem') {
+    randImage.imageItem = item;
     //not toggled yet
 
-    const updatedImages = imageSet.images.map((el) =>
-    el._id === thisImage._id ? { ...el, imageItem:imageItem } : el
+    updatedImages = imageSet.images.map((el) =>
+    el._id === thisImage._id ? { ...el, imageItem:item } : el
     )
+
+    } else {
+      randImage.URL = item
+      updatedImages = imageSet.images.map((el) =>
+    el._id === thisImage._id ? { ...el, URL:item } : el
+    )
+    }
 
     console.log(updatedImages); //this is right
 
@@ -267,17 +279,6 @@ const TrainingCenter = ({user, imageSet}) => {
 
   }
 
-  const handleEditChange = (e) => {
-    e.stopPropagation();
-    const target = e.target
-    const value = target.value
-    //const name = target.name
-
-    // setForm({
-    //   ...form,
-    //   imageItem: value,
-    // })
-  }
 
   const handleChangeSelect = () => {
     const level = document.getElementById("selSet").value;   
@@ -324,12 +325,12 @@ const TrainingCenter = ({user, imageSet}) => {
           </div>
           <div id="card-back" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-              <h1 class="text-3xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" name={randImage.name} imageItem={randImage.imageItem} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
+              <h1 class="text-3xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" field={field} name={randImage.name} item={field === 'imageItem' ? randImage.imageItem : randImage.URL} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
               <h5><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>
               <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
-            {isEditable ? <></>: <FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white h-8' icon={faEdit} onClick={handleEdit} />}
+            {isEditable ? <></>: <><FontAwesomeIcon className='cursor-pointer absolute left-3/4 top-3/4 text-white h-6 lg:h-8' icon={faEdit} onClick={(e) => handleEdit(e, 'imageItem')} /><FontAwesomeIcon className='absolute cursor-pointer left-[87%] top-3/4 text-white h-6 lg:h-8' icon={faImage} onClick={(e) => handleEdit(e, 'URL')} /></>}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
         </div>
