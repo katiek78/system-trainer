@@ -10,6 +10,7 @@ import { faCheck, faDumbbell, faEdit, faGrip, faList } from "@fortawesome/free-s
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
+import ConfidenceLevel from "@/components/ConfidenceLevel";
 
 const ImageSetPage = ({user, imageSet}) => {
     const router = useRouter()    
@@ -244,7 +245,8 @@ const ImageSetPage = ({user, imageSet}) => {
       <div class="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">
          <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.imageItem}</h1>   
-          <h5 class="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>           
+          <h5 class="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>   
+          <ConfidenceLevel recentAttempts={img.recentAttempts} />        
         </div> 
         <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={img.URL && img.URL.length > 0 ? img.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
       </div>
