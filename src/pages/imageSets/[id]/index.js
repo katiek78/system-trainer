@@ -209,7 +209,7 @@ const ImageSetPage = ({user, imageSet}) => {
     <div>{renderPageNumbers()}</div>
 
     {isListView &&
-    <div className="mt-3 w-full grid grid-cols-3 gap-y-10">
+    <div className="mt-3 w-full grid lg:grid-cols-3 gap-y-10">
     {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => {
         if (isEditable) {
             return <>
