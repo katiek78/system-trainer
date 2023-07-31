@@ -1,6 +1,6 @@
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mutate } from 'swr'
 import { useRouter } from 'next/router'
 import dbConnect from "@/lib/dbConnect";
@@ -12,29 +12,57 @@ import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 
-const ImageSetPage = ({user, imageSet}) => {
+const ImageSetPage = ({user, total}) => {
     const router = useRouter()    
     const contentType = 'application/json'
-
+    const [imageSet, setImageSet] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+    const [imageForm, setImageForm] = useState({      
+           
+    })
+    
+    useEffect(() => {
+      setIsLoading(true);
+      const id = router.query.id
+      //get image set here
+    
+      const getImageSet = async (id) => {
+        console.log(id)
+          //get image set from DB
+          const res = await fetch(`/api/imageSets/${id}/${currentPage-1}`, {
+            method: 'GET',
+            headers: {
+              Accept: contentType,
+              'Content-Type': contentType,
+            },
+          })
+          const data = await res.json();
+          setImageSet(data.data);
+          setImageForm({name: data.data.name,       
+            images: data.data.images } )            
+        }
+        getImageSet(id);
+
+      setIsLoading(false);
+    }, [currentPage]);
+
+    
     const pageLimit = 20;
     const [errors, setErrors] = useState({})
     const [message, setMessage] = useState('')
     const [isListView, setIsListView] = useState(true);
     const [isEditable, setIsEditable] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
   
-    const [imageForm, setImageForm] = useState({      
-        name: imageSet.name,       
-        images: imageSet.images      
-      })
+ 
     const [populateForm, setPopulateForm] = useState({     
       setType: 'other'      
     })
-    const [title, setTitle] = useState(imageSet.name)
 
-    const renderPageNumbers = () => {   
+    const renderPageNumbers = () => {  
+      if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 
         let div = [];
-        for (let i = 0; i < imageSet.images.length / pageLimit; i++) {        
+        for (let i = 0; i < total / pageLimit; i++) {        
             if (i === currentPage - 1) {
                 div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{i+1}</button>);
             } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{i+1}</button>);
@@ -77,18 +105,35 @@ const ImageSetPage = ({user, imageSet}) => {
       }
 
       const putDataImages = async (imageForm) => {
+
+        function replaceElementsWithNewImages(originalArray, i, newImages) {
+                 
+          // Replace elements starting from index `i`
+          for (let j = 0; j < newImages.length; j++) {
+            if (i + j < originalArray.length) {
+              originalArray[i + j] = newImages[j];
+            } else {
+              originalArray.push(newImages[j]);
+            }
+          }
         
+          return originalArray
+        }
+       
+       // replaceElementsWithNewImages
+          
        const { id } = router.query
+       console.log(imageForm.images) // these are correct so req.body must be correct
       
        try {
          
-         const res = await fetch(`/api/imageSets/${id}`, {
+         const res = await fetch(`/api/imageSets/${id}/${currentPage}`, {
            method: 'PUT',
            headers: {
              Accept: contentType,
              'Content-Type': contentType,
            },
-           body: JSON.stringify({...imageSet, name: imageForm.name, images: imageForm.images}),
+           body: JSON.stringify({name: imageForm.name, images: imageForm.images}),
          })
    
          // Throw error with status code in case Fetch API req failed
@@ -100,7 +145,8 @@ const ImageSetPage = ({user, imageSet}) => {
    
    //      mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
      //    refreshData(router);
-         console.log(imageSet);
+         console.log(imageSet); //this shows the correct images
+         console.log(data) //this shows the whole set but the first 20 are the imageSet
        } catch (error) {
          setMessage('Failed to update images')
        }
@@ -112,14 +158,14 @@ const ImageSetPage = ({user, imageSet}) => {
         const value = target.value
         const name = target.name
        
-        const updatedForm = { ...imageForm };
+        const updatedForm = { ...imageForm };        
         const isURL = name.includes("URL");
         let thisIndex;        
         if (isURL) {
-            thisIndex = name.slice(6);
+            thisIndex = name.slice(6) % pageLimit; 
             updatedForm.images[thisIndex].URL = value;
         } else {
-            thisIndex = name.slice(8);
+            thisIndex = name.slice(8) % pageLimit;
             updatedForm.images[thisIndex].imageItem = value;     
         }
         setImageForm(updatedForm);
@@ -188,10 +234,14 @@ const ImageSetPage = ({user, imageSet}) => {
      }
    }
 
+  
+console.log(total)
+
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
+    
     <div className="flex flex-row">
        
 
@@ -222,7 +272,8 @@ const ImageSetPage = ({user, imageSet}) => {
 
     {isListView &&
     <div className="mt-3 w-full grid lg:grid-cols-3 gap-y-10">
-    {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => {
+    {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => { */}
+      {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
             return <>
             <div className="col-span-1">{img.name}</div>
@@ -244,7 +295,8 @@ const ImageSetPage = ({user, imageSet}) => {
     
         <div className="flex flex-wrap">
     {/* Create a card for each imageItem */}
-    {imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img) => (
+   {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img) => ( */}
+    {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img) => (
       <>
 
       <div class="group [perspective:1000px]">
@@ -273,7 +325,7 @@ const ImageSetPage = ({user, imageSet}) => {
     
     }
 
-    {imageSet.images.length === 0 && 
+    {!isLoading && imageSet && imageSet.images && imageSet.images.length === 0 && 
     <>
     <p>You have not added any images to this set. <br />
     Add some images manually, or select the set type and then click Populate Set to add the images automatically (e.g. 000-999 for a 3-digit set). </p>
@@ -324,17 +376,18 @@ export const getServerSideProps = withPageAuthRequired({
     const user = auth0User.user;
     await dbConnect()
   
-    const imageSet = await ImageSet.findById(params.id).lean()
-    imageSet._id = imageSet._id.toString()
-    const serializedImageSet = JSON.parse(JSON.stringify(imageSet))
+    //get total number of images (should be an easier way with $size or $count and/or $aggregate but can't seem to do it)
+    const total = await ImageSet.findOne({_id: params.id}, {images: {_id: 1}});   
+    const serializedTotal = JSON.parse(JSON.stringify(total)).images.length
 
-    // const result = await ImageSet.find({})
-    // const imageSets = result.map((doc) => {   
-    // const imageSet = JSON.parse(JSON.stringify(doc));
+
+    //previously got imageSet here but want to paginate
+    // const imageSet = await ImageSet.findOne({_id: params.id}, {images: {$slice: [0, 19]}}).lean()  //great but doesn't return total number of images
     // imageSet._id = imageSet._id.toString()
-    // return imageSet
-    // })
-  
-    return { props: { user, imageSet: serializedImageSet } }
+    // const serializedImageSet = JSON.parse(JSON.stringify(imageSet)) 
+    
+    // return { props: { user, imageSet: serializedImageSet, total:serializedTotal } }
+
+    return { props: { user, total:serializedTotal }}
   }
 })
