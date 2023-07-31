@@ -15,8 +15,6 @@ import { UserProvider } from '@auth0/nextjs-auth0/client';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGear } from '@fortawesome/free-solid-svg-icons'
-import Nav from '@/components/Nav';
-import Main from '@/components/Main';
 import Test from '@/components/Test'
 
 const inter = Inter({ subsets: ['latin'] })

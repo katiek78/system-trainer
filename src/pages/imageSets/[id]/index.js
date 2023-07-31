@@ -249,7 +249,7 @@ const ImageSetPage = ({user, imageSet}) => {
 
       <div class="group [perspective:1000px]">
     <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-      <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white">
+      <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
       <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.name}</h1>         
         </div> 
