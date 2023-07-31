@@ -78,7 +78,7 @@ export const getServerSideProps = withPageAuthRequired({
 //     return journey
 //   })
 
-  const result2 = await ImageSet.find({})
+  const result2 = await ImageSet.find({}, { name: 1})
   const imageSets = result2.map((doc) => {   
     const imageSet = JSON.parse(JSON.stringify(doc));
     imageSet._id = imageSet._id.toString()
