@@ -23,16 +23,27 @@ export default async function handler(req, res) {
       break
 
     case 'PUT' /* Edit a model by its ID */:
-        console.log("putting")
+        console.log("updating one item")
+        console.log(req.body)
       try {
-        const imageSet = await ImageSet.findByIdAndUpdate(id, req.body, {
-          new: true,
-          runValidators: true,
-        })
-        if (!imageSet) {
+        // const imageSet = await ImageSet.findByIdAndUpdate(id, req.body, {
+        //   new: true,
+        //   runValidators: true,
+        // })
+
+        const updateOperation = {
+          updateOne: {
+            filter: { _id: id, "images._id": req.body._id },
+            update: { $set: { "images.$": req.body } }
+          }
+        };
+
+        const changes = await ImageSet.bulkWrite([updateOperation])
+
+        if (!changes) {
           return res.status(400).json({ success: false })
         }
-        res.status(200).json({ success: true, data: imageSet })
+        res.status(200).json({ success: true, data: changes })
       } catch (error) {
         res.status(400).json({ success: false })
       }

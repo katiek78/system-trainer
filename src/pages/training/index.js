@@ -166,24 +166,14 @@ const TrainingCenter = ({user, imageSet}) => {
   }
 
   const addToRecentAttempts = async (isCorrect) => {
-    const thisImage = randImage;
+    
     //create the property if it doesn't exist
-    if (!thisImage.recentAttempts) thisImage.recentAttempts = [];
+    if (!randImage.recentAttempts) randImage.recentAttempts = [];
 
     //cap at 7 attempts
-    if (thisImage.recentAttempts.length === 7) thisImage.recentAttempts.shift();
+    if (randImage.recentAttempts.length === 7) randImage.recentAttempts.shift();
 
-    thisImage.recentAttempts.push(isCorrect ? 1 : 0);
-
-
-    const updatedImages = imageSet.images.map((el) =>
-    el._id === thisImage._id ? { ...el, recentAttempts: thisImage.recentAttempts } : el
-    )
-
-    //console.log(updatedImages);
-
-    //get updated imageSet
-    const updatedImageSet = {...imageSet, images: updatedImages};
+    randImage.recentAttempts.push(isCorrect ? 1 : 0);
 
     try {
 
@@ -193,7 +183,7 @@ const TrainingCenter = ({user, imageSet}) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify(updatedImageSet),
+        body: JSON.stringify(randImage),
       })
 
       // Throw error with status code in case Fetch API req failed
@@ -202,9 +192,7 @@ const TrainingCenter = ({user, imageSet}) => {
       }
       const { data } = await res.json()
 
-     // mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation
-      //setImageSet(data);
-      imageSet.images = updatedImages;
+      //imageSet.images = updatedImages;
 
       const level = document.getElementById("selSet").value;   
       setImageGroup(level)
@@ -225,28 +213,28 @@ const TrainingCenter = ({user, imageSet}) => {
     e.preventDefault();
    // not toggled yet
     setIsEditable(false);
-    const thisImage = randImage;
+   // const thisImage = randImage;
     let updatedImages = [];
 
     if (field === 'imageItem') {
     randImage.imageItem = item;
     //not toggled yet
 
-    updatedImages = imageSet.images.map((el) =>
-    el._id === thisImage._id ? { ...el, imageItem:item } : el
-    )
+    // updatedImages = imageSet.images.map((el) =>
+    // el._id === thisImage._id ? { ...el, imageItem:item } : el
+    // )
 
     } else {
       randImage.URL = item
-      updatedImages = imageSet.images.map((el) =>
-    el._id === thisImage._id ? { ...el, URL:item } : el
-    )
+    //   updatedImages = imageSet.images.map((el) =>
+    // el._id === thisImage._id ? { ...el, URL:item } : el
+    // )
     }
 
-    console.log(updatedImages); //this is right
+    //console.log(updatedImages); //this is right
 
     //get updated imageSet
-    const updatedImageSet = {...imageSet, images: updatedImages};
+   // const updatedImageSet = {...imageSet, images: updatedImages};
 
     try {
 
@@ -256,7 +244,7 @@ const TrainingCenter = ({user, imageSet}) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify(updatedImageSet),
+        body: JSON.stringify(randImage),
       })
 
       // Throw error with status code in case Fetch API req failed
