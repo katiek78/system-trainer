@@ -61,12 +61,48 @@ const ImageSetPage = ({user, allNames}) => {
     const renderPageNumbers = () => {   
       if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 
         let div = [];
-        for (let i = 0; i < allNames.images.length / pageLimit; i++) { 
-            const firstInRange = allNames.images[i*pageLimit].name;
+        const BUTTON_MAX = 10; //how many buttons are shown before there should be a '...'
+        const totalButtons = Math.ceil(allNames.images.length / pageLimit);
+        const buttonsToBeShown = Math.min(BUTTON_MAX, totalButtons) //lower of maximum and total buttons
+        const isEven = BUTTON_MAX % 2 === 0
+        const numberToShowBeforeCurrentPage = isEven ? BUTTON_MAX / 2 + 1 : (BUTTON_MAX - 1)/2   //6 when we have 10 buttons max
+    
+        //const firstButton = (currentPage <= numberToShowBeforeCurrentPage) ? 0 : currentPage - numberToShowBeforeCurrentPage 
+        let firstButton;
+        if (currentPage <= numberToShowBeforeCurrentPage) {
+          firstButton = 0
+        } else if (currentPage > totalButtons - BUTTON_MAX + numberToShowBeforeCurrentPage) { // unless we are in last BUTTON_MAX-nts buttons because then there are none showing after
+          firstButton = totalButtons - BUTTON_MAX;
+        } else firstButton = currentPage - numberToShowBeforeCurrentPage
+        
+        const lastButton = Math.min(firstButton + buttonsToBeShown - 1, totalButtons - 1);
+       
+        const isThereMoreAtEnd = lastButton < totalButtons - 1;
+        const isThereMoreAtStart = firstButton > 0;
+
+        if (isThereMoreAtStart) {
+          let i = 0;
+          const firstInRange = allNames.images[i*pageLimit].name;
+          const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
+          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+          div.push(" ... ");
+        
+        }
+
+        for (let i = firstButton; i <= lastButton; i++) { 
+            const firstInRange = allNames.images[i*pageLimit]?.name;
             const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
             if (i === currentPage - 1) {
                 div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
             } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+        }
+
+        if (isThereMoreAtEnd) {
+          div.push(" ... ");
+          let i = totalButtons - 1;
+          const firstInRange = allNames.images[i*pageLimit].name;
+          const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
+          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
         }
         return div;
     };
