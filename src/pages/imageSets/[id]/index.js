@@ -12,7 +12,7 @@ import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 
-const ImageSetPage = ({user, total}) => {
+const ImageSetPage = ({user, allNames}) => {
     const router = useRouter()    
     const contentType = 'application/json'
     const [imageSet, setImageSet] = useState({});
@@ -59,13 +59,13 @@ const ImageSetPage = ({user, total}) => {
       setType: 'other'      
     })
 
-    const renderPageNumbers = () => {  
+    const renderPageNumbers = () => {        
       if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 
         let div = [];
-        for (let i = 0; i < total / pageLimit; i++) {        
+        for (let i = 0; i < allNames.images.length / pageLimit; i++) {        
             if (i === currentPage - 1) {
-                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{i+1}</button>);
-            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{i+1}</button>);
+                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{allNames.images[i*pageLimit].name + "-" + allNames.images[i*pageLimit + pageLimit - 1].name}</button>);
+            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{allNames.images[i*pageLimit].name + "-" + allNames.images[i*pageLimit + pageLimit - 1].name}</button>);
         }
         return div;
     };
@@ -235,7 +235,7 @@ const ImageSetPage = ({user, total}) => {
    }
 
   
-console.log(total)
+console.log(allNames)
 
     return(
  <>
@@ -376,9 +376,9 @@ export const getServerSideProps = withPageAuthRequired({
     const user = auth0User.user;
     await dbConnect()
   
-    //get total number of images (should be an easier way with $size or $count and/or $aggregate but can't seem to do it)
-    const total = await ImageSet.findOne({_id: params.id}, {images: {_id: 1}});   
-    const serializedTotal = JSON.parse(JSON.stringify(total)).images.length
+    //get all names
+    const allNames = await ImageSet.findOne({_id: params.id}, {images: {name: 1}});   
+    const serializedNames = JSON.parse(JSON.stringify(allNames))
 
 
     //previously got imageSet here but want to paginate
@@ -388,6 +388,6 @@ export const getServerSideProps = withPageAuthRequired({
     
     // return { props: { user, imageSet: serializedImageSet, total:serializedTotal } }
 
-    return { props: { user, total:serializedTotal }}
+    return { props: { user, allNames:serializedNames }}
   }
 })
