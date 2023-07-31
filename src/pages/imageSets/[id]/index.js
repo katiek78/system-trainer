@@ -26,8 +26,7 @@ const ImageSetPage = ({user, allNames}) => {
       const id = router.query.id
       //get image set here
     
-      const getImageSet = async (id) => {
-        console.log(id)
+      const getImageSet = async (id) => {        
           //get image set from DB
           const res = await fetch(`/api/imageSets/${id}/${currentPage-1}`, {
             method: 'GET',
@@ -59,13 +58,15 @@ const ImageSetPage = ({user, allNames}) => {
       setType: 'other'      
     })
 
-    const renderPageNumbers = () => {        
+    const renderPageNumbers = () => {   
       if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 
         let div = [];
-        for (let i = 0; i < allNames.images.length / pageLimit; i++) {        
+        for (let i = 0; i < allNames.images.length / pageLimit; i++) { 
+            const firstInRange = allNames.images[i*pageLimit].name;
+            const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
             if (i === currentPage - 1) {
-                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{allNames.images[i*pageLimit].name + "-" + allNames.images[i*pageLimit + pageLimit - 1].name}</button>);
-            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{allNames.images[i*pageLimit].name + "-" + allNames.images[i*pageLimit + pageLimit - 1].name}</button>);
+                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
         }
         return div;
     };
@@ -122,8 +123,7 @@ const ImageSetPage = ({user, allNames}) => {
        
        // replaceElementsWithNewImages
           
-       const { id } = router.query
-       console.log(imageForm.images) // these are correct so req.body must be correct
+       const { id } = router.query       
       
        try {
          
@@ -145,8 +145,6 @@ const ImageSetPage = ({user, allNames}) => {
    
    //      mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
      //    refreshData(router);
-         console.log(imageSet); //this shows the correct images
-         console.log(data) //this shows the whole set but the first 20 are the imageSet
        } catch (error) {
          setMessage('Failed to update images')
        }
@@ -233,9 +231,6 @@ const ImageSetPage = ({user, allNames}) => {
              }
      }
    }
-
-  
-console.log(allNames)
 
     return(
  <>
