@@ -104,6 +104,31 @@ const ImageSetPage = ({user, allNames}) => {
           const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
           div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
         }
+
+        let jump;
+        if (allNames.images.length > 1000) {
+          jump = 500
+        } else if (allNames.images.length > 100) {
+          jump = 100;
+        };
+
+        const options = allNames.images.map((item, index) => {
+          if (index % jump === 0) {
+            const entryNumber = index / pageLimit;
+            return (
+              <option key={entryNumber} value={entryNumber + 1}>
+                {item.name}
+              </option>
+            );
+          }
+          return null;
+        });
+
+        if (jump) div.push(<><span>  Jump to: </span>
+        <select id="entry" onChange={() => handlePageChange(document.getElementById("entry").options[document.getElementById("entry").selectedIndex].value)}>
+          {/* Add default option   <option value="">-- Select an option --</option> */}          
+          {options}
+        </select></>)
         return div;
     };
 
