@@ -1,3 +1,8 @@
+import { calculateOverrideValues } from "next/dist/server/font-utils";
+
+const suitValues = ['♥️', '♦️', '♣️', '♠️']
+const cardValues = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
 export const getPopulatedImageArray = (setType) => {
       //get the array that we want to populate the image set with
         let imageArray = [];
@@ -19,6 +24,24 @@ export const getPopulatedImageArray = (setType) => {
                     const fourDigitValue = i.toString().padStart(4, '0');
                     imageArray.push({ name: fourDigitValue, imageItem: '' });
                     }
+                break;
+            case '1c':
+                for (let i = 0; i < suitValues.length; i++) {
+                    for (let j = 0; j < cardValues.length; j++) {
+                        imageArray.push({name: cardValues[j] + suitValues[i], imageItem: ''});
+                    }    
+                }
+                break;
+            case '2c':
+                for (let i = 0; i < suitValues.length; i++) {
+                    for (let j = 0; j < cardValues.length; j++) {
+                        for (let k = 0; k < suitValues.length; k++) {
+                            for (let l = 0; l < cardValues.length; l++) {
+                                imageArray.push({name: cardValues[j] + suitValues[i] + cardValues[l] + suitValues[k], imageItem: ''});
+                            }
+                        }
+                    }    
+                }
                 break;
             case 'other':
             default:
