@@ -10,7 +10,8 @@ import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import QuickEditForm from "@/components/QuickEditForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark, faEdit, faImage } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faXmark, faEdit, faImage, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarOutline }  from "@fortawesome/free-regular-svg-icons";
 import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLevel";
 
 // import SiteUser from "@/models/SiteUser";
@@ -31,15 +32,18 @@ const TrainingCenter = ({user, imageSet}) => {
   const [filteredData, setFilteredData] = useState(imageSet.images);
   const [needNewCard, setNeedNewCard] = useState(false);
   const [field, setField] = useState('imageItem')
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [cardsAvailable, setCardsAvailable] = useState(false);
 // let filteredData = [];
 
   useEffect(() => {
     setIsLoading(true);
+    setCardsAvailable(false);
     const filterData = () => {
-
-      if (imageGroup === 'all') {
-        setFilteredData(imageSet.images);
-      } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup)));
+      let newSet = [...imageSet.images];
+      if (imageGroup !== 'all') newSet = newSet.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup));
+      if (starredOnly) newSet = newSet.filter(image => image.starred)
+      setFilteredData(newSet, starredOnly);
     }
 
     filterData();
@@ -49,9 +53,14 @@ const TrainingCenter = ({user, imageSet}) => {
     toggleRotate(null, true);
     setIsEditable(false);
     setMessage('');
-  } else setMessage('There are no cards of this type! Choose another.');
+    setCardsAvailable(true);
+  } else {
+    setMessage('There are no cards of this type! Choose another.');
+   // setCardsAvailable(false);
+  }
     setNeedNewCard(false);
     setIsLoading(false);
+    
   }, [needNewCard]);
 
   const toggleRotate = (e, toFront = false) => {
@@ -224,28 +233,15 @@ const TrainingCenter = ({user, imageSet}) => {
     e.preventDefault();
    // not toggled yet
     setIsEditable(false);
-   // const thisImage = randImage;
-    let updatedImages = [];
-
+   
     if (field === 'imageItem') {
     randImage.imageItem = item;
-    //not toggled yet
-
-    // updatedImages = imageSet.images.map((el) =>
-    // el._id === thisImage._id ? { ...el, imageItem:item } : el
-    // )
-
+    
     } else {
       randImage.URL = item
-    //   updatedImages = imageSet.images.map((el) =>
-    // el._id === thisImage._id ? { ...el, URL:item } : el
-    // )
+   
     }
 
-    //console.log(updatedImages); //this is right
-
-    //get updated imageSet
-   // const updatedImageSet = {...imageSet, images: updatedImages};
 
     try {
 
@@ -292,6 +288,40 @@ const TrainingCenter = ({user, imageSet}) => {
     console.log(filteredData) //appears to be fine
   }
 
+  const handleToggleStar = async (id) => {
+    let newImage = {...randImage};
+    if (newImage.starred === undefined) newImage.starred = false;
+    newImage.starred = !newImage.starred;
+    
+    setRandImage(newImage)
+    
+    try {
+
+      const res = await fetch(`/api/imageSets/${imageSetID}`, {
+        method: 'PUT',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+        body: JSON.stringify(randImage),
+      })
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status)
+      }
+      const { data } = await res.json()
+  
+    } catch (error) { 
+      setMessage('Failed to save image')
+    }
+   }
+
+const handleToggleStarredDisplay = () => {
+  setStarredOnly(!starredOnly);
+  setNeedNewCard(true)
+}
+
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -312,8 +342,10 @@ const TrainingCenter = ({user, imageSet}) => {
     </select>
     </div>
 
+    <div>Starred only? <input type="checkbox" value="false" onChange={handleToggleStarredDisplay}></input></div>
+
     {!isStarted && <button onClick={handleStartTraining} className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Start</button>}
-    {isStarted &&
+    {isStarted && cardsAvailable &&
     <div className="flex flex-col justify-center items-center">
 
       <div class="group [perspective:1000px]">
@@ -330,6 +362,7 @@ const TrainingCenter = ({user, imageSet}) => {
               <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
+            {randImage.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }
             {isEditable ? <></>: <><FontAwesomeIcon className='cursor-pointer absolute left-3/4 top-3/4 text-white h-6 lg:h-8' icon={faEdit} onClick={(e) => handleEdit(e, 'imageItem')} /><FontAwesomeIcon className='absolute cursor-pointer left-[87%] top-3/4 text-white h-6 lg:h-8' icon={faImage} onClick={(e) => handleEdit(e, 'URL')} /></>}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>

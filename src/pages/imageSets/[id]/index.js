@@ -6,7 +6,8 @@ import { useRouter } from 'next/router'
 import dbConnect from "@/lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faDumbbell, faEdit, faGrip, faList } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faDumbbell, faEdit, faGrip, faList, faStar} from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
@@ -293,6 +294,50 @@ const ImageSetPage = ({user, allNames}) => {
      }
    }
 
+   const handleToggleStar = async (id) => {
+    const thisImage = imageSet.images.filter(el => el._id === id)[0];    
+    if (!thisImage) return;
+    if (thisImage.starred === undefined) thisImage.starred = false;
+    thisImage.starred = !thisImage.starred;
+    
+    //change it in the form as well
+      function findIndexById(array, id) {
+        for (let i = 0; i < array.length; i++) {
+          if (array[i]._id === id) {
+            return i;
+          }
+        }
+        return -1;
+      }
+
+    const updatedForm = { ...imageForm };            
+    const thisIndex = findIndexById(updatedForm.images, id);
+    if (thisIndex) updatedForm.images[thisIndex].starred = thisImage.starred
+   
+    setImageForm(updatedForm);
+    
+    try {
+
+      const res = await fetch(`/api/imageSets/${imageSet._id}`, {
+        method: 'PUT',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+        body: JSON.stringify(thisImage),
+      })
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status)
+      }
+      const { data } = await res.json()
+  
+    } catch (error) { 
+      setMessage('Failed to save image')
+    }
+   }
+
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -327,7 +372,7 @@ const ImageSetPage = ({user, allNames}) => {
     <div>{renderPageNumbers()}</div>
 
     {isListView &&
-    <div className="mt-3 w-full grid lg:grid-cols-3 gap-y-10">
+    <div className="mt-3 w-full grid lg:grid-cols-4 gap-y-10">
     {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => { */}
       {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
@@ -335,11 +380,13 @@ const ImageSetPage = ({user, allNames}) => {
             <div className="col-span-1">{img.name}</div>
             <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
+            <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
             </>
         } else return <>
         <div className="col-span-1">{img.name}</div>
         <div className="col-span-1">{img.imageItem || '<none entered>'}</div>
         <div className="col-span-1">{img.URL && img.URL.length && <img className='h-8' src={img.URL}></img>}</div>
+        <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
         </>
       })
     }
@@ -366,7 +413,8 @@ const ImageSetPage = ({user, allNames}) => {
          <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <h1 class="text-3xl font-bold">{img.imageItem}</h1>   
           <h5 class="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>   
-          <ConfidenceLevel recentAttempts={img.recentAttempts} />        
+          <ConfidenceLevel recentAttempts={img.recentAttempts} />  
+          {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }      
         </div> 
         <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={img.URL && img.URL.length > 0 ? img.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
       </div>

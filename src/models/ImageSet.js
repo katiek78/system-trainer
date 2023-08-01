@@ -13,7 +13,8 @@ const ImageSetSchema = new mongoose.Schema({
           recentAttempts: {
             type: [Number],
             default: []
-          } 
+          },
+          starred: {type: Boolean}
         })
       ],
 })
