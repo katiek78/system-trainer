@@ -66,6 +66,17 @@ const TrainingCenter = ({user, imageSet}) => {
     }
   }
 
+  const getGroupTotals = () => {
+    let result = [];
+    for (let i = 0; i < confidenceLabels.length; i++) {
+      const group = imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(i))
+      result.push(group.length);
+    }
+    return result;
+  }
+
+  const groupTotals = getGroupTotals();
+
   // const getImageSet = async (id) => {
   //   //get image set from DB
   //   const res = await fetch(`/api/imageSets/${id}`, {
@@ -293,11 +304,11 @@ const TrainingCenter = ({user, imageSet}) => {
     <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
 
     <div>
-    <p>Which words do you want to train?</p>
+    <p>Which images do you want to train?</p>
 
     <select id="selSet" className="w-full rounded-md" onChange={handleChangeSelect}>
       <option value="all">All 🌍</option>
-      {confidenceLabels.map((label, i) => <option value={i}>{label}</option>)}      
+      {confidenceLabels.map((label, i) => <option value={i}>{label} ({groupTotals && groupTotals[i]})</option>)}      
     </select>
     </div>
 
