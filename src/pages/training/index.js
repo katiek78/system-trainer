@@ -37,6 +37,7 @@ const TrainingCenter = ({user, imageSet}) => {
 // let filteredData = [];
 
   useEffect(() => {
+    if (isLoading) return;
     setIsLoading(true);
     setCardsAvailable(false);
     const filterData = () => {
@@ -290,10 +291,10 @@ const TrainingCenter = ({user, imageSet}) => {
 
   const handleToggleStar = async (id) => {
     let newImage = {...randImage};
+    
     if (newImage.starred === undefined) newImage.starred = false;
     newImage.starred = !newImage.starred;
-    
-    setRandImage(newImage)
+    setRandImage(newImage);
     
     try {
 
@@ -303,7 +304,7 @@ const TrainingCenter = ({user, imageSet}) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify(randImage),
+        body: JSON.stringify(newImage),
       })
 
       // Throw error with status code in case Fetch API req failed
@@ -311,9 +312,10 @@ const TrainingCenter = ({user, imageSet}) => {
         throw new Error(res.status)
       }
       const { data } = await res.json()
+      
   
     } catch (error) { 
-      setMessage('Failed to save image')
+      setMessage('Failed to toggle star')
     }
    }
 
