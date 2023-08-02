@@ -1,7 +1,4 @@
-import { calculateOverrideValues } from "next/dist/server/font-utils";
-
-const suitValues = ['♥️', '♦️', '♣️', '♠️']
-const cardValues = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+import { cardValues, suitValues } from "./cardConstants";
 
 export const getPopulatedImageArray = (setType) => {
       //get the array that we want to populate the image set with

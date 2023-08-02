@@ -12,7 +12,6 @@ import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
-import { displayRedHD } from "@/utilities/displayRedHD";
 import RedHeartsAndDiamonds from "@/components/RedHD";
 
 const ImageSetPage = ({user, allNames}) => {
@@ -374,24 +373,27 @@ const ImageSetPage = ({user, allNames}) => {
     <div>{renderPageNumbers()}</div>
 
     {isListView &&
-    <div className="mt-6 w-full grid lg:grid-cols-4 gap-y-10">
+    <div className="mt-6 w-full grid lg:grid-cols-7 gap-y-10">
     {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => { */}
     <div className="col-span-1 font-bold">Item</div>
-            <div className="col-span-1 font-bold">Image description</div>
-            <div className="col-span-1 font-bold">Picture URL</div>
+    <div className="col-span-1 font-bold">Phonetics</div>
+            <div className="col-span-1 lg:col-span-2 font-bold">Image description</div>            
+            <div className="col-span-1 lg:col-span-2 font-bold">Picture URL</div>
             <div className="col-span-1 font-bold"> </div>
       {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
             return <>
-            <div className="col-span-1"> <RedHeartsAndDiamonds text={img.name} /></div>
-            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
-            <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
+            <div className="col-span-1 font-bold text-xl"> <RedHeartsAndDiamonds text={img.name} /></div>
+            <div className="col-span-1"> <RedHeartsAndDiamonds text={img.phonetics} /></div>
+            <div className="col-span-1 lg:col-span-2 "><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
+            <div className="col-span-1 lg:col-span-2 "><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
             </>
         } else return <>
-        <div className="col-span-1"><RedHeartsAndDiamonds text={img.name} /></div>
-        <div className="col-span-1">{img.imageItem || '<none entered>'}</div>
-        <div className="col-span-1">{img.URL && img.URL.length && <img className='h-8' src={img.URL}></img>}</div>
+        <div className="col-span-1 font-bold text-xl"><RedHeartsAndDiamonds text={img.name} /></div>
+        <div className="col-span-1"><RedHeartsAndDiamonds text={img.phonetics} /></div>
+        <div className="col-span-1 lg:col-span-2 ">{img.imageItem || '<none entered>'}</div>
+        <div className="col-span-1 lg:col-span-2 ">{img.URL && img.URL.length && <img className='h-8' src={img.URL}></img>}</div>
         <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
         </>
       })
@@ -417,7 +419,8 @@ const ImageSetPage = ({user, allNames}) => {
       </div>
       <div class="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">
          <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <h1 class="text-3xl font-bold">{img.imageItem}</h1>   
+          <h1 class="text-3xl font-bold">{img.imageItem}</h1>
+          <h5 class="absolute top-24 text-md">{img.phonetics}</h5>   
           <h5 class="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>   
           <ConfidenceLevel recentAttempts={img.recentAttempts} />  
           {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }      

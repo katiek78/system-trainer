@@ -11,8 +11,7 @@ import { useRouter } from "next/router";
 
 const ImageSetsPage = ({user, imageSets}) => {
   //let user = useUser(); //should we be using this instead?
-
-    const [errors, setErrors] = useState({})
+    
     const [message, setMessage] = useState('')
     const router = useRouter();
     

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { mutate } from 'swr'
 import { getPopulatedImageArray } from '@/lib/getPopulatedImageArray'
+import { getPopulatedPhoneticsArray } from '@/lib/getPopulatedPhoneticsArray'
 
 const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
   const router = useRouter()
@@ -11,8 +12,8 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
 
   const [form, setForm] = useState({
     name: imageSetForm.name,
-    setType: imageSetForm.setType
-    // meaning: wordForm.meaning,
+    setType: imageSetForm.setType,
+    phoneticsType: imageSetForm.phoneticsType,
     // wordType: wordForm.wordType
   })
 
@@ -50,8 +51,10 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
     //populate set
     const imageArray = getPopulatedImageArray(form.setType);
     form.images = imageArray;
+    const phoneticsArray = getPopulatedPhoneticsArray(form.setType, form.phoneticsType);
+    form.images = form.images.map((el, i) => ({...el, phonetics: phoneticsArray[i]}));
     
-    const { setType, ...formDataToStore } = form;
+    const { setType, phoneticsType, ...formDataToStore } = form;
 
 
     try {
@@ -144,10 +147,28 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
         <option value="other">other</option>
         </select>
 <br />
+{form.setType !== "other" &&  
+<>
+<label htmlFor="phoneticsType">Select phonetics if applicable:</label>
+        <select         
+          name="phoneticsType"
+          value={form.phoneticsType || 'none'}
+          onChange={handleChange}
+          className="ml-3"
+          required
+                >
+        <option value="none">None</option>
+        {form.setType !== "1c" && <option value="maj">Major System</option> }               
+        {(form.setType === "2c" || form.setType === "3d") &&  <option value="ben">Ben System</option> }              
+        {(form.setType === "2c" || form.setType === "4d") &&  <option value="kben">Katie Ben System</option> }
+        </select>
+        </>
+      }
+        <br />
         <button type="submit" className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Submit
         </button>
-    
+
       </form>
       <p>{message}</p>
       <div>
