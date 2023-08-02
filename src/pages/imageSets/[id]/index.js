@@ -372,8 +372,12 @@ const ImageSetPage = ({user, allNames}) => {
     <div>{renderPageNumbers()}</div>
 
     {isListView &&
-    <div className="mt-3 w-full grid lg:grid-cols-4 gap-y-10">
+    <div className="mt-6 w-full grid lg:grid-cols-4 gap-y-10">
     {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => { */}
+    <div className="col-span-1 font-bold">Item</div>
+            <div className="col-span-1 font-bold">Image description</div>
+            <div className="col-span-1 font-bold">Picture URL</div>
+            <div className="col-span-1 font-bold"> </div>
       {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
             return <>

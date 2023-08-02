@@ -139,9 +139,9 @@ const TrainingCenter = ({user, imageSet}) => {
 
   const getImage = () => {
  //get random image from set
+ 
  const randIndex = Math.floor(Math.random() * filteredData.length);
  setRandImage(filteredData[randIndex])
- console.log(getConfidenceLevel(randImage.recentAttempts))
   }
 
   // const moveNextImage = () => {
@@ -290,11 +290,14 @@ const TrainingCenter = ({user, imageSet}) => {
   }
 
   const handleToggleStar = async (id) => {
-    let newImage = {...randImage};
+    // let newImage = {...randImage};
     
-    if (newImage.starred === undefined) newImage.starred = false;
-    newImage.starred = !newImage.starred;
-    setRandImage(newImage);
+    // if (newImage.starred === undefined) newImage.starred = false;
+    // newImage.starred = !newImage.starred;
+    // setRandImage(newImage);
+
+    if (randImage.starred === undefined) randImage.starred = false;
+    randImage.starred = !randImage.starred
     
     try {
 
@@ -313,7 +316,9 @@ const TrainingCenter = ({user, imageSet}) => {
       }
       const { data } = await res.json()
       
-  
+      const level = document.getElementById("selSet").value;   
+      setImageGroup(level);
+
     } catch (error) { 
       setMessage('Failed to toggle star')
     }
