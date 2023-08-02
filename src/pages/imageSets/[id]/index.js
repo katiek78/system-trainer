@@ -12,6 +12,8 @@ import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
+import { displayRedHD } from "@/utilities/displayRedHD";
+import RedHeartsAndDiamonds from "@/components/RedHD";
 
 const ImageSetPage = ({user, allNames}) => {
     const router = useRouter()    
@@ -85,7 +87,7 @@ const ImageSetPage = ({user, allNames}) => {
           let i = 0;
           const firstInRange = allNames.images[i*pageLimit].name;
           const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
-          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}><RedHeartsAndDiamonds text={firstInRange} />-<RedHeartsAndDiamonds text={lastInRange} /></button>);
           div.push(" ... ");
         
         }
@@ -94,8 +96,8 @@ const ImageSetPage = ({user, allNames}) => {
             const firstInRange = allNames.images[i*pageLimit]?.name;
             const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
             if (i === currentPage - 1) {
-                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
-            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+                div.push(<button className='btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}><RedHeartsAndDiamonds text={firstInRange} />-<RedHeartsAndDiamonds text={lastInRange} /></button>);
+            } else div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}><RedHeartsAndDiamonds text={firstInRange} />-<RedHeartsAndDiamonds text={lastInRange} /></button>);
         }
 
         if (isThereMoreAtEnd) {
@@ -103,7 +105,7 @@ const ImageSetPage = ({user, allNames}) => {
           let i = totalButtons - 1;
           const firstInRange = allNames.images[i*pageLimit].name;
           const lastInRange = i*pageLimit + pageLimit - 1 < allNames.images.length ? allNames.images[i*pageLimit + pageLimit - 1]?.name : allNames.images[allNames.images.length - 1].name;
-          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}>{firstInRange + "-" + lastInRange}</button>);
+          div.push(<button className='btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline' onClick={() => handlePageChange(i+1)} key={i+1}><RedHeartsAndDiamonds text={firstInRange} />-<RedHeartsAndDiamonds text={lastInRange} /></button>);
         }
 
         let jump;
@@ -381,13 +383,13 @@ const ImageSetPage = ({user, allNames}) => {
       {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
             return <>
-            <div className="col-span-1">{img.name}</div>
+            <div className="col-span-1"> <RedHeartsAndDiamonds text={img.name} /></div>
             <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1"><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
             </>
         } else return <>
-        <div className="col-span-1">{img.name}</div>
+        <div className="col-span-1"><RedHeartsAndDiamonds text={img.name} /></div>
         <div className="col-span-1">{img.imageItem || '<none entered>'}</div>
         <div className="col-span-1">{img.URL && img.URL.length && <img className='h-8' src={img.URL}></img>}</div>
         <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
@@ -410,7 +412,7 @@ const ImageSetPage = ({user, allNames}) => {
     <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
       <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
       <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <h1 class="text-3xl font-bold">{img.name}</h1>         
+          <h1 class="text-3xl font-bold"><RedHeartsAndDiamonds text={img.name} /></h1>         
         </div> 
       </div>
       <div class="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">

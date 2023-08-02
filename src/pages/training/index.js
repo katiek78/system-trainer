@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark, faEdit, faImage, faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline }  from "@fortawesome/free-regular-svg-icons";
 import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLevel";
+import RedHeartsAndDiamonds from "@/components/RedHD";
 
 // import SiteUser from "@/models/SiteUser";
 
@@ -359,7 +360,7 @@ const handleToggleStarredDisplay = () => {
         <div class="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl"> 
           <div id="card-front" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
           <div class="flex-col rounded-xl px-12 bg-white text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
-              <h1 class="text-3xl font-bold">{randImage.name}</h1>
+              <h1 class="text-3xl font-bold"><RedHeartsAndDiamonds text={randImage.name} /></h1>
             </div>
           </div>
           <div id="card-back" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
