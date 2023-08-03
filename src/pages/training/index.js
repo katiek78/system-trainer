@@ -291,15 +291,12 @@ const TrainingCenter = ({user, imageSet}) => {
   }
 
   const handleToggleStar = async (id) => {
-    // let newImage = {...randImage};
+    let newImage = {...randImage};
     
-    // if (newImage.starred === undefined) newImage.starred = false;
-    // newImage.starred = !newImage.starred;
-    // setRandImage(newImage);
+    if (newImage.starred === undefined) newImage.starred = false;
+    newImage.starred = !newImage.starred;
+    setRandImage(newImage);
 
-    if (randImage.starred === undefined) randImage.starred = false;
-    randImage.starred = !randImage.starred
-    
     try {
 
       const res = await fetch(`/api/imageSets/${imageSetID}`, {
@@ -316,9 +313,6 @@ const TrainingCenter = ({user, imageSet}) => {
         throw new Error(res.status)
       }
       const { data } = await res.json()
-      
-      const level = document.getElementById("selSet").value;   
-      setImageGroup(level);
 
     } catch (error) { 
       setMessage('Failed to toggle star')
