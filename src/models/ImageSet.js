@@ -14,7 +14,8 @@ const ImageSetSchema = new mongoose.Schema({
             type: [Number],
             default: []
           },
-          starred: {type: Boolean}
+          starred: {type: Boolean},
+          setType: {type: String}
         })
       ],
 })

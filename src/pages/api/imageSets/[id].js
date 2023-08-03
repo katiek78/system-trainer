@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       break
 
     case 'PUT' /* Edit a model by its ID */:
-        console.log("updating one item")
+        console.log("updating one image")
         console.log(req.body)
       try {
         // const imageSet = await ImageSet.findByIdAndUpdate(id, req.body, {

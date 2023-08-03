@@ -10,6 +10,7 @@ import { faCheck, faDumbbell, faEdit, faGrip, faList, faStar} from "@fortawesome
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
+import { getPopulatedPhoneticsArray } from "@/lib/getPopulatedPhoneticsArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
@@ -19,9 +20,15 @@ const ImageSetPage = ({user, allNames}) => {
     const contentType = 'application/json'
     const [imageSet, setImageSet] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [imageForm, setImageForm] = useState({      
-           
-    })
+    const [imageForm, setImageForm] = useState({})
+    const [phoneticsType, setPhoneticsType] = useState(''); 
+    const [message, setMessage] = useState('')
+    const [isListView, setIsListView] = useState(true);
+    const [isEditable, setIsEditable] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isShowingPhoneticsDiv, setIsShowingPhoneticsDiv] = useState(false);
+    
+    const pageLimit = 20;
     
     useEffect(() => {
       setIsLoading(true);
@@ -39,8 +46,12 @@ const ImageSetPage = ({user, allNames}) => {
           })
           const data = await res.json();
           setImageSet(data.data);
-          setImageForm({name: data.data.name,       
-            images: data.data.images } )            
+          let setType = data.data.setType;
+          if (!setType || setType === "") setType = determineSetType();
+          console.log(setType)
+          setImageForm({name: data.data.name, setType: setType,      
+            images: data.data.images } )
+         
         }
         getImageSet(id);
 
@@ -48,17 +59,21 @@ const ImageSetPage = ({user, allNames}) => {
     }, [currentPage]);
 
     
-    const pageLimit = 20;
-    const [errors, setErrors] = useState({})
-    const [message, setMessage] = useState('')
-    const [isListView, setIsListView] = useState(true);
-    const [isEditable, setIsEditable] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-  
+    
  
     const [populateForm, setPopulateForm] = useState({     
       setType: 'other'      
     })
+
+    const determineSetType = () => {
+      console.log(allNames.images.length)
+      if (allNames.images.length === 100) return '2d';
+      if (allNames.images.length === 1000) return '3d';
+      if (allNames.images.length === 10000) return '4d';
+      if (allNames.images.length === 52) return '1c';
+      if (allNames.images.length === 2704) return '2c';
+      return 'other'
+    }
 
     const renderPageNumbers = () => {   
       if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 
@@ -339,11 +354,83 @@ const ImageSetPage = ({user, allNames}) => {
     }
    }
 
+const handlePhoneticsChange = (e) => {
+  const target = e.target
+  const value = target.value
+  setPhoneticsType(value);
+
+}
+
+const handleShowPhoneticsDiv = () => {
+  setIsShowingPhoneticsDiv(true);
+}
+
+const handleSubmitPhonetics = async (e) => {    
+  e.preventDefault();
+  const phoneticsArray = getPopulatedPhoneticsArray(imageForm.setType, phoneticsType);
+
+  try {
+    const res = await fetch(`/api/imageSets/${imageSet._id}/phonetics`, {
+      method: 'PUT',
+      headers: {
+        Accept: contentType,
+        'Content-Type': contentType,
+      },
+      body: JSON.stringify(phoneticsArray),
+    })
+
+    // Throw error with status code in case Fetch API req failed
+    if (!res.ok) {
+      throw new Error(res.status)
+    }
+
+    const updatedImageSet = { ...imageSet };
+    const updatedImages = updatedImageSet.images.map((image, index) => ({
+      ...image,
+      phonetics: phoneticsArray[index],
+    }));
+    updatedImageSet.images = updatedImages;
+    setImageSet(updatedImageSet);
+    
+  } catch (error) {
+    setMessage('Failed to update image set')
+  }
+}
+
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
+    <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>
     
+    {isShowingPhoneticsDiv &&
+    <div id="changePhoneticsDiv">
+    <label htmlFor="phoneticsType">Select phonetics you wish to use:</label>
+        <select         
+          name="phoneticsType"
+          value={phoneticsType || 'none'}
+          onChange={handlePhoneticsChange}
+          className="ml-3"
+          required
+                >
+        <option value="none">None</option>
+        {imageForm.setType !== "1c" && <option value="maj">Major System</option> }               
+        {(imageForm.setType === "2c" || imageForm.setType === "3d") &&  <option value="ben">Ben System</option> }              
+        {(imageForm.setType === "2c" || imageForm.setType === "4d") &&  <option value="kben">Katie Ben System</option> }
+                
+        </select>
+          
+        <br />
+        <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Cancel
+        </button>
+        <button onClick={handleSubmitPhonetics} className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Submit
+        </button>
+
+    </div>
+    }
+
     <div className="flex flex-row">
        
 
