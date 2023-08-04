@@ -185,19 +185,19 @@ const ImageSetPage = ({user, allNames}) => {
 
       const putDataImages = async (imageForm) => {
 
-        function replaceElementsWithNewImages(originalArray, i, newImages) {
+        // function replaceElementsWithNewImages(originalArray, i, newImages) {
                  
-          // Replace elements starting from index `i`
-          for (let j = 0; j < newImages.length; j++) {
-            if (i + j < originalArray.length) {
-              originalArray[i + j] = newImages[j];
-            } else {
-              originalArray.push(newImages[j]);
-            }
-          }
+        //   // Replace elements starting from index `i`
+        //   for (let j = 0; j < newImages.length; j++) {
+        //     if (i + j < originalArray.length) {
+        //       originalArray[i + j] = newImages[j];
+        //     } else {
+        //       originalArray.push(newImages[j]);
+        //     }
+        //   }
         
-          return originalArray
-        }
+        //   return originalArray
+        // }
        
        // replaceElementsWithNewImages
           
@@ -365,6 +365,10 @@ const handleShowPhoneticsDiv = () => {
   setIsShowingPhoneticsDiv(true);
 }
 
+const handleCancelPhonetics = () => {
+  setIsShowingPhoneticsDiv(false);
+}
+
 const handleSubmitPhonetics = async (e) => {    
   e.preventDefault();
   const phoneticsArray = getPopulatedPhoneticsArray(imageForm.setType, phoneticsType);
@@ -401,10 +405,10 @@ const handleSubmitPhonetics = async (e) => {
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
-    <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>
+   {!isShowingPhoneticsDiv && <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>}
     
     {isShowingPhoneticsDiv &&
-    <div id="changePhoneticsDiv">
+    <div id="changePhoneticsDiv" className="px-2 py-2 my-5 rounded-xl bg-gray-200">
     <label htmlFor="phoneticsType">Select phonetics you wish to use:</label>
         <select         
           name="phoneticsType"
@@ -421,7 +425,7 @@ const handleSubmitPhonetics = async (e) => {
         </select>
           
         <br />
-        <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+        <button onClick={handleCancelPhonetics} className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Cancel
         </button>
         <button onClick={handleSubmitPhonetics} className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
