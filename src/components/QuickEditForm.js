@@ -25,8 +25,7 @@ const QuickEditForm = ({field, item, name, handleSubmitEdit}) => {
     
       const handleClickSubmit = (e, field, formItem) => {    
         e.preventDefault();
-        e.stopPropagation();  
-        console.log("submitting")    
+        e.stopPropagation();            
         handleSubmitEdit(e, field, formItem);   
       }
 

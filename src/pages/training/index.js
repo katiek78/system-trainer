@@ -23,8 +23,10 @@ const TrainingCenter = ({user, imageSet}) => {
 
   const [message, setMessage] = useState('');
   const imageSetID = router.query.imageSet;
+  //const [updatableImageSet, setUpdatableImageSet] = useState(imageSet);
   //const [imageSet, setImageSet] = useState({});
   const [randImage, setRandImage] = useState({});
+  const [isStarred, setIsStarred] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   // const [isFrontSide, setIsFrontSide] = useState(true);
   const [isStarted, setIsStarted] = useState(false);
@@ -41,14 +43,18 @@ const TrainingCenter = ({user, imageSet}) => {
     if (isLoading) return;
     setIsLoading(true);
     setCardsAvailable(false);
-    const filterData = () => {
-      let newSet = [...imageSet.images];
+    
+    //console.log(imageSet.images[1926]); //outdated 'starred' but correct name and recentAttempts?
+    //console.log(filteredData.filter(el => el.imageItem.includes("nightshade"))); //correct
+
+    //const filterData = () => {
+      let newSet = [...imageSet.images];      
       if (imageGroup !== 'all') newSet = newSet.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup));
       if (starredOnly) newSet = newSet.filter(image => image.starred)
       setFilteredData(newSet, starredOnly);
-    }
+   // }
 
-    filterData();
+  //  filterData();
   
    if (filteredData.length) {
     getImage();
@@ -78,6 +84,7 @@ const TrainingCenter = ({user, imageSet}) => {
   }
 
   const getGroupTotals = () => {
+   // console.log("getting group totals - this means page has refreshed") //this happens when you change select, when you click Start, when you click submit, when you press correct
     let result = [];
     for (let i = 0; i < confidenceLabels.length; i++) {
       const group = imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(i))
@@ -142,20 +149,10 @@ const TrainingCenter = ({user, imageSet}) => {
  //get random image from set
  
  const randIndex = Math.floor(Math.random() * filteredData.length);
- setRandImage(filteredData[randIndex])
+ setRandImage(filteredData[randIndex]);
+ setIsStarred(filteredData[randIndex].starred)
   }
 
-  // const moveNextImage = () => {
-  //   console.log("now in move next image")
-  //   if(filteredData.length === 0) {
-  //     alert("No cards of this type.")
-  //     return
-  //   }
-  //   getImage();
-  //   toggleRotate(null, true);
-  //   setIsEditable(false);
-   
-  // }
 
 //   function handleKeyDownEdit(k) {
 //     console.log("special key down thing called")
@@ -217,8 +214,7 @@ const TrainingCenter = ({user, imageSet}) => {
       //imageSet.images = updatedImages;
 
       const level = document.getElementById("selSet").value;   
-      setImageGroup(level)
-      //setNeedNewCard(true);
+      setImageGroup(level)     //this makes sure the categories are updated, I think this works by causing a re-render which causes updating of groupTotals
 
     } catch (error) {
       setMessage(error + 'Failed to save training data')
@@ -233,15 +229,20 @@ const TrainingCenter = ({user, imageSet}) => {
   const handleSubmitEdit = async (e, field, item) => {
     e.stopPropagation();
     e.preventDefault();
-   // not toggled yet
     setIsEditable(false);
    
     if (field === 'imageItem') {
     randImage.imageItem = item;
     
-    } else {
+    } else if (field === 'URL') {
       randImage.URL = item
    
+    } else {
+     
+      if (randImage.starred === undefined) randImage.starred = false;
+      randImage.starred = !randImage.starred
+      setIsStarred(randImage.starred)
+     
     }
 
 
@@ -261,13 +262,7 @@ const TrainingCenter = ({user, imageSet}) => {
         throw new Error(res.status)
       }
       const { data } = await res.json()
-      //toggled by now
-      //console.log(data); //this is correct
-      //mutate(`/api/imageSets/${imageSetID}`, data, false) // Update the local data without a revalidation
-      //It saves when use tick it but isn't displaying. With return it doesn't work at all (undefined)
-     //setImageSet(data);
-
-
+  
     } catch (error) { 
       setMessage('Failed to save training data')
     }
@@ -279,23 +274,17 @@ const TrainingCenter = ({user, imageSet}) => {
 
 
   const handleChangeSelect = () => {
-    const level = document.getElementById("selSet").value;   
-    //setImageGroup(level);
-    // console.log(level)
-    //  if (level === 'all') {
-    //    setFilteredData(imageSet.images);
-    //  } else setFilteredData(imageSet.images.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(level)));
+    const level = document.getElementById("selSet").value;      
     setImageGroup(level)
-    setNeedNewCard(true);
-    console.log(filteredData) //appears to be fine
+    setNeedNewCard(true);    
   }
 
   const handleToggleStar = async (id) => {
-    let newImage = {...randImage};
     
-    if (newImage.starred === undefined) newImage.starred = false;
-    newImage.starred = !newImage.starred;
-    setRandImage(newImage);
+    if (randImage.starred === undefined) randImage.starred = false;
+    randImage.starred = !randImage.starred;
+
+    setIsStarred(randImage.starred)
 
     try {
 
@@ -305,17 +294,17 @@ const TrainingCenter = ({user, imageSet}) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify(newImage),
+        body: JSON.stringify(randImage),
       })
 
       // Throw error with status code in case Fetch API req failed
       if (!res.ok) {
         throw new Error(res.status)
       }
-      const { data } = await res.json()
+      const { data } = await res.json()     
 
     } catch (error) { 
-      setMessage('Failed to toggle star')
+      setMessage('Failed to toggle star - ' + error)
     }
    }
 
@@ -366,6 +355,7 @@ const handleToggleStarredDisplay = () => {
 
             </div>
             {randImage.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }
+            {/* {isStarred ? <FontAwesomeIcon onClick={(e) => handleSubmitEdit(e, "starred", null)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={(e) => handleSubmitEdit(e, "starred", null)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> } */}
             {isEditable ? <></>: <><FontAwesomeIcon className='cursor-pointer absolute left-3/4 top-3/4 text-white h-6 lg:h-8' icon={faEdit} onClick={(e) => handleEdit(e, 'imageItem')} /><FontAwesomeIcon className='absolute cursor-pointer left-[87%] top-3/4 text-white h-6 lg:h-8' icon={faImage} onClick={(e) => handleEdit(e, 'URL')} /></>}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
