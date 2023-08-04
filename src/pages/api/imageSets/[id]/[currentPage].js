@@ -27,12 +27,19 @@ export default async function handler(req, res) {
     case 'PUT' /* Update only the images where we have an image with matching ID */:
       try {
 
-        const updateOperations = req.body.images.map(image => ({
+        const updateOperations = [ 
+          {
+          updateOne: {
+            filter: { _id: id },
+            update: { $set: { name: req.body.name } }
+          }
+        }, ...req.body.images.map(image => ({
           updateOne: {
             filter: { _id: id, "images._id": image._id },
             update: { $set: { "images.$": image } }
           }
-        }));
+        }))
+      ];
 
         const changes = await ImageSet.bulkWrite(updateOperations);
 
