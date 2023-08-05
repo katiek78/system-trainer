@@ -15,19 +15,26 @@ import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
 
-const ImageSetPage = ({user, allNames}) => {
+const ImageSetPage = ({user, allNames, imageSets}) => {
     const router = useRouter()    
     const contentType = 'application/json'
     const [imageSet, setImageSet] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [imageForm, setImageForm] = useState({})
     const [phoneticsType, setPhoneticsType] = useState(''); 
     const [message, setMessage] = useState('')
+    
     const [isListView, setIsListView] = useState(true);
     const [isEditable, setIsEditable] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isShowingPhoneticsDiv, setIsShowingPhoneticsDiv] = useState(false);
+    const [isShowingImportPhoneticsDiv, setIsShowingImportPhoneticsDiv] = useState(false);
     
+    const [imageForm, setImageForm] = useState({})
+    const [importImagesForm, setImportImagesForm] = useState({imageSetFrom: '', overwrite: false})
+    const [populateForm, setPopulateForm] = useState({     
+      setType: 'other'      
+    })
+
     const pageLimit = 20;
     
     useEffect(() => {
@@ -58,12 +65,7 @@ const ImageSetPage = ({user, allNames}) => {
       setIsLoading(false);
     }, [currentPage]);
 
-    
-    
  
-    const [populateForm, setPopulateForm] = useState({     
-      setType: 'other'      
-    })
 
     const determineSetType = () => {
       console.log(allNames.images.length)
@@ -154,6 +156,7 @@ const ImageSetPage = ({user, allNames}) => {
       }
 
     const putDataPopulate = async (populateForm) => {
+      
         const imageArray = getPopulatedImageArray(populateForm.setType);
         
         const { id } = router.query
@@ -358,8 +361,22 @@ const handlePhoneticsChange = (e) => {
   const target = e.target
   const value = target.value
   setPhoneticsType(value);
-
 }
+
+const handleImportPhoneticsChange = (e) => {
+  const target = e.target
+  const value = target.value
+  const name = target.name
+
+//setting form correctly
+
+setImportImagesForm({
+      ...importImagesForm,
+  [name]:name === 'overwrite' ? target.checked : value,
+   })
+  
+}
+
 
 const handleShowPhoneticsDiv = () => {
   setIsShowingPhoneticsDiv(true);
@@ -367,6 +384,14 @@ const handleShowPhoneticsDiv = () => {
 
 const handleCancelPhonetics = () => {
   setIsShowingPhoneticsDiv(false);
+}
+
+const handleShowImportPhoneticsDiv = () => {
+  setIsShowingImportPhoneticsDiv(true);
+}
+
+const handleCancelImportPhonetics = () => {
+  setIsShowingImportPhoneticsDiv(false);
 }
 
 const handleSubmitPhonetics = async (e) => {    
@@ -401,11 +426,113 @@ const handleSubmitPhonetics = async (e) => {
   }
 }
 
+const handleSubmitImportPhonetics = async (e) => {    
+  e.preventDefault();
+  
+  
+  //first, get imageSet being imported from
+    let imagesToImport;
+    const id = importImagesForm.imageSetFrom;
+
+    try {
+      const res = await fetch(`/api/imageSets/${id}`, {
+        method: 'GET',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+      })
+      const data = await res.json();
+      imagesToImport = data.data.images;
+
+    } catch (error) {
+      setMessage('Failed to import images. ' + error)
+    }
+              
+    const changedImages = [];
+
+    // allNames.images.forEach((ANimage) => {
+    //   const matchingImport = imagesToImport.find(
+    //     (importedImage) => importedImage.phonetics === ANimage.phonetics
+    //   );
+    
+    //   if (matchingImport) {        
+    //     if (importImagesForm.overwrite || ANimage.imageItem === '') {
+    //       ANimage.imageItem = matchingImport.imageItem;
+    //     }
+    //     changedImages.push(ANimage); 
+    //   }
+    // });
+
+    console.log(imageSet.images[0]); //this one is the correct ID
+    console.log(allNames.images[0]) //they have different IDs?!!!
+
+    allNames.images.forEach((ANimage) => {
+      const matchingImport = imagesToImport.find(
+        (importedImage) => importedImage.phonetics === ANimage.phonetics
+      );
+    
+      if (matchingImport) {        
+        if (importImagesForm.overwrite || ANimage.imageItem === '') {
+          ANimage.imageItem = matchingImport.imageItem;
+        }
+        changedImages.push(ANimage); 
+      }
+    });
+
+    console.log(changedImages) //this is all correct but obviously we are missing URLs so don't want to just overwrite images
+
+    try {
+         
+      // const res = await fetch(`/api/imageSets/${id}/${currentPage}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //     Accept: contentType,
+      //     'Content-Type': contentType,
+      //   },
+      //   body: JSON.stringify({name: imageSet.name, images: changedImages}),
+      // })
+
+      const res = await fetch(`/api/imageSets/${imageSet._id}/importImages`, {
+        method: 'PUT',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+        body: JSON.stringify({images: changedImages}),
+      })
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status)
+      }
+
+      const { data } = await res.json()
+
+
+      // const updatedImageSet = { ...imageSet };
+      // const updatedImages = updatedImageSet.images.map((image, index) => ({
+      //   ...image,
+      //   phonetics: phoneticsArray[index],
+      // }));
+      // updatedImageSet.images = updatedImages;
+      // setImageSet(updatedImageSet);
+      
+
+//      mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
+    refreshData(router);
+    } catch (error) {
+      setMessage('Failed to update images.' + error)
+    }
+  
+}
+
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
    {!isShowingPhoneticsDiv && <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>}
+   {!isShowingImportPhoneticsDiv && <button onClick={handleShowImportPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Import images</button>}
     
     {isShowingPhoneticsDiv &&
     <div id="changePhoneticsDiv" className="px-2 py-2 my-5 rounded-xl bg-gray-200">
@@ -434,6 +561,35 @@ const handleSubmitPhonetics = async (e) => {
 
     </div>
     }
+
+    {isShowingImportPhoneticsDiv &&
+    <div id="importImagesDiv" className="px-2 py-2 my-5 rounded-xl bg-gray-200">
+    <label htmlFor="imageSetFrom">Select image set to import from:</label>
+        <select         
+          name="imageSetFrom"
+          value={importImagesForm.imageSetFrom}
+          onChange={handleImportPhoneticsChange}
+          className="ml-3"
+          required
+                >
+                {/* show all image sets except this one */}
+                {imageSets.filter(el => el._id !== imageSet._id).map(el => <option value={el._id}>{el.name}</option>)} 
+        </select>
+
+    <label htmlFor="overwrite">Overwrite existing images?</label>
+    <input type="checkbox" name="overwrite" value={importImagesForm.overwrite}   onChange={handleImportPhoneticsChange}></input>
+          
+        <br />
+        <button onClick={handleCancelImportPhonetics} className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Cancel
+        </button>
+        <button onClick={handleSubmitImportPhonetics} className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+          Submit
+        </button>
+
+    </div>
+    }
+  
 
     <div className="flex flex-row">
        
@@ -473,13 +629,13 @@ const handleSubmitPhonetics = async (e) => {
             <div className="col-span-1 font-bold"> </div>
       {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img,i) => {
         if (isEditable) {
-            return <>
+            return <div key={img._id}>
             <div className="col-span-1 font-bold text-xl"> <RedHeartsAndDiamonds text={img.name} /></div>
             <div className="col-span-1"> <RedHeartsAndDiamonds text={img.phonetics} /></div>
             <div className="col-span-1 lg:col-span-2 "><input onChange={handleChangeImageForm} value={img.imageItem} id={'inpImage' + (i + (currentPage-1)*pageLimit)} name={'inpImage' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1 lg:col-span-2 "><input onChange={handleChangeImageForm} value={img.URL ? img.URL : ''} id={'inpURL' + (i + (currentPage-1)*pageLimit)} name={'inpURL' + (i + (currentPage-1) * pageLimit)}></input></div>
             <div className="col-span-1"> {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='text-black' icon={faStarOutline} /> }</div>
-            </>
+            </div >
         } else return <>
         <div className="col-span-1 font-bold text-xl"><RedHeartsAndDiamonds text={img.name} /></div>
         <div className="col-span-1"><RedHeartsAndDiamonds text={img.phonetics} /></div>
@@ -581,17 +737,18 @@ export const getServerSideProps = withPageAuthRequired({
     await dbConnect()
   
     //get all names
-    const allNames = await ImageSet.findOne({_id: params.id}, {images: {name: 1}});   
+    const allNames = await ImageSet.findOne({_id: params.id}, {images: {_id: 1, name: 1, phonetics: 1, imageItem: 1}});   
     const serializedNames = JSON.parse(JSON.stringify(allNames))
 
 
-    //previously got imageSet here but want to paginate
-    // const imageSet = await ImageSet.findOne({_id: params.id}, {images: {$slice: [0, 19]}}).lean()  //great but doesn't return total number of images
-    // imageSet._id = imageSet._id.toString()
-    // const serializedImageSet = JSON.parse(JSON.stringify(imageSet)) 
-    
-    // return { props: { user, imageSet: serializedImageSet, total:serializedTotal } }
+   //get all image sets name and ids
+    const result2 = await ImageSet.find({}, { name: 1})
+    const imageSets = result2.map((doc) => {   
+     const imageSet = JSON.parse(JSON.stringify(doc));
+     imageSet._id = imageSet._id.toString()
+     return imageSet
+   })
 
-    return { props: { user, allNames:serializedNames }}
+    return { props: { user, allNames:serializedNames, imageSets:imageSets }}
   }
 })
