@@ -37,30 +37,33 @@ const ImageSetPage = ({user, allNames, imageSets}) => {
     })
 
     const pageLimit = 20;
+
+    const getImageSet = async (id) => {
+
+      //get image set from DB
+      const res = await fetch(`/api/imageSets/${id}/${currentPage-1}`, {
+        method: 'GET',
+        headers: {
+          Accept: contentType,
+          'Content-Type': contentType,
+        },
+      })
+      const data = await res.json();
+      setImageSet(data.data);
+      let setType = data.data.setType;
+      if (!setType || setType === "") setType = determineSetType();
+      console.log(setType)
+      setImageForm({name: data.data.name, setType: setType,      
+        images: data.data.images } )
+     
+    }
     
     useEffect(() => {
       setIsLoading(true);
       const id = router.query.id
       //get image set here
     
-      const getImageSet = async (id) => {        
-          //get image set from DB
-          const res = await fetch(`/api/imageSets/${id}/${currentPage-1}`, {
-            method: 'GET',
-            headers: {
-              Accept: contentType,
-              'Content-Type': contentType,
-            },
-          })
-          const data = await res.json();
-          setImageSet(data.data);
-          let setType = data.data.setType;
-          if (!setType || setType === "") setType = determineSetType();
-          console.log(setType)
-          setImageForm({name: data.data.name, setType: setType,      
-            images: data.data.images } )
-         
-        }
+    
         getImageSet(id);
 
       setIsLoading(false);
@@ -432,63 +435,63 @@ const handleSubmitImportPhonetics = async (e) => {
   e.preventDefault();
   
   
-  //first, get imageSet being imported from and whole set we are importing to
-    let imagesToImport, wholeSet;
-    const fromID = importImagesForm.imageSetFrom;
+//   //first, get imageSet being imported from and whole set we are importing to
+//     let imagesToImport, wholeSet;
+     const fromID = importImagesForm.imageSetFrom;
 
-    try {
-      const res = await fetch(`/api/imageSets/${fromID}`, {
-        method: 'GET',
-        headers: {
-          Accept: contentType,
-          'Content-Type': contentType,
-        },
-      })
-      const data = await res.json();
-      imagesToImport = data.data.images;
+//     try {
+//       const res = await fetch(`/api/imageSets/${fromID}`, {
+//         method: 'GET',
+//         headers: {
+//           Accept: contentType,
+//           'Content-Type': contentType,
+//         },
+//       })
+//       const data = await res.json();
+//       imagesToImport = data.data.images;
 
-    } catch (error) {
-      setMessage('Failed to import images. ' + error)
-    }
+//     } catch (error) {
+//       setMessage('Failed to import images. ' + error)
+//     }
 
-    try {
-      const res = await fetch(`/api/imageSets/${imageSet._id}`, {
-        method: 'GET',
-        headers: {
-          Accept: contentType,
-          'Content-Type': contentType,
-        },
-      })
-      const data = await res.json();
-      wholeSet = data.data;
+//     try {
+//       const res = await fetch(`/api/imageSets/${imageSet._id}`, {
+//         method: 'GET',
+//         headers: {
+//           Accept: contentType,
+//           'Content-Type': contentType,
+//         },
+//       })
+//       const data = await res.json();
+//       wholeSet = data.data;
 
-    } catch (error) {
-      setMessage('Failed to import images. ' + error)
-    }
+//     } catch (error) {
+//       setMessage('Failed to import images. ' + error)
+//     }
               
-    const changedImages = [];
+//     const changedImages = [];
 
-    // console.log(imageSet.images[0]); //this one is the correct ID
-    // console.log(allNames.images[0]) //they have different IDs?!!!
-console.log(wholeSet.images);
-    wholeSet.images.forEach((ANimage) => {
-      const matchingImport = imagesToImport.find(
-        (importedImage) => importedImage.phonetics === ANimage.phonetics
-      );
+//     // console.log(imageSet.images[0]); //this one is the correct ID
+//     // console.log(allNames.images[0]) //they have different IDs?!!!
+// console.log(wholeSet.images);
+//     wholeSet.images.forEach((ANimage) => {
+//       const matchingImport = imagesToImport.find(
+//         (importedImage) => importedImage.phonetics === ANimage.phonetics
+//       );
     
-      if (matchingImport) {        
-        if (importImagesForm.overwrite || ANimage.imageItem === '') {
-       //   ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred, URL: matchingImport.URL};
-       ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred}; //took out URL because of data
-        }
-        let newItemWithoutURL = { ...ANimage };
-        delete newItemWithoutURL.URL;        
-        changedImages.push(newItemWithoutURL); 
-      }
-    });
+//       if (matchingImport) {        
+//         if (importImagesForm.overwrite || ANimage.imageItem === '') {
+//        //   ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred, URL: matchingImport.URL};
+//        ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred}; //took out URL because of data
+//         }
+//         let newItemWithoutURL = { ...ANimage };
+//         delete newItemWithoutURL.URL;        
+//         changedImages.push(newItemWithoutURL); 
+//       }
+//     });
 
-    console.log("here are the changes")
-    console.log(changedImages) //this is all correct but obviously we are missing URLs so don't want to just overwrite images
+//     console.log("here are the changes")
+//     console.log(changedImages) //this is all correct but obviously we are missing URLs so don't want to just overwrite images
     
     try {
          
@@ -507,7 +510,7 @@ console.log(wholeSet.images);
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify({images: changedImages}),
+        body: JSON.stringify({sourceSetID: fromID}),
       })
 
       // Throw error with status code in case Fetch API req failed
@@ -538,26 +541,25 @@ console.log(wholeSet.images);
       //do this
       //console.log("data:")
       //console.log(data);
-      console.log("image Set:")
-      console.log(imageSet);
-      const updatedImageSet = {...imageSet, images: imageSet.images.map((imageSetElement) => {
-        const correspondingImageData = changedImages.find(
-          (imageData) => imageData.phonetics === imageSetElement.phonetics
-        );
+     
+      // const updatedImageSet = {...imageSet, images: imageSet.images.map((imageSetElement) => {
+      //   const correspondingImageData = changedImages.find(
+      //     (imageData) => imageData.phonetics === imageSetElement.phonetics
+      //   );
       
-        if (correspondingImageData) {
-          // Update the desired properties from correspondingImageData
-          imageSetElement.imageItem = correspondingImageData.imageItem;
-          imageSetElement.recentAttempts = correspondingImageData.recentAttempts;
-          imageSetElement.starred = correspondingImageData.starred;
-        //  imageSetElement.URL = correspondingImageData.URL;
-        }
+      //   if (correspondingImageData) {
+      //     // Update the desired properties from correspondingImageData
+      //     imageSetElement.imageItem = correspondingImageData.imageItem;
+      //     imageSetElement.recentAttempts = correspondingImageData.recentAttempts;
+      //     imageSetElement.starred = correspondingImageData.starred;
+      //   //  imageSetElement.URL = correspondingImageData.URL;
+      //   }
       
-        return imageSetElement;
-      })};
+      //   return imageSetElement;
+      // })};
       
-      setImageSet(updatedImageSet);
-     setCurrentPage(currentPage)
+      // setImageSet(updatedImageSet);
+     getImageSet(imageSet._id);
      
 
   //mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation

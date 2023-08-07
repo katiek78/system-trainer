@@ -15,28 +15,33 @@ export default async function handler(req, res) {
     case 'PUT'  /* Update only the images where we have an image with matching ID */:
         try {
        
-            const updateOperations = req.body.images.map(image => ({
-                updateOne: {
-                filter: { _id: id, "images._id": image._id },
-                update: { $set: { "images.$.imageItem": image.imageItem, "images.$.recentAttempts":image.recentAttempts, "images.$.starred":image.starred }}
-                //update: { $set: { "images.$": image }}
-                }
-            }))
-            ;   
-        console.log(JSON.stringify(updateOperations[0]))
-            const changes = await ImageSet.bulkWrite  (updateOperations);
+        //     const updateOperations = req.body.images.map(image => ({
+        //         updateOne: {
+        //         filter: { _id: id, "images._id": image._id },
+        //         update: { $set: { "images.$.imageItem": image.imageItem, "images.$.recentAttempts":image.recentAttempts, "images.$.starred":image.starred }}
+        //         //update: { $set: { "images.$": image }}
+        //         }
+        //     }))
+        //     ;   
+        // console.log(JSON.stringify(updateOperations[0]))
+        //     const changes = await ImageSet.bulkWrite  (updateOperations);
     
-        // for (const image of req.body.images) {
-        //     const filter = { _id: id, "images._id": image._id };
-        //     const update = { $set: { "images.$.imageItem": image.imageItem } };
-      
-        //     const result = await ImageSet.updateOne(filter, update);
-        //     console.log("Updated:", result.modifiedCount);
-        //   }
+        const sourceSetID = req.body.sourceSetID;
+        console.log(sourceSetID)
+        const sourceImageSet = await ImageSet.findOne({ _id: sourceSetID });
+        const sourceImages = sourceImageSet.images;
     
-        //   if (!changes) {
-        //     return res.status(400).json({ success: false })
-        //   }
+        // Iterate through the source images and update matching images in the current ImageSet
+        for (const sourceImage of sourceImages) {
+          const sourcePhonetics = sourceImage.phonetics;
+    
+          await ImageSet.updateMany(
+            { _id: id, "images.phonetics": sourcePhonetics },
+            { $set: { "images.$[image].imageItem": sourceImage.imageItem, "images.$[image].URL": sourceImage.URL, "images.$[image].recentAttempts": sourceImage.recentAttempts, "images.$[image].starred": sourceImage.starred } },
+            { arrayFilters: [{ "image.phonetics": sourcePhonetics }] }
+          );
+        }
+        
           res.status(200).json({ success: true })
         } catch (error) {
             console.log(error)
