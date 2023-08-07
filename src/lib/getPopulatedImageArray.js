@@ -38,6 +38,17 @@ export const getPopulatedImageArray = (setType) => {
                             }
                         }
                     }    
+                }                
+                break;
+            case '2cv':
+                for (let i = 2; i < suitValues.length; i++) {
+                    for (let j = 0; j < cardValues.length; j++) {
+                        for (let k = 0; k < suitValues.length; k++) {
+                            for (let l = 0; l < cardValues.length; l++) {
+                                imageArray.push({name: cardValues[j] + suitValues[i] + cardValues[l] + suitValues[k], imageItem: ''});
+                            }
+                        }
+                    }    
                 }
                 break;
             case 'other':

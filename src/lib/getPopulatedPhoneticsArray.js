@@ -282,8 +282,21 @@ export const getPopulatedPhoneticsArray = (setType, phoneticsType) => {
                     }                        
                 }
                 if (setType === '2c') {
-                    //Katie's 2-card Ben System here
+                    //Katie's 2-card Ben System 2704 here
                     for (let i = 0; i < suitValues.length; i++) {
+                        for (let j = 0; j < cardValues.length; j++) {
+                            for (let k = 0; k < suitValues.length; k++) {
+                                for (let l = 0; l < cardValues.length; l++) {
+                                    const twoCardPhonetics = getKBenCardPhonetics(cardValues[j] + suitValues[i] + cardValues[l] + suitValues[k]);
+                                    phoneticsArray.push(twoCardPhonetics);  
+                                }
+                            }
+                        }
+                    }
+                }
+                if (setType === '2cv') {
+                    //Katie's 2-card Ben System 1352 here
+                    for (let i = 2; i < suitValues.length; i++) {
                         for (let j = 0; j < cardValues.length; j++) {
                             for (let k = 0; k < suitValues.length; k++) {
                                 for (let l = 0; l < cardValues.length; l++) {

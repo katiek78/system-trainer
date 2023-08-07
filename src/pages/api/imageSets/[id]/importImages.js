@@ -18,7 +18,8 @@ export default async function handler(req, res) {
             const updateOperations = req.body.images.map(image => ({
                 updateOne: {
                 filter: { _id: id, "images._id": image._id },
-                update: { $set: { "images.$.imageItem": image.imageItem }}
+                update: { $set: { "images.$.imageItem": image.imageItem, "images.$.recentAttempts":image.recentAttempts, "images.$.starred":image.starred }}
+                //update: { $set: { "images.$": image }}
                 }
             }))
             ;   

@@ -49,7 +49,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
   /* The POST method adds a new entry in the mongodb database. */
   const postData = async (form) => {
     //populate set
-    const imageArray = getPopulatedImageArray(form.setType);
+    const imageArray = getPopulatedImageArray(form.setType);    
     form.images = imageArray;
     const phoneticsArray = getPopulatedPhoneticsArray(form.setType, form.phoneticsType);
     form.images = form.images.map((el, i) => ({...el, phonetics: phoneticsArray[i]}));
@@ -143,7 +143,8 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
         <option value="3d">3-digit</option>        
         <option value="4d">4-digit</option>
         <option value="1c">1-card</option>
-        <option value="2c">2-card</option>
+        <option value="2cv">2-card (1352)</option>
+        <option value="2c">2-card (2704)</option>
         <option value="other">other</option>
         </select>
 <br />
@@ -159,8 +160,8 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
                 >
         <option value="none">None</option>
         {form.setType !== "1c" && <option value="maj">Major System</option> }               
-        {(form.setType === "2c" || form.setType === "3d") &&  <option value="ben">Ben System</option> }              
-        {(form.setType === "2c" || form.setType === "4d") &&  <option value="kben">Katie Ben System</option> }
+        {(form.setType === "2c" || form.setType === "2cv" ||form.setType === "3d") &&  <option value="ben">Ben System</option> }              
+        {(form.setType === "2c" || form.setType === "2cv" ||form.setType === "4d") &&  <option value="kben">Katie Ben System</option> }
         </select>
         </>
       }
