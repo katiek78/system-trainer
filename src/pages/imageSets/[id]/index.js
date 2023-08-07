@@ -510,7 +510,7 @@ const handleSubmitImportPhonetics = async (e) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify({sourceSetID: fromID}),
+        body: JSON.stringify({sourceSetID: fromID, overwrite: importImagesForm.overwrite}),
       })
 
       // Throw error with status code in case Fetch API req failed
