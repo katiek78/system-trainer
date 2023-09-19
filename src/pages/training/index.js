@@ -340,22 +340,21 @@ const handleToggleStarredDisplay = () => {
     <div className="flex flex-col justify-center items-center">
 
       <div class="group [perspective:1000px]">
-        <div class="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl"> 
+        <div class="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl "> 
           <div id="card-front" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
           <div class="flex-col rounded-xl px-12 bg-white text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold"><RedHeartsAndDiamonds text={randImage.name} /></h1>
             </div>
           </div>
           <div id="card-back" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
+            <div class="flex-col rounded-xl bg-black/40 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <h1 class="text-3xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" field={field} name={randImage.name} item={field === 'imageItem' ? randImage.imageItem : randImage.URL} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
               <h5 class="absolute top-24 lg:top-48 text-md">{randImage.phonetics}</h5>   
               <h5 class="absolute top-36 lg:top-56 text-md"><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>
               <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
-            {randImage.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }
-            {/* {isStarred ? <FontAwesomeIcon onClick={(e) => handleSubmitEdit(e, "starred", null)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={(e) => handleSubmitEdit(e, "starred", null)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> } */}
+            {randImage.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(randImage._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }            
             {isEditable ? <></>: <><FontAwesomeIcon className='cursor-pointer absolute left-3/4 top-3/4 text-white h-6 lg:h-8' icon={faEdit} onClick={(e) => handleEdit(e, 'imageItem')} /><FontAwesomeIcon className='absolute cursor-pointer left-[87%] top-3/4 text-white h-6 lg:h-8' icon={faImage} onClick={(e) => handleEdit(e, 'URL')} /></>}
             <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={randImage.URL && randImage.URL.length > 0 ? randImage.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
           </div>
