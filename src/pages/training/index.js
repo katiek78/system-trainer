@@ -347,10 +347,10 @@ const handleToggleStarredDisplay = () => {
             </div>
           </div>
           <div id="card-back" onClick={(e) => toggleRotate(e, false)}  className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <div class="flex-col rounded-xl bg-black/40 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-              <h1 class="text-3xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" field={field} name={randImage.name} item={field === 'imageItem' ? randImage.imageItem : randImage.URL} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
-              <h5 class="absolute top-24 lg:top-48 text-md">{randImage.phonetics}</h5>   
-              <h5 class="absolute top-36 lg:top-56 text-md"><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>
+            <div class="flex-col rounded-xl bg-black/40 text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
+              <h1 class="lg:text-3xl text-2xl font-bold">{isEditable ? <QuickEditForm formId="quick-edit-form" field={field} name={randImage.name} item={field === 'imageItem' ? randImage.imageItem : randImage.URL} handleSubmitEdit={handleSubmitEdit} /> : randImage.imageItem}</h1>
+              <h5 class="lg:text-lg text-sm">{randImage.phonetics}</h5>   
+              <h5 class=""><TrafficLights recentAttempts={randImage.recentAttempts} /></h5>
               <ConfidenceLevel recentAttempts={randImage.recentAttempts} />
 
             </div>
