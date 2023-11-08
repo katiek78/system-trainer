@@ -36,7 +36,7 @@ const QuickEditForm = ({field, item, name, handleSubmitEdit}) => {
 
 return(
 <div>
-    <form onSubmit={(e) => handleClickSubmit(e, field, formItem)}><input name='imageItem' 
+    <form onSubmit={(e) => handleClickSubmit(e, field, formItem)}><input autoFocus name='imageItem' 
     onChange={(e) => handleEditChange(e)} 
     onClick={(e) => handleClickForm(e)} 
     className='text-black w-40 lg:w-60 text-lg rounded-xl absolute top-3/4 left-1 lg:left-5' 
