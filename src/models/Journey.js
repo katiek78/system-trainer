@@ -25,6 +25,9 @@ const JourneySchema = new mongoose.Schema({
     required: [false],
     type: String,
   },
+  userId: {
+    type: String,    
+  }
 })
 
 // const PointSchema = new mongoose.Schema({

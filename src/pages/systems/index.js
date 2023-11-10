@@ -11,13 +11,22 @@ const SystemsPage = ({user, systems}) => {
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">My systems</h1>
-    <p className="font-mono">Hi {user.nickname} - there are {systems.length} systems in the database.</p>
+    
+    <br />
+    <div className="bg-white py-5 px-5 rounded">
+    <h3 className="font-semibold">What is a system?</h3>
+    <p className="font-mono">A system is a combination of your journeys (routes / palaces) and image sets. For instance, for Numbers you might use a particular journey and your 3-digit Major System. Or if you use PAO then you would have 3 different image sets (People, Action, Objects).</p>
+    </div>
+<br />
+    <div className="bg-white py-5 px-5 rounded">
+    <p className="font-mono">You currently have {systems.length} systems.</p>
+    <br />
     {systems.length > 0 && systems.map(system => <p className="font-semibold"> <Link href="/[id]/" as={`/${system._id}/`} legacyBehavior>{system.name}</Link></p>)}
     <Link href="/new"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new system
         </button></Link>
   </div>
-
+  </div>
 </>
   )
 }

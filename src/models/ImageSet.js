@@ -18,6 +18,9 @@ const ImageSetSchema = new mongoose.Schema({
           setType: {type: String}
         })
       ],
+    userId: {
+        type: String,    
+    }
 })
 
 export default mongoose.models.ImageSet || mongoose.model('ImageSet', ImageSetSchema)

@@ -21,6 +21,7 @@ export default function Index() {
       <h1 className="font-mono text-6xl">System Trainer</h1>
       <p>
         Welcome {user.name}! 
+        {/* <br />ID is: { user.sub } */}
         {/* {user.nickname}  */}
         {/* <a href="/api/auth/logout">Logout</a> */}
         </p>
