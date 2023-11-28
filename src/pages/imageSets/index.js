@@ -98,14 +98,16 @@ export const getServerSideProps = withPageAuthRequired({
 //     return journey
 //   })
 
-  const result2 = await ImageSet.find({userId: user.sub}, { name: 1})
+  //only want to send the name and ID of private image sets
+  const result2 = await ImageSet.find({userId: user.sub}, { name: 1 })
   const imageSets = result2.map((doc) => {   
     const imageSet = JSON.parse(JSON.stringify(doc));
     imageSet._id = imageSet._id.toString()
     return imageSet
   })
 
-  const publicImageSetResult = await ImageSet.find({ $or: [{ userId: null }, { userId: { $exists: false } }] });
+  //only want to send the name and ID of public images sets
+  const publicImageSetResult = await ImageSet.find({ $or: [{ userId: null }, { userId: { $exists: false } }] }, { name: 1 });
   const publicImageSets = publicImageSetResult.map((doc) => {   
     const imageSet = JSON.parse(JSON.stringify(doc));
     imageSet._id = imageSet._id.toString()
