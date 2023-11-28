@@ -15,7 +15,7 @@ const SystemsPage = ({user, systems}) => {
     <br />
     <div className="bg-white py-5 px-5 rounded">
     <h3 className="font-semibold">What is a system?</h3>
-    <p className="font-mono">A system is a combination of your journeys (routes / palaces) and image sets. For instance, for Numbers you might use a particular journey and your 3-digit Major System. Or if you use PAO then you would have 3 different image sets (People, Action, Objects).</p>
+    <p className="font-mono">A system is a combination of image sets that you use when memorising. For instance, for Numbers you might use your 3-digit Major System and place 2 images in each location, so your system would be "3-digit + 3-digit". Or if you use PAO then you would have 3 different image sets (People, Actions, Objects), so your system would be "People + Actions + Objects".</p>
     </div>
 <br />
     <div className="bg-white py-5 px-5 rounded">
