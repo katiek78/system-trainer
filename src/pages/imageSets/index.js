@@ -36,21 +36,34 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">My image sets</h1>
-    <p className="font-mono">Hi {user.nickname} - you have {imageSets.length === 0 ? 'no private ' : imageSets.length} image {imageSets.length === 1 ? 'set' : 'sets'}.</p>
+    <h1 className="py-2 font-mono text-4xl">Image sets</h1>
 
+    <br />
+    <div className="bg-white py-5 px-5 rounded">
+    <h3 className="font-semibold">What is an image set?</h3>
+    <p className="font-mono">An image set is a group of images or words, each one associated with a digit or group of digits, or a card or group of cards. 
+      For instance, if you use a 2-digit approach, you'll need an image set that assigns an image to each pair of digits from 00 to 99 (e.g. '00' is 'sauce', '01' is a 'seat').</p>
+    </div>
 
+    <br />
+    <div className="bg-white py-5 px-5 rounded">
+    <h2 className="text-2xl font-semibold">My private image sets</h2>
+    <p className="font-mono">You currently have {imageSets.length === 0 ? 'no private ' : imageSets.length} image {imageSets.length === 1 ? 'set' : 'sets'}.</p>
+    <br />
     {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> 
     <FontAwesomeIcon className="ml-5 cursor-pointer" onClick={() => handleDelete(imageSet._id)} icon={faTrash} size="1x" /></p>)}
     <Link href="/newImageSet"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new image set
         </button></Link>
+    </div>
 
-        <h1 className="py-2 font-mono text-4xl">Public image sets</h1>
-    <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} in the database.</p>
-
+    <br />
+    <div className="bg-white py-5 px-5 rounded">
+    <h2 className="text-2xl font-semibold">Public image sets</h2>
+    <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} available. Click the 'add' icon to make a private copy of the image set that you can edit.</p>
+<br />
     {publicImageSets.length > 0 && publicImageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
-      
+      </div>
   </div>
     <div>{message}</div>
 </>
