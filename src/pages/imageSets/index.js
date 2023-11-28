@@ -15,6 +15,9 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     const [message, setMessage] = useState('')
     const router = useRouter();
     
+  console.log(imageSets)
+  console.log(publicImageSets)
+
     const handleDelete = async (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this set?');
         if (confirmed) {
@@ -113,6 +116,7 @@ export const getServerSideProps = withPageAuthRequired({
     imageSet._id = imageSet._id.toString()
     return imageSet
   })
+
 
   // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
   // if (!user) {
