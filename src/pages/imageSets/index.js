@@ -9,7 +9,7 @@ import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 
-const ImageSetsPage = ({user, imageSets}) => {
+const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
   //let user = useUser(); //should we be using this instead?
     
     const [message, setMessage] = useState('')
@@ -37,12 +37,20 @@ const ImageSetsPage = ({user, imageSets}) => {
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
     <h1 className="py-2 font-mono text-4xl">My image sets</h1>
-    <p className="font-mono">Hi {user.nickname} - there {imageSets.length === 1 ? 'is' : 'are'} {imageSets.length} image {imageSets.length === 1 ? 'set' : 'sets'} in the database.</p>
+    <p className="font-mono">Hi {user.nickname} - you have {imageSets.length === 0 ? 'no private ' : imageSets.length} image {imageSets.length === 1 ? 'set' : 'sets'}.</p>
+
+
     {imageSets.length > 0 && imageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> 
     <FontAwesomeIcon className="ml-5 cursor-pointer" onClick={() => handleDelete(imageSet._id)} icon={faTrash} size="1x" /></p>)}
     <Link href="/newImageSet"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new image set
         </button></Link>
+
+        <h1 className="py-2 font-mono text-4xl">Public image sets</h1>
+    <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} in the database.</p>
+
+    {publicImageSets.length > 0 && publicImageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
+      
   </div>
     <div>{message}</div>
 </>
@@ -77,8 +85,15 @@ export const getServerSideProps = withPageAuthRequired({
 //     return journey
 //   })
 
-  const result2 = await ImageSet.find({}, { name: 1})
+  const result2 = await ImageSet.find({userId: user.sub}, { name: 1})
   const imageSets = result2.map((doc) => {   
+    const imageSet = JSON.parse(JSON.stringify(doc));
+    imageSet._id = imageSet._id.toString()
+    return imageSet
+  })
+
+  const publicImageSetResult = await ImageSet.find({ $or: [{ userId: null }, { userId: { $exists: false } }] });
+  const publicImageSets = publicImageSetResult.map((doc) => {   
     const imageSet = JSON.parse(JSON.stringify(doc));
     imageSet._id = imageSet._id.toString()
     return imageSet
@@ -92,9 +107,9 @@ export const getServerSideProps = withPageAuthRequired({
       props: {
         // dbUser: user,
         user: (auth0User).user,
-        // user: user,  //EVENTUALLY THIS
-       
-        imageSets: imageSets
+        // user: user,  //EVENTUALLY THIS      
+        imageSets: imageSets,
+        publicImageSets: publicImageSets
       },
     };
   },

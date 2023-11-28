@@ -14,7 +14,7 @@ const NewImageSetPage = ({user}) => {
     <h1 className="py-2 font-mono text-4xl">New image set</h1>
     
     
-    <ImageSetForm formId="add-image-set-form" imageSetForm={imageSetForm} />
+    <ImageSetForm userId={user.sub} formId="add-image-set-form" imageSetForm={imageSetForm} />
    
   </div>
 

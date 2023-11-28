@@ -4,7 +4,7 @@ import { mutate } from 'swr'
 import { getPopulatedImageArray } from '@/lib/getPopulatedImageArray'
 import { getPopulatedPhoneticsArray } from '@/lib/getPopulatedPhoneticsArray'
 
-const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
+const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
   const router = useRouter()
   const contentType = 'application/json'
   const [errors, setErrors] = useState({})
@@ -64,7 +64,7 @@ const ImageSetForm = ({ formId, imageSetForm, forNewSet = true }) => {
           Accept: contentType,
           'Content-Type': contentType,
         },
-        body: JSON.stringify(formDataToStore),
+        body: JSON.stringify({...formDataToStore, userId: userId}),        
       })
 
       // Throw error with status code in case Fetch API req failed
