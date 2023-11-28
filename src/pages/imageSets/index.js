@@ -4,7 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -13,10 +13,8 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
   //let user = useUser(); //should we be using this instead?
     
     const [message, setMessage] = useState('')
+    const contentType = 'application/json'
     const router = useRouter();
-    
-  console.log(imageSets)
-  console.log(publicImageSets)
 
     const handleDelete = async (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this set?');
@@ -34,6 +32,51 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
                 setMessage('Failed to delete the set.')
             }
         }
+    }
+
+    const handleCopyPublic = async (id) => {
+      try {
+         // Fetch the details of the public image set based on the ID
+        const publicImageSetResponse = await fetch(`/api/imageSets/${id}`, {
+          method: 'GET',
+          headers: {
+            Accept: contentType,
+            'Content-Type': contentType,
+          },
+
+        });       
+
+        if (!publicImageSetResponse.ok) {
+          throw new Error(publicImageSetResponse.status + " when fetching image set");
+        }
+
+         // Extract the public image set data
+        const { data } = await publicImageSetResponse.json()     
+
+        // Modify the retrieved data to include the user's ID      
+        const { _id, ...modifiedImageSetData } = data;
+        modifiedImageSetData.userId = user.sub; // Assuming user.sub contains the user's ID
+
+
+        // POST the modified data to create a copy in the user's private sets
+        const res = await fetch('/api/imageSets', {
+          method: 'POST',
+          headers: {
+            Accept: contentType,
+            'Content-Type': contentType,
+          },
+          body: JSON.stringify(modifiedImageSetData),        
+         })
+   
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status + " when copying image set")
+      }
+
+      router.push({pathname: `/imageSets`})
+    } catch (error) {
+      setMessage('Failed to copy image set. ' + error)
+    }
     }
 
   return(
@@ -63,9 +106,11 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     <br />
     <div className="bg-white py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">Public image sets</h2>
-    <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} available. Click the 'add' icon to make a private copy of the image set that you can edit.</p>
+    <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} available. Click the <FontAwesomeIcon icon={faCopy} size="1x" /> icon next to a set to make a private copy of that set, which you can then edit.</p>
 <br />
-    {publicImageSets.length > 0 && publicImageSets.map(imageSet => <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link></p>)}
+    {publicImageSets.length > 0 && publicImageSets.map(imageSet => 
+      <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> <FontAwesomeIcon className="ml-5 cursor-pointer" icon={faCopy} size="1x" onClick={() => handleCopyPublic(imageSet._id)} /></p>
+    )}
       </div>
   </div>
     <div>{message}</div>
