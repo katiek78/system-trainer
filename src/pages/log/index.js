@@ -74,7 +74,9 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
                 <h2 className="text-2xl font-semibold">My log entries</h2>
 
                 <br />
-
+                    {logEntries.length === 0 && 
+                    <p>You have not added any entries to your training log yet.</p>
+                    }
                     {logEntries.length > 0 && (
                         <>
 
