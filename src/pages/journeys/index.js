@@ -92,7 +92,7 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     <br />
     <div className="bg-white py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">My private journeys</h2>
-    <p className="font-mono">You currently have {journeys.length === 0 ? 'no private ' : journeys.length} {journeys.length === 1 ? 'journey' : 'journeys'}.</p>
+    <p className="font-mono">You currently have {journeys.length === 0 ? 'no private ' : journeys.length + " "} {journeys.length === 1 ? 'journey' : 'journeys'}.</p>
     <br />
     {journeys.length > 0 && journeys.map(journey => <p className="font-semibold"> <Link href="/journeys/[id]/" as={`/journeys/${journey._id}/`} legacyBehavior>{journey.name}</Link> 
     <FontAwesomeIcon className="ml-5 cursor-pointer" onClick={() => handleDelete(journey._id)} icon={faTrash} size="1x" /></p>)}
