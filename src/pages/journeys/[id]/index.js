@@ -5,6 +5,7 @@ import { mutate } from 'swr'
 import { useRouter } from 'next/router'
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
+import EmbedStreetView from "@/components/EmbedStreetView"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faEdit, faGrip, faList, faStar} from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
@@ -28,7 +29,7 @@ const JourneyPage = ({user, journey}) => {
     //   setType: 'other'      
     // })
 
-
+console.log(journey)
     const pageLimit = 20;
 
     // const getJourney = async (id) => {
@@ -209,6 +210,18 @@ const JourneyPage = ({user, journey}) => {
         
     // }
 
+    const handleDelete = async () => {
+        const journeyID = router.query.id
+
+        try {
+            await fetch(`/api/journeys/${journeyID}`, {
+            method: 'Delete',
+            })
+            router.push(`/`)      
+        } catch (error) {
+            setMessage('Failed to delete the journey.')
+        }
+        }
 
 
   const handleChangeTitle = (e) => {
@@ -275,7 +288,48 @@ const JourneyPage = ({user, journey}) => {
         }
     </h1> 
 
-    
+    <div class='journey-btn-container'>
+        <Link href="/[id]/new" as={`/${journey._id}/new`} legacyBehavior>
+        <button className="btn add">Add a point</button>
+        </Link>
+        <Link href="/[id]/edit" as={`/${journey._id}/edit`} legacyBehavior>
+        <button className="btn edit">Edit journey</button>
+        </Link>
+        <button className="btn delete" onClick={handleDelete}>
+                Delete journey
+        </button>
+      </div>
+
+  <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white" style={{ minHeight: '400px' }}>
+  <div className="p-5">
+    <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
+    {journey.points?.map(point => (
+      <div className="point-card mb-5" key={point._id}>
+        <div className="card-content">
+          <p className="point-name">{point.name}</p>
+          <EmbedStreetView
+            width={300}
+            height={200}
+            location={point.location}
+            heading={point.heading || 90}
+            pitch={point.pitch || 0}
+            fov={point.fov || 100}
+          />
+          <div className="point-btn-container mt-3">
+            <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
+              <button className="btn edit">Edit</button>
+            </Link>
+            <button className="btn delete" onClick={() => handleDeletePoint(point._id)}>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+
 <div>{message}</div>
 
     {/* Add a button to add an image manually */}
