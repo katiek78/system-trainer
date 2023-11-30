@@ -7,7 +7,7 @@ import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faEdit, faGrip, faList, faStar} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faEdit, faGrip, faList, faPlus, faStar, faTrash} from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
 import { refreshData } from "@/lib/refreshData";
 
@@ -217,12 +217,24 @@ console.log(journey)
             await fetch(`/api/journeys/${journeyID}`, {
             method: 'Delete',
             })
-            router.push(`/`)      
+            router.push(`/journeys`)      
         } catch (error) {
             setMessage('Failed to delete the journey.')
         }
         }
 
+        const handleDeletePoint = async (pointID, e) => {
+    console.log("deleting point")
+            try {
+              await fetch(`/api/points/${pointID}`, {
+                method: 'Delete',
+              })           
+             // router.push(`/`) 
+              refreshData(router);
+            } catch (error) {
+              setMessage('Failed to delete the point.')
+            }
+          }
 
   const handleChangeTitle = (e) => {
     setJourneyForm({...journeyForm, name: e.target.value})        
@@ -284,20 +296,15 @@ console.log(journey)
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={journeyForm.name}></input> : journeyForm.name}
     {isEditable ? 
           <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleSubmitJourneyForm} icon={faCheck} size="1x" />
-        : <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleToggleEditable} icon={faEdit} size="1x" />
+        :<> <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleToggleEditable} icon={faEdit} size="1x" />
+        <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleDelete} icon={faTrash} size="1x" />        </>
         }
     </h1> 
 
     <div class='journey-btn-container'>
-        <Link href="/[id]/new" as={`/${journey._id}/new`} legacyBehavior>
-        <button className="btn add">Add a point</button>
-        </Link>
-        <Link href="/[id]/edit" as={`/${journey._id}/edit`} legacyBehavior>
-        <button className="btn edit">Edit journey</button>
-        </Link>
-        <button className="btn delete" onClick={handleDelete}>
-                Delete journey
-        </button>
+        <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>
+        <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Add a location</button>
+        </Link>        
       </div>
 
   <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white" style={{ minHeight: '400px' }}>
