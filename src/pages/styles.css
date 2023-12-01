@@ -1,11 +1,7 @@
 .animation {
     width: 80px;
     height: 80px;
-    border-radius: 24%;
-    /* animation: colorChange 1s ease-in-out forwards; */
-    /* position: absolute; */
-    /* top: 60vh;
-    left: 50%; */
+    border-radius: 24%;  
     transform: translateY(50%);
     background-color: red;
     animation: colorChange 1s linear infinite; /* Updated animation */
@@ -22,8 +18,10 @@
   .result { 
     font-size: 24px;
 
-  transform: translateY(-20px);
-  transition: transform 1s ease;
+  /* transform: translateY(50px);
+  transition: transform 1s ease; */
+  opacity: 0;
+  animation: moveUp 1s ease forwards; 
   }
   
   @keyframes colorChange {
@@ -38,6 +36,17 @@
     100% { background-color: violet; }
   }
   
+  @keyframes moveUp {
+    0% {
+      opacity: 0;
+      transform: translateY(50px); /* Initial position */
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0); /* Move to the top */
+    }
+  }
+
   /* @keyframes revealText {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }

@@ -10,7 +10,7 @@ import { ML_DISCIPLINES, TRADITIONAL_DISCIPLINES } from '@/lib/disciplines'
 export default function Index() {
   const { user, error, isLoading } = useUser();
   const [ randomChoice, setRandomChoice ] = useState('');
-  const [showAnimation, setShowAnimation] = useState(true);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   const handleRandom = () => {
     const bigArrayOfDisciplines = [...ML_DISCIPLINES, ...TRADITIONAL_DISCIPLINES];
@@ -60,7 +60,7 @@ export default function Index() {
         {showAnimation ? (
         <div className="animation"></div>
       ) : (
-        <div className="result bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>
+       <> {randomChoice && <div className="result bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>}</>
       )}
 
         {/* <div className={`animation ${showAnimation ? 'show' : 'hide'}`}></div>
