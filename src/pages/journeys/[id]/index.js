@@ -288,12 +288,11 @@ console.log(journey)
     //   setMessage('Failed to save image')
     // }
 
-
-
+   
 
     return(
  <>
-    <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">Journey:
+    <div className="z-10 justify-between font-mono text-lg max-w-6xl w-full ">Journey:
     <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={journeyForm.name}></input> : journeyForm.name}
     {isEditable ? 
           <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleSubmitJourneyForm} icon={faCheck} size="1x" />
@@ -310,13 +309,14 @@ console.log(journey)
 
   <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white" style={{ minHeight: '400px' }}>
   <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
-  <div className="p-5 flex flex-wrap">
+  <div className="p-5 flex flex-wrap justify-center">
    
    
     {journey.points?.map(point => (
-      <div className="point-card relative mb-4" key={point._id}>
-        <div className="card-content">
-          <p className="point-name text-center whitespace-normal">{point.name}</p>
+      <div className="point-card-container">
+      <div className="point-card relative flex justify-center mb-4 border border-gray-300 rounded-lg mr-3 shadow-md hover:shadow-lg transition duration-300" key={point._id}>
+        <div className="card-content px-2 h-full">
+          <p className="point-name max-w-xs text-center h-12 whitespace-normal" style={{ maxWidth: 300 }}>{point.name}</p>
           <div className="street-view-container relative w-max">
             <EmbedStreetView
               width={300}
@@ -326,7 +326,7 @@ console.log(journey)
               pitch={point.pitch || 0}
               fov={point.fov || 100}
             />
-            <div className="icon-container flex flex-row space-x-3 p-3 justify-end items-end">
+            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
               <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
                 <FontAwesomeIcon icon={faEdit} size="2x" />
               </Link>
@@ -334,6 +334,7 @@ console.log(journey)
             </div>
           </div>
         </div>
+      </div>
       </div>
     ))}
 
