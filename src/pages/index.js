@@ -45,13 +45,13 @@ export default function Index() {
         {/* <a href="/api/auth/logout">Logout</a> */}
 </p>
 <br /><br />
-<div className="bg-white py-5 px-5 rounded">
+<div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h3 className="font-semibold">Welcome to System Trainer</h3>
     <p className="font-mono">Please take a look around! You can add your image sets, systems, journeys and log your memory training. Meanwhile, get a random training suggestion by clicking the button below!</p>
     </div>
 
         <br /><br />
-        <button onClick={handleRandom} className="btn bg-black hover:bg-gray-700 text-white text-lg font-bold mt-3 py-3 px-6 rounded focus:outline-none focus:shadow-outline">
+        <button onClick={handleRandom} className="btn bg-black dark:bg-slate-500 hover:bg-gray-700 text-white text-lg font-bold mt-3 py-3 px-6 rounded focus:outline-none focus:shadow-outline">
           What should I train next?
         </button>
         {/* {randomChoice && <div className="bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>} */}
@@ -60,7 +60,7 @@ export default function Index() {
         {showAnimation ? (
         <div className="animation"></div>
       ) : (
-       <> {randomChoice && <div className="result bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>}</>
+       <> {randomChoice && <div className="result bg-white dark:bg-slate-800 w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>}</>
       )}
 
         {/* <div className={`animation ${showAnimation ? 'show' : 'hide'}`}></div>

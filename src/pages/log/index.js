@@ -58,7 +58,7 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
                 <h1 className="py-2 font-mono text-4xl">Training log</h1>
 
                 <br />
-                <div className="bg-white py-5 px-5 rounded">
+                <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
                     <h3 className="font-semibold">Log your training</h3>
                     <p className="font-mono">Click 'Add entry' to log any memory training you have done. Statistics and graphs coming soon!
                         In the future, it may also be possible to train in this app and your log will be updated automatically.</p>
@@ -70,7 +70,7 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
             </div>
             <div>{message}</div>
             <br />
-            <div className="bg-white py-5 px-5 rounded">
+            <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
                 <h2 className="text-2xl font-semibold">My log entries</h2>
 
                 <br />

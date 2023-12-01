@@ -327,7 +327,7 @@ const handleToggleStarredDisplay = () => {
     <div>
     <p>Which images do you want to train?</p>
 
-    <select id="selSet" className="w-full rounded-md" onChange={handleChangeSelect}>
+    <select id="selSet" className="w-full rounded-md dark:bg-slate-800" onChange={handleChangeSelect}>
       <option value="all">All 🌍</option>
       {confidenceLabels.map((label, i) => <option value={i}>{label} ({groupTotals && groupTotals[i]})</option>)}      
     </select>

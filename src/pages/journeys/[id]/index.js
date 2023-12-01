@@ -307,7 +307,7 @@ console.log(journey)
         </Link>        
       </div>
 
-  <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white" style={{ minHeight: '400px' }}>
+  <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white dark:bg-slate-800" style={{ minHeight: '400px' }}>
   <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
   <div className="p-5 flex flex-wrap justify-center">
    
@@ -316,7 +316,7 @@ console.log(journey)
       <div className="point-card-container">
       <div className="point-card relative flex justify-center mb-4 border border-gray-300 rounded-lg mr-3 shadow-md hover:shadow-lg transition duration-300" key={point._id}>
         <div className="card-content px-2 h-full">
-          <p className="point-name max-w-xs text-center h-12 whitespace-normal" style={{ maxWidth: 300 }}>{point.name}</p>
+          <p className="point-name max-w-xs text-center h-12 whitespace-normal" style={{ maxWidth: 300 }} >{point.name}</p>
           <div className="street-view-container relative w-max">
             <EmbedStreetView
               width={300}
@@ -340,7 +340,7 @@ console.log(journey)
 
     <div className="plusIcon flex items-center justify-center mb-16">
     <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>
-    <FontAwesomeIcon className="cursor-pointer bg-gray-200 rounded p-10" icon={faPlus} size="5x" />
+    <FontAwesomeIcon className="cursor-pointer bg-gray-200 rounded p-10 dark:bg-black" icon={faPlus} size="5x" />
     </Link>
     </div>
     

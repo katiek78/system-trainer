@@ -85,14 +85,14 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     <h1 className="py-2 font-mono text-4xl">Image sets</h1>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h3 className="font-semibold">What is an image set?</h3>
     <p className="font-mono">An image set is a group of images or words, each one associated with a digit or group of digits, or a card or group of cards. 
       For instance, if you use a 2-digit approach, you'll need an image set that assigns an image to each pair of digits from 00 to 99 (e.g. '00' is 'sauce', '01' is a 'seat').</p>
     </div>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">My private image sets</h2>
     <p className="font-mono">You currently have {imageSets.length === 0 ? 'no private ' : imageSets.length} image {imageSets.length === 1 ? 'set' : 'sets'}.</p>
     <br />
@@ -104,7 +104,7 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     </div>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">Public image sets</h2>
     <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} available. Click the <FontAwesomeIcon icon={faCopy} size="1x" /> icon next to a set to make a private copy of that set, which you can then edit.</p>
 <br />

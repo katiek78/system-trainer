@@ -84,13 +84,13 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     <h1 className="py-2 font-mono text-4xl">Journeys</h1>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h3 className="font-semibold">What is a journey?</h3>
     <p className="font-mono">A journey (or memory palace) is a series of locations (or loci) that you will use, and maybe re-use, to memorise information.</p>
     </div>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">My private journeys</h2>
     <p className="font-mono">You currently have {journeys.length === 0 ? 'no private ' : journeys.length + " "} {journeys.length === 1 ? 'journey' : 'journeys'}.</p>
     <br />
@@ -102,7 +102,7 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     </div>
 
     <br />
-    <div className="bg-white py-5 px-5 rounded">
+    <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
     <h2 className="text-2xl font-semibold">Public journeys</h2>
     <p className="font-mono">There {publicJourneys.length === 1 ? 'is' : 'are'} {publicJourneys.length} public {publicJourneys.length === 1 ? 'journey' : 'journeys'} available. Click the <FontAwesomeIcon icon={faCopy} size="1x" /> icon next to a journey to make a private copy of that journey, which you can then edit.</p>
 <br />
