@@ -7,9 +7,10 @@ import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faEdit, faGrip, faList, faPlus, faStar, faTrash} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faEdit, faPlus, faTrash} from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
 import { refreshData } from "@/lib/refreshData";
+import './styles.css';
 
 const JourneyPage = ({user, journey}) => {
     const router = useRouter()    
@@ -308,31 +309,40 @@ console.log(journey)
       </div>
 
   <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white" style={{ minHeight: '400px' }}>
-  <div className="p-5">
-    <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
+  <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
+  <div className="p-5 flex flex-wrap">
+   
+   
     {journey.points?.map(point => (
-      <div className="point-card mb-5" key={point._id}>
+      <div className="point-card relative mb-4" key={point._id}>
         <div className="card-content">
-          <p className="point-name">{point.name}</p>
-          <EmbedStreetView
-            width={300}
-            height={200}
-            location={point.location}
-            heading={point.heading || 90}
-            pitch={point.pitch || 0}
-            fov={point.fov || 100}
-          />
-          <div className="point-btn-container mt-3">
-            <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
-              <button className="btn edit">Edit</button>
-            </Link>
-            <button className="btn delete" onClick={() => handleDeletePoint(point._id)}>
-              Delete
-            </button>
+          <p className="point-name text-center whitespace-normal">{point.name}</p>
+          <div className="street-view-container relative w-max">
+            <EmbedStreetView
+              width={300}
+              height={200}
+              location={point.location}
+              heading={point.heading || 90}
+              pitch={point.pitch || 0}
+              fov={point.fov || 100}
+            />
+            <div className="icon-container flex flex-row space-x-3 p-3 justify-end items-end">
+              <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
+                <FontAwesomeIcon icon={faEdit} size="2x" />
+              </Link>
+              <FontAwesomeIcon className="ml-5" icon={faTrash} size="2x" onClick={() => handleDeletePoint(point._id)} />          
+            </div>
           </div>
         </div>
       </div>
     ))}
+
+    <div className="plusIcon flex items-center justify-center mb-16">
+    <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>
+    <FontAwesomeIcon className="cursor-pointer bg-gray-200 rounded p-10" icon={faPlus} size="5x" />
+    </Link>
+    </div>
+    
   </div>
 </div>
 
