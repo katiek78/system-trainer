@@ -1,0 +1,53 @@
+.animation {
+    width: 80px;
+    height: 80px;
+    border-radius: 24%;
+    /* animation: colorChange 1s ease-in-out forwards; */
+    /* position: absolute; */
+    /* top: 60vh;
+    left: 50%; */
+    transform: translateY(50%);
+    background-color: red;
+    animation: colorChange 1s linear infinite; /* Updated animation */
+  }
+
+  /* .animation::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="0" y="0" width="100" height="100"/></svg>');
+  } */
+  
+  .result { 
+    font-size: 24px;
+
+  transform: translateY(-20px);
+  transition: transform 1s ease;
+  }
+  
+  @keyframes colorChange {
+    0% { background-color: red; }
+    12.5% { background-color: orange; }
+    25% { background-color: yellow; }
+    37.5% { background-color: olive; }
+    50% { background-color: green; }
+    62.5% { background-color: turquoise; }
+    75% { background-color: blue; }
+    87.5% { background-color: purple; }
+    100% { background-color: violet; }
+  }
+  
+  /* @keyframes revealText {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(-20px); 
+    }
+    50% {
+      transform: translateY(20px);
+    }
+  } */

@@ -4,17 +4,26 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGear } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react';
+import './styles.css';
 import { ML_DISCIPLINES, TRADITIONAL_DISCIPLINES } from '@/lib/disciplines'
 
 export default function Index() {
   const { user, error, isLoading } = useUser();
   const [ randomChoice, setRandomChoice ] = useState('');
+  const [showAnimation, setShowAnimation] = useState(true);
 
   const handleRandom = () => {
     const bigArrayOfDisciplines = [...ML_DISCIPLINES, ...TRADITIONAL_DISCIPLINES];
-    const choice = Math.floor(Math.random() * bigArrayOfDisciplines.length)
-    setRandomChoice(bigArrayOfDisciplines[choice])
-    console.log(randomChoice)
+    setShowAnimation(true);
+
+    const timeout = setTimeout(() => {
+     
+      const choice = Math.floor(Math.random() * bigArrayOfDisciplines.length)
+      setRandomChoice(bigArrayOfDisciplines[choice])
+      setShowAnimation(false);
+    }, 1000);
+
+    return () => clearTimeout(timeout);
   }
 
   if (isLoading) return <div>Loading...</div>;
@@ -45,10 +54,18 @@ export default function Index() {
         <button onClick={handleRandom} className="btn bg-black hover:bg-gray-700 text-white text-lg font-bold mt-3 py-3 px-6 rounded focus:outline-none focus:shadow-outline">
           What should I train next?
         </button>
-        <div className="bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>
+        {/* {randomChoice && <div className="bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>} */}
         
+        <br />
+        {showAnimation ? (
+        <div className="animation"></div>
+      ) : (
+        <div className="result bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>
+      )}
 
-       
+        {/* <div className={`animation ${showAnimation ? 'show' : 'hide'}`}></div>
+      {!showAnimation && <div className="result">{randomChoice}</div>} */}
+
       
        
 
