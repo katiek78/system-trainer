@@ -3,9 +3,19 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGear } from '@fortawesome/free-solid-svg-icons'
+import { useState } from 'react';
+import { ML_DISCIPLINES, TRADITIONAL_DISCIPLINES } from '@/lib/disciplines'
 
 export default function Index() {
   const { user, error, isLoading } = useUser();
+  const [ randomChoice, setRandomChoice ] = useState('');
+
+  const handleRandom = () => {
+    const bigArrayOfDisciplines = [...ML_DISCIPLINES, ...TRADITIONAL_DISCIPLINES];
+    const choice = Math.floor(Math.random() * bigArrayOfDisciplines.length)
+    setRandomChoice(bigArrayOfDisciplines[choice])
+    console.log(randomChoice)
+  }
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>{error.message}</div>;
@@ -24,7 +34,20 @@ export default function Index() {
         {/* <br />ID is: { user.sub } */}
         {/* {user.nickname}  */}
         {/* <a href="/api/auth/logout">Logout</a> */}
-        </p>
+</p>
+<br /><br />
+<div className="bg-white py-5 px-5 rounded">
+    <h3 className="font-semibold">Welcome to System Trainer</h3>
+    <p className="font-mono">Please take a look around! You can add your image sets, systems, journeys and log your memory training. Meanwhile, get a random training suggestion by clicking the button below!</p>
+    </div>
+
+        <br /><br />
+        <button onClick={handleRandom} className="btn bg-black hover:bg-gray-700 text-white text-lg font-bold mt-3 py-3 px-6 rounded focus:outline-none focus:shadow-outline">
+          What should I train next?
+        </button>
+        <div className="bg-white w-auto font-bold rounded text-lg mt-5 py-3 px-6">{randomChoice}</div>
+        
+
        
       
        
