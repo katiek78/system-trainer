@@ -82,6 +82,7 @@ const PointForm = ({ formId, pointForm, forNewPoint = true }) => {
   }
 
    const validateLocation = (locationValue) => {
+    if (!locationValue || locationValue === '') return {...form, location: ''};
     function getPosition(str, char, index) {
         return str.split(char, index).join(char).length;
       }

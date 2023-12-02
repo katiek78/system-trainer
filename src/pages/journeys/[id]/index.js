@@ -358,10 +358,13 @@ const JourneyPage = ({ user, journey }) => {
               <div className="p-2 lg:p-5 flex flex-wrap justify-center">
                 {journey.points?.map(point => (
                   <div className="point-card-container flex justify-center">
-                    <div className="point-card flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300" key={point._id}>
+                    <div className={`point-card ${point.location ? '' : 'small-point-card'} flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300`} key={point._id}>
                       <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
-                        <p className="point-name max-w-xs text-center h-12 whitespace-normal" style={{ maxWidth: 300 }} >{point.name}</p>
+                        <p className={`point-name max-w-xs text-center h-12 whitespace-normal`} style={{ maxWidth: 300 }} >{point.name}</p>
+                     
+                   
                         <div className="street-view-container relative w-max">
+                          {point.location && 
                           <EmbedStreetView
                             width={300}
                             height={200}
@@ -369,7 +372,8 @@ const JourneyPage = ({ user, journey }) => {
                             heading={point.heading || 90}
                             pitch={point.pitch || 0}
                             fov={point.fov || 100}
-                          />
+                          />}                                              
+
                           <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                             <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
                               <FontAwesomeIcon icon={faEdit} size="2x" />
