@@ -24,6 +24,9 @@ const JourneyPage = ({ user, journey }) => {
   const [isEditable, setIsEditable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
+
   const [journeyForm, setJourneyForm] = useState({})
   // const [pointForm, setPointForm] = useState({})
   // const [importPointsForm, setImportPointsForm] = useState({imageSetFrom: '', overwrite: false})
@@ -307,22 +310,28 @@ const JourneyPage = ({ user, journey }) => {
   }
 
 
-  const mql = window.matchMedia('(max-width: 600px)');
-  const mobileView = mql.matches;
-  const mql2 = window.matchMedia('(min-width: 600px)');
-  const midView = mql2.matches;
-  const mql3 = window.matchMedia('(min-width: 1000px)');
-  const largeView = mql3.matches;
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 600px)');
+    const mobileView = mql.matches;
+    const mql2 = window.matchMedia('(min-width: 600px)');
+    const midView = mql2.matches;
+    const mql3 = window.matchMedia('(min-width: 1000px)');
+    const largeView = mql3.matches;
 
 
-  let width = 0, height = 0;
-  if (mobileView) {
-    width = 300, height = 200;
-  } else if (largeView) {
-    width = 900, height = 500;
-  } else {
-    width = 400, height = 300;
-  }
+    let width = 0, height = 0;
+    if (mobileView) {
+      width = 300, height = 200;
+    } else if (largeView) {
+      width = 900, height = 500;
+    } else {
+      width = 400, height = 300;
+    }
+
+    setWidth(width);
+    setHeight(height);
+  }, [])
+  
 
   return (
     <>
@@ -338,6 +347,9 @@ const JourneyPage = ({ user, journey }) => {
         <div class='journey-btn-container'>
           <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>
             <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Add a location</button>
+          </Link>
+          <Link href="/journeys/[id]/import" as={`/journeys/${journey._id}/import`} legacyBehavior>
+            <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Import locations</button>
           </Link>
           {journey.points.length > 0 ?
             isListView ?
