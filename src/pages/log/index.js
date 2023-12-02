@@ -2,6 +2,7 @@
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import Link from "next/link";
+import Journey from "@/models/Journey";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
@@ -11,7 +12,7 @@ import LogEntry from '@/models/LogEntry'
 
 
 const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
-
+console.log(logEntries)
     const [message, setMessage] = useState('')
     const contentType = 'application/json'
     const router = useRouter();
@@ -111,7 +112,7 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
           <td className="border border-gray-400 px-4 py-2">{entry.score}</td>
           <td className="border border-gray-400 px-4 py-2">{entry.correct}</td>
           <td className="border border-gray-400 px-4 py-2">{entry.time}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.journey}</td>
+          <td className="border border-gray-400 px-4 py-2">{entry.journeyName}</td>
           <td className="border border-gray-400 px-4 py-2">{entry.notes}</td>
           <td className="border border-gray-400 px-4 py-2">
             <FontAwesomeIcon
@@ -180,14 +181,50 @@ export const getServerSideProps = withPageAuthRequired({
           };
 
         const logEntries = await fetchLogEntries(user.sub, currentPage, entriesPerPage);
-        const totalNumberOfEntries = await fetchTotalNumberOfEntries(user.sub);
+        const totalNumberOfEntries = await fetchTotalNumberOfEntries(user.sub);      
+      
+          // only want to send the name and ID of private journeys
+      const result2 = await Journey.find({userId: user.sub}, { name: 1 })
+      const journeys = result2.map((doc) => {   
+        const journey = JSON.parse(JSON.stringify(doc));
+        journey._id = journey._id.toString()
+        return journey
+      })
+      
+      //only want to send the name and ID of public images sets
+      const publicJourneyResult = await Journey.find({ $or: [{ userId: null }, { userId: { $exists: false } }] }, { name: 1 });
+      const publicJourneys = publicJourneyResult.map((doc) => {   
+        const journey = JSON.parse(JSON.stringify(doc));
+        journey._id = journey._id.toString()
+        return journey
+      })
+
+      const enhancedLogEntries = logEntries.map(e => {
+        const journeyId = e.journey
+        let journeyName;
+        for (let i = 0; i < journeys.length; i++) {
+          if (journeys[i]._id === journeyId) {
+            journeyName = journeys[i].name;
+            break;
+          }
+        }
+        for (let i = 0; i < publicJourneys.length; i++) {
+          if (publicJourneys[i]._id === journeyId) {
+            journeyName = publicJourneys[i].name;
+            break;
+          }
+        }
+        return {...e, journeyName};
+      })
 
         return {
             props: {
                 user: (auth0User).user,                
-                logEntries,
+                logEntries: enhancedLogEntries,
                 currentPage,
-                totalPages: Math.ceil(totalNumberOfEntries / entriesPerPage),
+                totalPages: Math.ceil(totalNumberOfEntries / entriesPerPage),   
+                journeys,
+                publicJourneys            
             },
         };
     }

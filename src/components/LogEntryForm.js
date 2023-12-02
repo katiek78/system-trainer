@@ -1,8 +1,10 @@
+import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { mutate } from 'swr'
 import { ML_DISCIPLINES } from '@/lib/disciplines'; 
 import { TRADITIONAL_DISCIPLINES } from '@/lib/disciplines'; 
+
 // import { getPopulatedImageArray } from '@/lib/getPopulatedImageArray'
 // import { getPopulatedPhoneticsArray } from '@/lib/getPopulatedPhoneticsArray'
 
@@ -23,21 +25,21 @@ const getTodayDate = () => {
     return `${year}-${month}-${day}`;
   };
 
-const LogEntryForm = ({ userId, formId, logEntryForm, forNewEntry = true }) => {
+const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, forNewEntry = true,  }) => {
   const router = useRouter()
   const contentType = 'application/json'
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
-
-  const journeys = [{_id: 1, name: 'USA 1'}, {_id: 2, name: 'USA 2'}, {_id: 3, name: 'Japan 1'}];
+  console.log("here")
+  console.log(journeys)
 
   const [form, setForm] = useState({
     entryDate: forNewEntry ? getTodayDate() : logEntryForm.entryDate,    
     discipline: logEntryForm.discipline || ML_DISCIPLINES[0],
     score: logEntryForm.score,
     correct: logEntryForm.correct,
-    time: logEntryForm.time,
-    journey: logEntryForm.journey || journeys[0]._id,
+    time: logEntryForm.time || '',
+    journey: logEntryForm.journey || (journeys ? journeys[0]._id : ''),
     notes: logEntryForm.notes,
   })
 
@@ -193,11 +195,11 @@ const LogEntryForm = ({ userId, formId, logEntryForm, forNewEntry = true }) => {
         <label htmlFor="journey">Journey</label>
         <select className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"       
           name="journey"
-          value={form.journey || journeys[0]._id || ''}
+          value={form.journey ||  (journeys ? journeys[0]._id : '')}
           onChange={handleChange}          
           required
                 >
-                {journeys.map(j => <option value={j._id}>{j.name}</option>)}            
+                {journeys && journeys.map(j => <option value={j._id}>{j.name}</option>)}            
         <option value="other">other</option>
         </select> 
 
@@ -248,4 +250,5 @@ const LogEntryForm = ({ userId, formId, logEntryForm, forNewEntry = true }) => {
   )
 }
 
-export default LogEntryForm
+export default LogEntryForm;
+
