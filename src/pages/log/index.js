@@ -54,7 +54,7 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
 
     return (
         <>
-            <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
+            <div className="z-10 justify-between font-mono text-lg max-w-5xl" style={{ '@media (max-width: 768px)': { maxWidth: '100%' } }}>
                 <h1 className="py-2 font-mono text-4xl">Training log</h1>
 
                 <br />

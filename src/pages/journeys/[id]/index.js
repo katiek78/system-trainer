@@ -292,8 +292,8 @@ console.log(journey)
 
     return(
  <>
-    <div className="z-10 justify-between font-mono text-lg max-w-6xl w-full ">Journey:
-    <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={journeyForm.name}></input> : journeyForm.name}
+    <div className="z-10 justify-between font-mono text-sm md:text-md lg:text-lg pl-2 md:pl-2 lg:pl-0">Journey:
+    <h1 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={journeyForm.name}></input> : journeyForm.name}
     {isEditable ? 
           <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleSubmitJourneyForm} icon={faCheck} size="1x" />
         :<> <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleToggleEditable} icon={faEdit} size="1x" />
@@ -307,15 +307,13 @@ console.log(journey)
         </Link>        
       </div>
 
-  <div className="relative w-full overflow-hidden py-5 px-5 rounded bg-white dark:bg-slate-800" style={{ minHeight: '400px' }}>
-  <h2 className="mb-5 text-2xl font-semibold">Locations:</h2>
-  <div className="p-5 flex flex-wrap justify-center">
-   
-   
+  <div className="relative w-full overflow-hidden py-2 md:py-4 lg:py-5 px-2 lg:px-5 rounded bg-white dark:bg-slate-800" style={{ minHeight: '400px' }}>
+  <h2 className="mb-5 text-lg md:text-2xl lg:text-2xl font-semibold">Locations:</h2>
+  <div className="p-2 lg:p-5 flex flex-wrap justify-center">
     {journey.points?.map(point => (
-      <div className="point-card-container">
-      <div className="point-card relative flex justify-center mb-4 border border-gray-300 rounded-lg mr-3 shadow-md hover:shadow-lg transition duration-300" key={point._id}>
-        <div className="card-content px-2 h-full">
+      <div className="point-card-container flex justify-center">
+      <div className="point-card flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300" key={point._id}>
+        <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
           <p className="point-name max-w-xs text-center h-12 whitespace-normal" style={{ maxWidth: 300 }} >{point.name}</p>
           <div className="street-view-container relative w-max">
             <EmbedStreetView
