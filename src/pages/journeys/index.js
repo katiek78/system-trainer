@@ -78,6 +78,9 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     }
     }
 
+    const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
+    const sortedPublicJourneys = publicJourneys.sort((a, b) => a.name.localeCompare(b.name));
+
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -94,7 +97,7 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     <h2 className="text-2xl font-semibold">My private journeys</h2>
     <p className="font-mono">You currently have {journeys.length === 0 ? 'no private ' : journeys.length + " "} {journeys.length === 1 ? 'journey' : 'journeys'}.</p>
     <br />
-    {journeys.length > 0 && journeys.map(journey => <p className="font-semibold"> <Link href="/journeys/[id]/" as={`/journeys/${journey._id}/`} legacyBehavior>{journey.name}</Link> 
+    {journeys.length > 0 && sortedJourneys.map(journey => <p className="font-semibold"> <Link href="/journeys/[id]/" as={`/journeys/${journey._id}/`} legacyBehavior>{journey.name}</Link> 
     <FontAwesomeIcon className="ml-5 cursor-pointer" onClick={() => handleDelete(journey._id)} icon={faTrash} size="1x" /></p>)}
     <Link href="/newJourney"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
           Add new journey
@@ -106,7 +109,7 @@ const JourneysPage = ({user, journeys, publicJourneys}) => {
     <h2 className="text-2xl font-semibold">Public journeys</h2>
     <p className="font-mono">There {publicJourneys.length === 1 ? 'is' : 'are'} {publicJourneys.length} public {publicJourneys.length === 1 ? 'journey' : 'journeys'} available. Click the <FontAwesomeIcon icon={faCopy} size="1x" /> icon next to a journey to make a private copy of that journey, which you can then edit.</p>
 <br />
-    {publicJourneys.length > 0 && publicJourneys.map(journey => 
+    {publicJourneys.length > 0 && sortedPublicJourneys.map(journey => 
       <p className="font-semibold"> <Link href="/journeys/[id]/" as={`/journeys/${journey._id}/`} legacyBehavior>{journey.name}</Link> <FontAwesomeIcon className="ml-5 cursor-pointer" icon={faCopy} size="1x" onClick={() => handleCopyPublic(journey._id)} /></p>
     )}
       </div>
