@@ -387,7 +387,7 @@ const JourneyPage = ({ user, journey }) => {
                           />}                                              
 
                           <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                            <Link href="/[id]/editPoint" as={`/${point._id}/editPoint`} legacyBehavior>
+                            <Link href="/journeys/[id]/editPoint" as={`/journeys/${point._id}/editPoint`} legacyBehavior>
                               <FontAwesomeIcon icon={faEdit} size="2x" />
                             </Link>
                             <FontAwesomeIcon className="ml-5" icon={faTrash} size="2x" onClick={() => handleDeletePoint(point._id)} />
@@ -426,7 +426,7 @@ const JourneyPage = ({ user, journey }) => {
                       />
                     }
                       <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                        <Link href="/[id]/editPoint" as={`/${journey.points[currentSlideshowPoint]._id}/editPoint`} legacyBehavior>
+                        <Link href="/journeys/[id]/points/[id]/editPoint" as={`/journeys/${journey._id}/points/${journey.points[currentSlideshowPoint]._id}/editPoint`} legacyBehavior>
                           <FontAwesomeIcon icon={faEdit} size="2x" />
                         </Link>
                         <FontAwesomeIcon className="ml-5" icon={faTrash} size="2x" onClick={() => handleDeletePoint(journey.points[currentSlideshowPoint]._id)} />

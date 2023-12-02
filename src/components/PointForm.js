@@ -4,7 +4,7 @@ import { mutate } from 'swr'
 import LocationExplanation from '@/components/LocationExplanation'
 import EmbedStreetView from './EmbedStreetView'
 
-const PointForm = ({ formId, pointForm, forNewPoint = true }) => {
+const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
   const router = useRouter()
   const contentType = 'application/json'
   const [errors, setErrors] = useState({})
@@ -40,8 +40,8 @@ const PointForm = ({ formId, pointForm, forNewPoint = true }) => {
 
       const { data } = await res.json()
   
-      mutate(`/api/points/${id}`, data, false) // Update the local data without a revalidation
-      router.push(`/${data._id}`)
+     // mutate(`/api/journeys/${id}`, data, false) // Update the local data without a revalidation
+      router.push(`/journeys/${journeyId}`)
     } catch (error) {
       setMessage('Failed to update location')
     }
