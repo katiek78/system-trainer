@@ -6,6 +6,10 @@
     flex-grow: 1;  
 }
 
+.point-card-big {
+    width:90vw;
+}
+
 .point-name {
     flex: 1;
     flex-shrink: 0;

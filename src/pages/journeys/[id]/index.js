@@ -403,6 +403,7 @@ const JourneyPage = ({ user, journey }) => {
                     <p className="point-name text-center h-12 whitespace-normal">{journey.points[currentSlideshowPoint].name}</p>
                     <button onClick={handlePrevious}>Previous</button>   <button onClick={handleNext}>Next</button>
                     <div className="street-view-container relative w-max">
+                    {journey.points[currentSlideshowPoint].location && 
                       <EmbedStreetView
                         width={width}
                         height={height}
@@ -411,6 +412,7 @@ const JourneyPage = ({ user, journey }) => {
                         pitch={journey.points[currentSlideshowPoint].pitch || 0}
                         fov={journey.points[currentSlideshowPoint].fov || 100}
                       />
+                    }
                       <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                         <Link href="/[id]/editPoint" as={`/${journey.points[currentSlideshowPoint]._id}/editPoint`} legacyBehavior>
                           <FontAwesomeIcon icon={faEdit} size="2x" />
