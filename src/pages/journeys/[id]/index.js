@@ -20,11 +20,12 @@ const JourneyPage = ({user, journey}) => {
     const [message, setMessage] = useState('')
     
     const [isListView, setIsListView] = useState(true);
+    const [currentSlideshowPoint, setCurrentSlideshowPoint] = useState(0);
     const [isEditable, setIsEditable] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
    
     const [journeyForm, setJourneyForm] = useState({})
-    const [pointForm, setPointForm] = useState({})
+    // const [pointForm, setPointForm] = useState({})
     // const [importPointsForm, setImportPointsForm] = useState({imageSetFrom: '', overwrite: false})
     // const [populateForm, setPopulateForm] = useState({     
     //   setType: 'other'      
@@ -288,7 +289,40 @@ console.log(journey)
     //   setMessage('Failed to save image')
     // }
 
+   const handleSlideshow = () => {
+    setIsListView(false);
+    setCurrentSlideshowPoint(0);
+   }
+
+   const handleGallery = () => {
+    setIsListView(true);   
+   }
    
+   const handlePrevious = () => {
+    setCurrentSlideshowPoint(currentSlideshowPoint > 0 ? currentSlideshowPoint - 1 : 0);
+   }
+
+   const handleNext = () => {
+    setCurrentSlideshowPoint(currentSlideshowPoint < journey.points.length - 1 ? currentSlideshowPoint + 1 : journey.points.length - 1);
+   }
+
+
+   const mql = window.matchMedia('(max-width: 600px)');
+   const mobileView = mql.matches;
+   const mql2 = window.matchMedia('(min-width: 600px)');
+   const midView = mql2.matches;
+   const mql3 = window.matchMedia('(min-width: 1000px)');
+   const largeView = mql3.matches;
+
+
+   let width = 0, height = 0;
+   if (mobileView) {
+       width = 300, height = 200;
+   } else if (largeView) {
+       width = 900, height = 500;
+   } else {
+       width = 400, height = 300;
+   }
 
     return(
  <>
@@ -304,10 +338,22 @@ console.log(journey)
     <div class='journey-btn-container'>
         <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>
         <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Add a location</button>
-        </Link>        
+        </Link>       
+        {journey.points.length > 0 ? 
+           isListView ? 
+            <button onClick={handleSlideshow} className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Slideshow</button>           
+          
+            :  <button onClick={handleGallery} className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Gallery</button>
+          
+          : <></>} 
+             {/* <Link href="/journeys/[id]/view" as={`/${journey.points[0]._id}/view`} legacyBehavior> */}
+              {/* </Link> */}
       </div>
 
   <div className="relative w-full overflow-hidden py-2 md:py-4 lg:py-5 px-2 lg:px-5 rounded bg-white dark:bg-slate-800" style={{ minHeight: '400px' }}>
+
+{isListView ? 
+<>
   <h2 className="mb-5 text-lg md:text-2xl lg:text-2xl font-semibold">Locations:</h2>
   <div className="p-2 lg:p-5 flex flex-wrap justify-center">
     {journey.points?.map(point => (
@@ -341,8 +387,40 @@ console.log(journey)
     <FontAwesomeIcon className="cursor-pointer bg-gray-200 rounded p-10 dark:bg-black" icon={faPlus} size="5x" />
     </Link>
     </div>
-    
-  </div>
+       
+  </div></>
+  : 
+ 
+  <div className="p-2 lg:p-5 flex flex-wrap justify-center">
+  <div className="point-card-container flex justify-center">
+      <div className="point-card-big flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300" key={journey.points[currentSlideshowPoint]._id}>
+      <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
+          <p className="point-name max-w-xs text-center h-12 whitespace-normal">{journey.points[currentSlideshowPoint].name}</p>
+          <button onClick={handlePrevious}>Previous</button>   <button onClick={handleNext}>Next</button> 
+          <div className="street-view-container relative w-max">
+            <EmbedStreetView
+              width={width}
+              height={height}
+              location={journey.points[currentSlideshowPoint].location}
+              heading={journey.points[currentSlideshowPoint].heading || 90}
+              pitch={journey.points[currentSlideshowPoint].pitch || 0}
+              fov={journey.points[currentSlideshowPoint].fov || 100}
+            />
+            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+              <Link href="/[id]/editPoint" as={`/${journey.points[currentSlideshowPoint]._id}/editPoint`} legacyBehavior>
+                <FontAwesomeIcon icon={faEdit} size="2x" />
+              </Link>
+              <FontAwesomeIcon className="ml-5" icon={faTrash} size="2x" onClick={() => handleDeletePoint(journey.points[currentSlideshowPoint]._id)} />          
+            </div>
+</div>
+          </div>
+        </div>
+        </div>
+    </div>
+ 
+  }
+
+
 </div>
 
 
