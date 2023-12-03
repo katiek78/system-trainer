@@ -12,7 +12,7 @@ import LogEntry from '@/models/LogEntry'
 
 
 const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
-console.log(logEntries)
+
     const [message, setMessage] = useState('')
     const contentType = 'application/json'
     const router = useRouter();
@@ -51,7 +51,7 @@ console.log(logEntries)
         }
     }
 
-
+    const sortedLogEntries = logEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
 
     return (
         <>
@@ -105,7 +105,7 @@ console.log(logEntries)
       </tr>
     </thead>
     <tbody>
-      {logEntries.map(entry => (
+      {sortedLogEntries.map(entry => (
         <tr key={entry._id}>
           <td className="border border-gray-400 px-4 py-2">{formatDate(entry.entryDate)}</td>
           <td className="border border-gray-400 px-4 py-2">{entry.discipline}</td>

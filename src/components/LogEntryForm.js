@@ -30,8 +30,10 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
   const contentType = 'application/json'
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
-  console.log("here")
-  console.log(journeys)
+
+  const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
+  const sortedPublicJourneys = publicJourneys.sort((a, b) => a.name.localeCompare(b.name));
+
 
   const [form, setForm] = useState({
     entryDate: forNewEntry ? getTodayDate() : logEntryForm.entryDate,    
@@ -39,9 +41,10 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
     score: logEntryForm.score,
     correct: logEntryForm.correct,
     time: logEntryForm.time || '',
-    journey: logEntryForm.journey || (journeys ? journeys[0]._id : ''),
+    journey: logEntryForm.journey || (journeys ? sortedJourneys[0]._id : ''),
     notes: logEntryForm.notes,
   })
+
 
 
   /* The PUT method edits an existing entry in the mongodb database. */
@@ -195,11 +198,12 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
         <label htmlFor="journey">Journey</label>
         <select className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"       
           name="journey"
-          value={form.journey ||  (journeys ? journeys[0]._id : '')}
+          value={form.journey ||  (journeys ? sortedJourneys[0]._id : '')}
           onChange={handleChange}          
           required
                 >
-                {journeys && journeys.map(j => <option value={j._id}>{j.name}</option>)}            
+                {journeys && sortedJourneys.map(j => <option value={j._id}>{j.name}</option>)}            
+                {publicJourneys && sortedPublicJourneys.map(j => <option value={j._id}>{j.name}</option>)}            
         <option value="other">other</option>
         </select> 
 

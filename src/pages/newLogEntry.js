@@ -8,8 +8,7 @@ const NewLogEntryPage = ({user, journeys, publicJourneys}) => {
     const logEntryForm = {
         notes: ''
     }
-console.log("tomato")
-  console.log(journeys);
+
 
     return(
  <>
