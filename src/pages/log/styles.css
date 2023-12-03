@@ -59,19 +59,38 @@ table.responsive-table {
         content: "Notes";
         font-weight: bold;
       }
+      table.responsive-table td:nth-child(8) {
+       border-top:none;
+      }
 
-    /* Targeting specific cells for icons */
+       /* Targeting specific cells for icons */
   table.responsive-table td.icon-cell {
     flex: 1; /* Each icon takes up equal space */
     text-align: center; /* Center align the icons */
     padding: 12px; /* Increase padding for larger appearance */
     background-color: #FFD8B7; /* Lighter shade of orange or coral */
-    border-radius: 8px; /* Optional: Add border-radius for visual appeal */
+    border-radius: 8px; 
     margin-right: 10px; /* Adjust margin as needed */
+    font-size:2em;
   }
 
   /* Clear the margin for the last cell */
   table.responsive-table td.icon-cell:last-child {
     margin-right: 0;
+    border-top:none;
   }
+
+  /* Ensure icons appear side by side */
+  table.responsive-table tr td.icon-cell {
+    display: inline-block;
+    width: 48%; /* Adjust the width for better placement */
+    box-sizing: border-box; /* Include padding in the width */
+  }
+
+        /* Text color adjustments for dark mode */
+    @media (prefers-color-scheme: dark) {
+        table.responsive-table {
+        color: #222; /* Set darker text color in dark mode */
+        }
+           }
   }
