@@ -4,11 +4,12 @@ import dbConnect from "@/lib/dbConnect";
 import Link from "next/link";
 import Journey from "@/models/Journey";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import LogEntry from '@/models/LogEntry'
+import './styles.css';
 
 
 const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
@@ -40,6 +41,8 @@ console.log(logEntries)
       }
       };
 
+   
+
     const handleDelete = async (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this entry?');
         if (confirmed) {
@@ -60,7 +63,7 @@ console.log(logEntries)
 
     return (
         <>
-            <div className="z-10 justify-between font-mono text-lg max-w-5xl" style={{ '@media (max-width: 768px)': { maxWidth: '100%' } }}>
+            <div className="z-10 justify-between font-mono text-lg max-w-5xl" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
                 <h1 className="py-2 font-mono text-4xl">Training log</h1>
 
                 <br />
@@ -76,7 +79,7 @@ console.log(logEntries)
             </div>
             <div>{message}</div>
             <br />
-            <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
+            <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
                 <h2 className="text-2xl font-semibold">My log entries</h2>
 
                 <br />
@@ -96,7 +99,7 @@ console.log(logEntries)
           </div>
 
                 
-  <table className="border-collapse border w-full">
+  <table className="border-collapse border w-full responsive-table">
     <thead>
       <tr className="bg-gray-200">
         <th className="border border-gray-400 px-4 py-2">Date</th>
@@ -106,20 +109,30 @@ console.log(logEntries)
         <th className="border border-gray-400 px-4 py-2">Time</th>
         <th className="border border-gray-400 px-4 py-2">Journey</th>
         <th className="border border-gray-400 px-4 py-2">Notes</th>
-        <th className="border border-gray-400 px-4 py-2"></th>
+        <th className="border lg:border-gray-400 px-4 py-2"></th>
+        <th className="border lg:border-gray-400 px-4 py-2"></th>
       </tr>
     </thead>
     <tbody>
       {sortedLogEntries.map(entry => (
         <tr key={entry._id}>
-          <td className="border border-gray-400 px-4 py-2">{formatDate(entry.entryDate)}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.discipline}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.score}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.correct}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.time}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.journeyName}</td>
-          <td className="border border-gray-400 px-4 py-2">{entry.notes}</td>
-          <td className="border border-gray-400 px-4 py-2">
+          <td className="lg:border border-gray-400 px-4 py-2">{formatDate(entry.entryDate)}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.discipline}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.score}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.correct}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.time}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.journeyName}</td>
+          <td className="lg:border border-gray-400 px-4 py-2">{entry.notes}</td>
+          <td className="icon-cell lg:border border-gray-400 px-4 py-2">
+          <Link href="/log/[id]/editEntry" as={`/log/${entry._id}/editEntry`} legacyBehavior>
+            <FontAwesomeIcon
+              className="cursor-pointer"             
+              icon={faEdit}
+              size="1x"
+            />
+            </Link>
+          </td>
+          <td className="icon-cell lg:border border-gray-400 px-4 py-2">
             <FontAwesomeIcon
               className="cursor-pointer"
               onClick={() => handleDelete(entry._id)}
@@ -226,7 +239,7 @@ export const getServerSideProps = withPageAuthRequired({
 
         return {
             props: {
-                user: (auth0User).user,                
+                user: user,                
                 logEntries: enhancedLogEntries,
                 currentPage,
                 totalPages: Math.ceil(totalNumberOfEntries / entriesPerPage),   

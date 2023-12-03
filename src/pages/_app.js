@@ -29,6 +29,7 @@ import { UserProvider } from '@auth0/nextjs-auth0/client';
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGear } from '@fortawesome/free-solid-svg-icons'
+import './styles.css';
 // import { Main } from '../app/components/Main'
 
 export default function MyApp({ Component, pageProps }) {
@@ -43,7 +44,7 @@ export default function MyApp({ Component, pageProps }) {
 
   }
 
-  return <UserProvider><main className="flex flex-col min-h-screen items-center p-24"><nav className="justify-between text-lg font-mono bg-white dark:bg-gray-900 fixed w-full z-20 top-0 left-0 border-b border-gray-200 dark:border-gray-600">
+  return <UserProvider><main className="main-div flex flex-col min-h-screen items-center"><nav className="justify-between text-lg font-mono bg-white dark:bg-gray-900 fixed w-full z-20 top-0 left-0 border-b border-gray-200 dark:border-gray-600">
   <div onClick={toggleNavBar} className="max-w-screen-xl flex flex-wrap justify-items-end mx-auto p-4">
     <div className="block w-full md:block md:w-auto" id="navbar-default">
       <ul className="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">

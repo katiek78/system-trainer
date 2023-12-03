@@ -22,6 +22,32 @@ export default async function handler(req, res) {
       }
       break
 
+      case 'PUT' /* Edit a model by an entry ID */:
+        try {      
+          const logEntry = await LogEntry.findOneAndUpdate(
+            { _id: id },
+            { $set: { 
+              date: req.body.date,
+              discipline: req.body.discipline,
+              journey: req.body.journey,
+              score: req.body.score,
+              correct: req.body.correct,
+              time: req.body.time,
+              notes: req.body.notes
+            }
+        }, {
+            new: true,
+            runValidators: true,
+          })        
+          if (!logEntry) {
+            return res.status(400).json({ success: false })
+          }
+          res.status(200).json({ success: true, data: logEntry })
+        } catch (error) {
+          res.status(400).json({ success: false })
+        }
+        break
+
     // case 'PUT' /* Edit a model by its ID */:        
     //     console.log(req.body)
     //   try {

@@ -1,3 +1,15 @@
+/* Default padding for larger screens */
+.main-div {
+  padding: 24px; /* or any padding value you prefer */
+}
+
+/* Media query for smaller screens (adjust max-width as needed) */
+@media (max-width: 768px) {
+  .main-div {
+    padding: 12px; /* Adjust this value for less padding on mobile */
+  }
+}
+
 .animation {
     width: 80px;
     height: 80px;

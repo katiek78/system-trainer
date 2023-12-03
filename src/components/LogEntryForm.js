@@ -31,12 +31,22 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
 
+  const formatDate = (dateString) => {
+    try {
+      const formattedDate = new Date(dateString).toISOString().split('T')[0];
+      return formattedDate;
+    }
+    catch {
+      return dateString;
+    }
+    };
+
   const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
   const sortedPublicJourneys = publicJourneys.sort((a, b) => a.name.localeCompare(b.name));
 
 
   const [form, setForm] = useState({
-    entryDate: forNewEntry ? getTodayDate() : logEntryForm.entryDate,    
+    entryDate: forNewEntry ? getTodayDate() : formatDate(logEntryForm.entryDate),    
     discipline: logEntryForm.discipline || ML_DISCIPLINES[0],
     score: logEntryForm.score,
     correct: logEntryForm.correct,
@@ -70,7 +80,7 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
       const { data } = await res.json()
 
       mutate(`/api/logEntries/${id}`, data, false) // Update the local data without a revalidation
-      router.push({pathname: `/logEntries/${id}`})
+      router.push({pathname: `/log`})
     } catch (error) {
       setMessage('Failed to update log entry')
     }

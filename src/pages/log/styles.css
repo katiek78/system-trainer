@@ -1,0 +1,77 @@
+/* Default styles for larger screens */
+table.responsive-table {
+    width: 100%;
+    border:none;
+  }
+
+/* Styles for smaller screens */
+@media (max-width: 768px) {
+    table.responsive-table thead {
+      display: none; /* Hide table header on small screens */
+    }
+  
+    table.responsive-table tbody tr {
+      display: block;
+      /* border: 1px solid #ccc; */
+      margin-bottom: 10px;
+      background-color: #FFD8B7;
+      border-radius: 8px;
+    }
+  
+    table.responsive-table td {
+      display: flex;
+      flex-direction: row;
+      padding: 8px;
+      justify-content: space-between;
+      border-top: 1px solid #777; 
+    }
+  
+    table.responsive-table td:nth-child(1) {
+       border:none;
+      }
+
+    /* Manually specify data labels */
+    table.responsive-table td:nth-child(1):before {
+      content: "Date";
+      font-weight: bold;
+    }
+    table.responsive-table td:nth-child(2):before {
+      content: "Discipline";
+      font-weight: bold;
+    }
+    table.responsive-table td:nth-child(3):before {
+        content: "Score";
+        font-weight: bold;
+      }
+      table.responsive-table td:nth-child(4):before {
+        content: "Correct";
+        font-weight: bold;
+      }
+      table.responsive-table td:nth-child(5):before {
+        content: "Time";
+        font-weight: bold;
+      }
+      table.responsive-table td:nth-child(6):before {
+        content: "Journey";
+        font-weight: bold;
+      }
+      table.responsive-table td:nth-child(7):before {
+        content: "Notes";
+        font-weight: bold;
+      }
+
+    /* Targeting specific cells for icons */
+  table.responsive-table td.icon-cell {
+    flex: 1; /* Each icon takes up equal space */
+    text-align: center; /* Center align the icons */
+    padding: 12px; /* Increase padding for larger appearance */
+    background-color: #FFD8B7; /* Lighter shade of orange or coral */
+    border-radius: 8px; /* Optional: Add border-radius for visual appeal */
+    margin-right: 10px; /* Adjust margin as needed */
+  }
+
+  /* Clear the margin for the last cell */
+  table.responsive-table td.icon-cell:last-child {
+    margin-right: 0;
+  }
+  }
