@@ -59,11 +59,11 @@ console.log(logEntries)
         }
     }
 
-    const sortedLogEntries = logEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+    const sortedLogEntries = logEntries.sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
 
     return (
         <>
-            <div className="z-10 justify-between font-mono text-lg max-w-5xl" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
+            <div className="z-10 justify-between font-mono text-lg max-w-5xl">
                 <h1 className="py-2 font-mono text-4xl">Training log</h1>
 
                 <br />
