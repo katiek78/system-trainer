@@ -204,6 +204,7 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
                 >
                 {journeys && sortedJourneys.map(j => <option value={j._id}>{j.name}</option>)}            
                 {publicJourneys && sortedPublicJourneys.map(j => <option value={j._id}>{j.name}</option>)}            
+        <option value="no">no journey used</option>
         <option value="other">other</option>
         </select> 
 

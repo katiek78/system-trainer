@@ -12,7 +12,7 @@ import LogEntry from '@/models/LogEntry'
 
 
 const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
-
+console.log(logEntries)
     const [message, setMessage] = useState('')
     const contentType = 'application/json'
     const router = useRouter();
@@ -31,8 +31,13 @@ const LogPage = ({ user, logEntries, currentPage, totalPages }) => {
     }
 
     const formatDate = (dateString) => {
+      try {
         const formattedDate = new Date(dateString).toISOString().split('T')[0];
         return formattedDate;
+      }
+      catch {
+        return dateString;
+      }
       };
 
     const handleDelete = async (id) => {
@@ -200,6 +205,8 @@ export const getServerSideProps = withPageAuthRequired({
       })
 
       const enhancedLogEntries = logEntries.map(e => {
+        if (e.journey === 'other') return {...e, journeyName: 'other'}
+        if (e.journey === 'no') return {...e, journeyName: 'no journey'}
         const journeyId = e.journey
         let journeyName;
         for (let i = 0; i < journeys.length; i++) {
