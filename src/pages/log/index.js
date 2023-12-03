@@ -42,6 +42,13 @@ console.log(logEntries)
       };
 
    
+      const getPageLink = (page) => {
+        const queryParams = { ...router.query, page };
+        return {
+          pathname: router.pathname,
+          query: queryParams,
+        };
+      };
 
     const handleDelete = async (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this entry?');
@@ -59,7 +66,7 @@ console.log(logEntries)
         }
     }
 
-    const sortedLogEntries = logEntries.sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
+   // const sortedLogEntries = logEntries.sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
 
     return (
         <>
@@ -82,6 +89,7 @@ console.log(logEntries)
             <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
                 <h2 className="text-2xl font-semibold">My log entries</h2>
 
+              
                 <br />
                     {logEntries.length === 0 && 
                     <p>You have not added any entries to your training log yet.</p>
@@ -91,7 +99,7 @@ console.log(logEntries)
 
                         <div className="flex justify-center gap-2 mt-2 mb-4">
             {pageNumbers.length > 1 && pageNumbers.map(number => (
-                <Link key={number} href={`/log?page=${number}`} 
+                <Link key={number} href={getPageLink(number)}
                 className={`px-4 py-2 border border-gray-300 text-gray-700 rounded-md ${
                 currentPage === number ? 'bg-gray-800 text-white' : ''
       }`}>{number}</Link>
@@ -102,19 +110,19 @@ console.log(logEntries)
   <table className="border-collapse border w-full responsive-table">
     <thead>
       <tr className="bg-gray-200">
-        <th className="border border-gray-400 px-4 py-2">Date</th>
-        <th className="border border-gray-400 px-4 py-2">Discipline</th>
-        <th className="border border-gray-400 px-4 py-2">Score</th>
-        <th className="border border-gray-400 px-4 py-2">Correct</th>
-        <th className="border border-gray-400 px-4 py-2">Time</th>
-        <th className="border border-gray-400 px-4 py-2">Journey</th>
-        <th className="border border-gray-400 px-4 py-2">Notes</th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=entryDate`}>Date</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=discipline`}>Discipline</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=score`}>Score</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=correct`}>Correct</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=time`}>Time</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=journey`}>Journey</Link></th>
+        <th className="border border-gray-400 px-4 py-2"><Link href={`/log?sortBy=notes`}>Notes</Link></th>
         <th className="border lg:border-gray-400 px-4 py-2"></th>
         <th className="border lg:border-gray-400 px-4 py-2"></th>
       </tr>
     </thead>
     <tbody>
-      {sortedLogEntries.map(entry => (
+      {logEntries.map(entry => (
         <tr key={entry._id}>
           <td className="lg:border border-gray-400 px-4 py-2">{formatDate(entry.entryDate)}</td>
           <td className="lg:border border-gray-400 px-4 py-2">{entry.discipline}</td>
@@ -158,11 +166,11 @@ export default LogPage;
 
 export const getServerSideProps = withPageAuthRequired({
     getServerSideProps: async ({ req, res, query }) => {
-        const { page } = query; // Get the current page from query parameters
+        const { page = 1, sortBy = 'entryDate' } = query; // Get the current page from query parameters
         const auth0User = await getSession(req, res);
         const db = await dbConnect()
         const user = (auth0User).user
-        const currentPage = parseInt(page) || 1;
+        const currentPage = parseInt(page);
         const entriesPerPage = 20;
 
         //fetch all training log entries (Eventually will need paginations)
@@ -172,7 +180,7 @@ export const getServerSideProps = withPageAuthRequired({
         const fetchLogEntries = async (userId, page, limit) => {
             try {
             const result2 = await LogEntry.find({ userId })
-                .sort({ entryDate: -1, _id: -1 }) // Sort by entryDate in descending order to get the latest entries first
+                .sort({ [sortBy]: sortBy === 'entryDate' ? -1 : 1, _id: -1 }) // Sort by chosen heading
                 .skip((page - 1) * limit) // Skip records based on page number
                 .limit(limit);
 
