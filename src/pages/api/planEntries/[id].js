@@ -36,7 +36,7 @@ export default async function handler(req, res) {
             new: true,
             runValidators: true,
           })        
-          if (!logEntry) {
+          if (!planEntry) {
             return res.status(400).json({ success: false })
           }
           res.status(200).json({ success: true, data: planEntry })
