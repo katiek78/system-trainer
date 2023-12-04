@@ -1,0 +1,76 @@
+/* Default styles for larger screens */
+table.responsive-table {
+    width: 100%;
+    border:none;
+  }
+
+/* Styles for smaller screens */
+@media (max-width: 768px) {
+    table.responsive-table thead {
+      display: none; /* Hide table header on small screens */
+    }
+  
+    table.responsive-table tbody tr {
+      display: block;
+      /* border: 1px solid #ccc; */
+      margin-bottom: 10px;
+      background-color: #FFFFCC;
+      border-radius: 8px;
+    }
+  
+    table.responsive-table td {
+      display: flex;
+      flex-direction: row;
+      padding: 8px;
+      justify-content: space-between;
+      border-top: 1px solid #777; 
+    }
+  
+    table.responsive-table td:nth-child(1) {
+       border:none;
+      }
+
+    /* Manually specify data labels */
+    table.responsive-table td:nth-child(1):before {
+      content: "Discipline";
+      font-weight: bold;
+    }
+    table.responsive-table td:nth-child(2):before {
+      content: "Frequency";
+      font-weight: bold;
+    }
+      table.responsive-table td:nth-child(4) {
+       border-top:none;
+      }
+
+       /* Targeting specific cells for icons */
+  table.responsive-table td.icon-cell {
+    flex: 1; /* Each icon takes up equal space */
+    text-align: center; /* Center align the icons */
+    padding: 12px; /* Increase padding for larger appearance */
+    background-color: #FFFFCC; /* Light yellow */
+    border-radius: 8px; 
+    margin-right: 10px; /* Adjust margin as needed */
+    font-size:2em;
+  }
+
+  /* Clear the margin for the last cell */
+  table.responsive-table td.icon-cell:last-child {
+    margin-right: 0;
+    border-top:none;
+  }
+
+  /* Ensure icons appear side by side */
+  table.responsive-table tr td.icon-cell {
+    display: inline-block;
+    width: 48%; /* Adjust the width for better placement */
+    box-sizing: border-box; /* Include padding in the width */
+  }
+
+        /* Text color adjustments for dark mode */
+    @media (prefers-color-scheme: dark) {
+        table.responsive-table {
+        color: #222; /* Set darker text color in dark mode */
+        }
+           }
+  }

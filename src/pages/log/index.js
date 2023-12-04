@@ -88,13 +88,13 @@ console.log(logEntries)
             <br />
             <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
                 <h2 className="text-2xl font-semibold">My log entries</h2>
-
+                {logEntries?.length > 0 && <h3>Click a column header to sort your entries.</h3>}
               
-                <br />
-                    {logEntries.length === 0 && 
+                
+                    {logEntries?.length === 0 && 
                     <p>You have not added any entries to your training log yet.</p>
                     }
-                    {logEntries.length > 0 && (
+                    {logEntries?.length > 0 && (
                         <>
 
                         <div className="flex justify-center gap-2 mt-2 mb-4">
