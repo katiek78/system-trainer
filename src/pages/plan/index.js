@@ -8,6 +8,7 @@ import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import PlanEntry from "@/models/PlanEntry";
+import SmallFrequencySpecific from "@/components/SmallFrequencySpecific";
 import './styles.css';
 
 
@@ -17,8 +18,8 @@ const PlanPage = ({ user, planEntries }) => {
     const contentType = 'application/json'
     const router = useRouter();
 
-    const getFormattedFrequencySpecifics = (str) => {
-        return str;
+    const getFormattedFrequencySpecifics = (arr) => {
+        return arr.join(",");
       }
     
       const getFormattedFrequencyType = (str) => {        
@@ -27,7 +28,8 @@ const PlanPage = ({ user, planEntries }) => {
         return 'month';
       }
     
-console.log(planEntries)
+      const weekdaysOrder = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+
     const handleDelete = async (id) => {
         const confirmed = window.confirm('Are you sure you want to delete this entry?');
         if (confirmed) {
@@ -87,7 +89,9 @@ console.log(planEntries)
         <tr key={entry._id}>          
           <td className="lg:border border-gray-400 px-4 py-2">{entry.discipline}</td>
           <td className="lg:border border-gray-400 px-4 py-2">{entry.frequency} per {getFormattedFrequencyType(entry.frequencyType)}</td>          
-          <td className="lg:border border-gray-400 px-4 py-2">{getFormattedFrequencySpecifics(entry.frequencySpecifics)}</td>     
+          <td className="lg:border border-gray-400 px-4 py-2"><div className=" flex gap-2">{entry.frequencySpecifics
+            .sort((a, b) => weekdaysOrder.indexOf(a) - weekdaysOrder.indexOf(b))
+            .map((el, index) => <SmallFrequencySpecific key={index} day={el} />)}</div></td>     
           <td className="icon-cell lg:border border-gray-400 px-4 py-2">
           <Link href="/plan/[id]/editEntry" as={`/plan/${entry._id}/editEntry`} legacyBehavior>
             <FontAwesomeIcon
