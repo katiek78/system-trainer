@@ -149,7 +149,7 @@ const PlanPage = ({ user, planEntries }) => {
                         <>
                         
                 
-  <table className="border-collapse border w-full responsive-table">
+  <table className="border-collapse border w-full responsive-table-plan">
     <thead>
       <tr className="bg-gray-200">
         <th className="border border-gray-400 px-4 py-2">Discipline</th>

@@ -1,24 +1,24 @@
 /* Default styles for larger screens */
-table.responsive-table {
+table.responsive-table-plan {
     width: 100%;
-    border:none;
+    border: none;
   }
 
 /* Styles for smaller screens */
 @media (max-width: 768px) {
-    table.responsive-table thead {
+    table.responsive-table-plan thead {
       display: none; /* Hide table header on small screens */
     }
   
-    table.responsive-table tbody tr {
+    table.responsive-table-plan tbody tr {
       display: block;
-      /* border: 1px solid #ccc; */
-      margin-bottom: 10px;
+      border: 2px solid #ccc;
+      margin-bottom: 12px;
       background-color: #FFFFCC;
       border-radius: 8px;
     }
   
-    table.responsive-table td {
+    table.responsive-table-plan td {
       display: flex;
       flex-direction: row;
       padding: 8px;
@@ -26,25 +26,25 @@ table.responsive-table {
       border-top: 1px solid #777; 
     }
   
-    table.responsive-table td:nth-child(1) {
+    table.responsive-table-plan td:nth-child(1) {
        border:none;
       }
 
     /* Manually specify data labels */
-    table.responsive-table td:nth-child(1):before {
+    table.responsive-table-plan td:nth-child(1):before {
       content: "Discipline";
       font-weight: bold;
     }
-    table.responsive-table td:nth-child(2):before {
+    table.responsive-table-plan td:nth-child(2):before {
       content: "Frequency";
       font-weight: bold;
     }
-      table.responsive-table td:nth-child(4) {
+      table.responsive-table-plan td:nth-child(4) {
        border-top:none;
       }
 
        /* Targeting specific cells for icons */
-  table.responsive-table td.icon-cell {
+  table.responsive-table-plan td.icon-cell {
     flex: 1; /* Each icon takes up equal space */
     text-align: center; /* Center align the icons */
     padding: 12px; /* Increase padding for larger appearance */
@@ -55,13 +55,13 @@ table.responsive-table {
   }
 
   /* Clear the margin for the last cell */
-  table.responsive-table td.icon-cell:last-child {
+  table.responsive-table-plan td.icon-cell:last-child {
     margin-right: 0;
     border-top:none;
   }
 
   /* Ensure icons appear side by side */
-  table.responsive-table tr td.icon-cell {
+  table.responsive-table-plan tr td.icon-cell {
     display: inline-block;
     width: 48%; /* Adjust the width for better placement */
     box-sizing: border-box; /* Include padding in the width */
@@ -69,7 +69,7 @@ table.responsive-table {
 
         /* Text color adjustments for dark mode */
     @media (prefers-color-scheme: dark) {
-        table.responsive-table {
+        table.responsive-table-plan {
         color: #222; /* Set darker text color in dark mode */
         }
            }

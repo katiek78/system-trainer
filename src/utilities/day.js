@@ -4,7 +4,7 @@ export const DAY_COLOURS = {
     'W' : 'yellow',
     'Th' : 'green',
     'F' : '#8888cd',
-    'Sa' : 'purple',
+    'Sa' : 'magenta',
     'Su' : 'pink'
 }
 
