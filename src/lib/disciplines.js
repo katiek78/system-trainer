@@ -1,2 +1,48 @@
 export const ML_DISCIPLINES = ['ML Cards', 'ML Images', 'ML International Names', 'ML Names', 'ML Numbers', 'ML Words'];
-export const TRADITIONAL_DISCIPLINES = ['Speed Cards', '5-minute Binary', '5-minute Names & Faces', '5-minute Numbers', '5-minute Words']
+export const TRADITIONAL_DISCIPLINES = ['Speed Cards',
+'5-minute Binary',
+'5-minute Names & Faces',
+'5-minute Numbers',
+'5-minute Dates',
+'5-minute Words',
+'5-minute Images',
+'Abstract Images',
+'10-minute Cards',
+'30-minute Cards',
+'Hour Cards',
+'15-minute Numbers',
+'30-minute Numbers',
+'Hour Numbers',
+'15-minute Words',
+'30-minute Binary',
+'15-minute Names & Faces',
+'Spoken Numbers (100)',
+'Spoken Numbers (200)',
+'Spoken Numbers (300)',
+'Spoken Numbers (550)'
+];
+
+export const ML_DISCIPLINES_WITH_TIME = [{ name: 'ML Cards', time: 5 }, { name: 'ML Images', time: 5 }, { name: 'ML International Names', time: 5 }, { name: 'ML Names', time: 5 }, { name: 'ML Numbers', time: 5 }, { name: 'ML Words', time: 5 }];
+export const TRADITIONAL_DISCIPLINES_WITH_TIME = [
+    { name: 'Speed Cards', time: 10 },
+    { name: '5-minute Binary', time: 20 },
+    { name: '5-minute Names & Faces', time: 20 },
+    { name: '5-minute Numbers', time: 20 },
+    { name: '5-minute Dates', time: 20 },
+    { name: '5-minute Words', time: 20 },
+    { name: '5-minute Images', time: 20 },
+    { name: 'Abstract Images', time: 45 }, //check this
+    { name: '10-minute Cards', time: 40 },
+    { name: '30-minute Cards', time: 90 },
+    { name: 'Hour Cards', time: 180 },
+    { name: '15-minute Numbers', time: 45 },
+    { name: '30-minute Numbers', time: 90 },
+    { name: 'Hour Numbers', time: 180 },
+    { name: '15-minute Words', time: 55 },
+    { name: '30-minute Binary', time: 90 },
+    { name: '15-minute Names & Faces', time: 45 },
+    { name: 'Spoken Numbers (100)', time: 7 },
+    { name: 'Spoken Numbers (200)', time: 14 },
+    { name: 'Spoken Numbers (300)', time: 20 },
+    { name: 'Spoken Numbers (550)', time: 35 },
+];

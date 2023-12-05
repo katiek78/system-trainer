@@ -7,3 +7,5 @@ export const DAY_COLOURS = {
     'Sa' : 'purple',
     'Su' : 'pink'
 }
+
+export const WEEKDAYS = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];

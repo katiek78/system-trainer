@@ -17,6 +17,7 @@ export default async function handler(req, res) {
       }
       break
     case 'POST':      
+    console.log(req.body)
       try {
         const planEntry = await PlanEntry.create(
           req.body
@@ -26,8 +27,9 @@ export default async function handler(req, res) {
         res.status(400).json({ success: false })
       }
       break
-    default:
-      res.status(400).json({ success: false })
-      break
+ 
+   
+      default:
+        res.status(400).json({ success: false })        
   }
 }
