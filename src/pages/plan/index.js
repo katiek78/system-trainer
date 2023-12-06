@@ -161,7 +161,7 @@ console.log(planEntries)
                 {isAGButtonDisabled &&
                   <AutoGenerate formId='auto-generate-form' doesPlanExist={planEntries.length > 0} autoGenerateForm={autoGenerateForm} onCancelClick={handleCancelClick} onGenerate={handleGenerate} />                
                 }
-                <br /><br />
+                <br />
                     {planEntries?.length === 0 && 
                     <p>You have not added any entries to your training plan yet.</p>
                     }
@@ -239,7 +239,7 @@ console.log(planEntries)
                         className={`tabcontent ${activeTab === day ? 'active' : ''}`}
                         style={{ display: activeTab === day ? 'block' : 'none' }}
                       >
-                      {today === day && <p className="lg:text-4xl md:text-3xl sm:text-3xl font-bold">Today's plan:</p>}
+                      {today === day && <p className="lg:text-4xl md:text-3xl sm:text-3xl mt-3 font-bold">Today's plan:</p>}
               
                       
                       

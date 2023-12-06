@@ -1,5 +1,5 @@
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { mutate } from 'swr'
 import { ML_DISCIPLINES } from '@/lib/disciplines'; 
@@ -82,9 +82,9 @@ const PlanEntryForm = ({ userId, formId, planEntryForm, forNewEntry = true,  }) 
 
     let resetFrequencySpecifics = false;
 
-    if ((value === 'W' || value === 'M' || value === 'D') && form.frequencyType !== value) {
+    if (name === 'frequencyType' && (value === 'W' || value === 'M' || value === 'D') && form.frequencyType !== value) {
         resetFrequencySpecifics = true;
-    }
+    }    
 
     setForm({
       ...form,
@@ -97,6 +97,7 @@ const PlanEntryForm = ({ userId, formId, planEntryForm, forNewEntry = true,  }) 
   const formValidate = () => {
     let err = {}
     if (!form.discipline) err.discipline = 'Discipline is required'
+
    
     return err
   }
@@ -179,10 +180,18 @@ const handleAddSpecifics = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+    //let updatedFormData;
+    let { frequencySpecificsInput, ...updatedFormData } = form;
+
+    //Check and adjust frequency if needed
+    if (updatedFormData.frequencySpecifics.length !== updatedFormData.frequency) {
+      updatedFormData = { ...updatedFormData, frequency: form.frequencySpecifics.length}      
+      setForm(updatedFormData)
+    }
+   
     const errs = formValidate()
-    if (Object.keys(errs).length === 0) {
-      forNewEntry ? postData(form) : putData(form)
+    if (Object.keys(errs).length === 0) {   
+      forNewEntry ? postData(updatedFormData) : putData(updatedFormData)
     } else {
       setErrors({ errs })
     }
