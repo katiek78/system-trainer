@@ -74,3 +74,40 @@ table.responsive-table-plan {
         }
            }
   }
+
+  .tablinks {  
+    border: 1px solid #ccc;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    font-size: 24px;
+
+    
+  }
+
+  @media (max-width: 768px) {
+    .tablinks{
+      font-size:15px;
+      padding: 7px 13px;
+    }
+  }
+
+  
+  /* Change color of active tab */
+  .tablinks.active {
+    border-bottom: 5px solid #000;
+  }
+  
+  /* Hide all tab content by default */
+  .tabcontent {
+    display: none;
+  }
+  
+  /* Show the active tab content */
+  .tabcontent.active {
+    display: block;
+  }
+
+  .active-view {
+    border-bottom: 5px solid blue; /* Replace 'blue' with your desired border color */
+  }
