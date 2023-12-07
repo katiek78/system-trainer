@@ -79,6 +79,36 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     }
     }
 
+    const handleCopyPublic2 = async (id) => {
+      try {
+        // Send only the selected ImageSet ID to the server
+        const res = await fetch(`/api/imageSets/copy/${id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: user.sub }), // Include the userId in the request body
+        });
+    
+        if (!res.ok) {
+          throw new Error(res.status + ' when copying image set');
+        }
+    
+        // After the copying operation on the server, fetch the updated list of ImageSets
+        // const updatedImageSetListResponse = await ImageSet.find({ $or: [{ userId: null }, { userId: { $exists: false } }] }, { name: 1 });;
+        // const updatedImageSetList = await updatedImageSetListResponse.json();
+    
+        // // Use the updated ImageSet list on the client-side as needed
+        // console.log('Updated ImageSet list:', updatedImageSetList);
+    
+        // Perform any necessary UI updates with the updated ImageSet list
+        // For example, update the displayed list of ImageSets on the client-side
+        router.push({pathname: `/imageSets`})
+      } catch (error) {
+        setMessage('Failed to copy image set. ' + error);
+      }
+    };
+
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -109,7 +139,7 @@ const ImageSetsPage = ({user, imageSets, publicImageSets}) => {
     <p className="font-mono">There {publicImageSets.length === 1 ? 'is' : 'are'} {publicImageSets.length} public image {publicImageSets.length === 1 ? 'set' : 'sets'} available. Click the <FontAwesomeIcon icon={faCopy} size="1x" /> icon next to a set to make a private copy of that set, which you can then edit.</p>
 <br />
     {publicImageSets.length > 0 && publicImageSets.map(imageSet => 
-      <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> <FontAwesomeIcon className="ml-5 cursor-pointer" icon={faCopy} size="1x" onClick={() => handleCopyPublic(imageSet._id)} /></p>
+      <p className="font-semibold"> <Link href="/imageSets/[id]/" as={`/imageSets/${imageSet._id}/`} legacyBehavior>{imageSet.name}</Link> <FontAwesomeIcon className="ml-5 cursor-pointer" icon={faCopy} size="1x" onClick={() => handleCopyPublic2(imageSet._id)} /></p>
     )}
       </div>
   </div>

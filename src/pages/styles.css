@@ -3,6 +3,40 @@
   padding-top: 80px; /* or any padding value you prefer */
   padding-left: 30px;
   padding-right: 30px;
+  padding-bottom: 60px;
+  flex: 1;
+}
+
+
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 20px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* Media query for smaller screens */
+@media (max-width: 767px) {
+  .footer {
+    position: fixed;
+    bottom: 0;
+  }
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* Media query for smaller screens (adjust max-width as needed) */

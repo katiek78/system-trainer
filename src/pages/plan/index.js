@@ -141,7 +141,7 @@ console.log(planEntries)
                 <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
                     <h3 className="font-semibold">Plan your training</h3>
                     <p className="font-mono">Click 'Add entry' to plan your daily/weekly/monthly memory training. 
-                        You can also click 'Auto-generate' to create a training plan that fits the time you have available.</p>
+                        You can also click 'Auto-generate' to create a weekly training plan that fits the time you have available. It's also possible to edit your plan afterwards.</p>
                 </div>
             
 
