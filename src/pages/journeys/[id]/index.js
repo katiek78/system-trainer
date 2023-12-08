@@ -335,14 +335,15 @@ const JourneyPage = ({ user, journey }) => {
 
   return (
     <>
-      <div className="z-10 justify-between font-mono text-sm md:text-md lg:text-lg pl-2 md:pl-2 lg:pl-0">Journey:
-        <h1 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={journeyForm.name}></input> : journeyForm.name}
+      <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
+      <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">Journey: </h1>
+        <h2 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">{isEditable ? <input onChange={handleChangeTitle} className='text-2xl md:text-3xl lg:text-5xl ' style={{width:'90%'}} value={journeyForm.name}></input> : journeyForm.name}
           {isEditable ?
             <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleSubmitJourneyForm} icon={faCheck} size="1x" />
             : <> <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleToggleEditable} icon={faEdit} size="1x" />
               <FontAwesomeIcon className="hover:text-gray-700 hover:cursor-pointer ml-5" onClick={handleDelete} icon={faTrash} size="1x" />        </>
           }
-        </h1>
+        </h2>
 
         <div class='journey-btn-container'>
           <Link href="/journeys/[id]/new" as={`/journeys/${journey._id}/new`} legacyBehavior>

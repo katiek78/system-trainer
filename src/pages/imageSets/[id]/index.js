@@ -435,75 +435,11 @@ const handleSubmitImportPhonetics = async (e) => {
   e.preventDefault();
   
   
-//   //first, get imageSet being imported from and whole set we are importing to
-//     let imagesToImport, wholeSet;
+//   //first, get imageSet being imported from 
      const fromID = importImagesForm.imageSetFrom;
-
-//     try {
-//       const res = await fetch(`/api/imageSets/${fromID}`, {
-//         method: 'GET',
-//         headers: {
-//           Accept: contentType,
-//           'Content-Type': contentType,
-//         },
-//       })
-//       const data = await res.json();
-//       imagesToImport = data.data.images;
-
-//     } catch (error) {
-//       setMessage('Failed to import images. ' + error)
-//     }
-
-//     try {
-//       const res = await fetch(`/api/imageSets/${imageSet._id}`, {
-//         method: 'GET',
-//         headers: {
-//           Accept: contentType,
-//           'Content-Type': contentType,
-//         },
-//       })
-//       const data = await res.json();
-//       wholeSet = data.data;
-
-//     } catch (error) {
-//       setMessage('Failed to import images. ' + error)
-//     }
-              
-//     const changedImages = [];
-
-//     // console.log(imageSet.images[0]); //this one is the correct ID
-//     // console.log(allNames.images[0]) //they have different IDs?!!!
-// console.log(wholeSet.images);
-//     wholeSet.images.forEach((ANimage) => {
-//       const matchingImport = imagesToImport.find(
-//         (importedImage) => importedImage.phonetics === ANimage.phonetics
-//       );
-    
-//       if (matchingImport) {        
-//         if (importImagesForm.overwrite || ANimage.imageItem === '') {
-//        //   ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred, URL: matchingImport.URL};
-//        ANimage = {...ANimage, imageItem:matchingImport.imageItem, recentAttempt:matchingImport.recentAttempts, starred:matchingImport.starred}; //took out URL because of data
-//         }
-//         let newItemWithoutURL = { ...ANimage };
-//         delete newItemWithoutURL.URL;        
-//         changedImages.push(newItemWithoutURL); 
-//       }
-//     });
-
-//     console.log("here are the changes")
-//     console.log(changedImages) //this is all correct but obviously we are missing URLs so don't want to just overwrite images
     
     try {
          
-      // const res = await fetch(`/api/imageSets/${id}/${currentPage}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     Accept: contentType,
-      //     'Content-Type': contentType,
-      //   },
-      //   body: JSON.stringify({name: imageSet.name, images: changedImages}),
-      // })
-
       const res = await fetch(`/api/imageSets/${imageSet._id}/importImages`, {
         method: 'PUT',
         headers: {
@@ -519,51 +455,9 @@ const handleSubmitImportPhonetics = async (e) => {
       }
 
       const { data } = await res.json()
-
-      //update images locally (NOT WORKING)
-      // const res2 = await fetch(`/api/imageSets/${id}/${currentPage-1}`, {
-      //   method: 'GET',
-      //   headers: {
-      //     Accept: contentType,
-      //     'Content-Type': contentType,
-      //   },
-      // })
-      // const data2 = await res2.json();
-      // setImageSet(data2.data);
-      // let setType = data2.data.setType;
-      // if (!setType || setType === "") setType = determineSetType();
-      // console.log(setType)
-      // setImageForm({name: data2.data.name, setType: setType,      
-      //   images: data2.data.images } )
      
-      //imageSet.images = imageSet.images.map
-
-      //do this
-      //console.log("data:")
-      //console.log(data);
-     
-      // const updatedImageSet = {...imageSet, images: imageSet.images.map((imageSetElement) => {
-      //   const correspondingImageData = changedImages.find(
-      //     (imageData) => imageData.phonetics === imageSetElement.phonetics
-      //   );
-      
-      //   if (correspondingImageData) {
-      //     // Update the desired properties from correspondingImageData
-      //     imageSetElement.imageItem = correspondingImageData.imageItem;
-      //     imageSetElement.recentAttempts = correspondingImageData.recentAttempts;
-      //     imageSetElement.starred = correspondingImageData.starred;
-      //   //  imageSetElement.URL = correspondingImageData.URL;
-      //   }
-      
-      //   return imageSetElement;
-      // })};
-      
-      // setImageSet(updatedImageSet);
      getImageSet(imageSet._id);
-     
-
-  //mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
-   // refreshData(router);
+       
     } catch (error) {
       setMessage('Failed to update images.' + error)
     }
@@ -572,9 +466,12 @@ const handleSubmitImportPhonetics = async (e) => {
 
     return(
  <>
-    <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">Image set: </h1>
-    <h2 className="py-2 font-mono text-3xl">{isEditable ? <input onChange={handleChangeTitle} className='text-3xl' size='50' value={imageForm.name}></input> : imageForm.name}</h2> 
+    {/* <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
+    <h1 className="py-2 font-mono text-4xl">Image set: </h1> */}
+
+    <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
+      <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">Image set: </h1>
+    <h2 className="py-2 font-mono  text-2xl md:text-3xl lg:text-5xl">{isEditable ? <input onChange={handleChangeTitle} className=' text-2xl md:text-3xl lg:text-5xl' style={{width:'90%'}} value={imageForm.name}></input> : imageForm.name}</h2> 
    {!isShowingPhoneticsDiv && <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>}
    {!isShowingImportPhoneticsDiv && <button onClick={handleShowImportPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Import images</button>}
     
