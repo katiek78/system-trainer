@@ -22,14 +22,14 @@
 //     </html>
 //   )
 // }
-
+import { useState } from 'react';
 import '../app/globals.css'
 import { Inter } from 'next/font/google'
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faGear } from '@fortawesome/free-solid-svg-icons'
+import { faGear, faUser } from '@fortawesome/free-solid-svg-icons'
 import './styles.css';
 // import { Main } from '../app/components/Main'
 
@@ -55,6 +55,11 @@ function AppContent({Component, pageProps}) {
 
   }
 
+  const [showSubMenu, setShowSubMenu] = useState(false);
+
+  const handleSubMenuToggle = () => {
+    setShowSubMenu(!showSubMenu);
+  };
   
 return (
  <div className="wrapper">
@@ -86,14 +91,35 @@ return (
         <li>
         <Link href="/goals" className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Goals</Link>
         </li>
-        <li>
+        {/* <li>
           <Link href="/settings" className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"> <FontAwesomeIcon icon={faGear} size="1x" /></Link>
+        </li> */}
+        <li>
+        <div className="relative">
+        <button
+          className="flex items-center focus:outline-none"
+          onClick={handleSubMenuToggle}
+        >
+          <FontAwesomeIcon icon={faUser} className="mt-1 mr-2" />          
+        </button>
+        {user && showSubMenu && (
+          <div className="absolute bg-white shadow-md mt-2 rounded-lg text-gray-800" style={{ minWidth: '7rem' }}>
+            <Link
+              href="/api/auth/logout"
+              className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100"
+            >
+              Log out
+            </Link>
+          </div>
+        )}
+      </div>
+
         </li>
-        { user &&
+        {/* { user &&
         <li>
           <Link href="/api/auth/logout" className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Log out</Link>
         </li>
-        }
+        } */}
 
         { !user &&
         <>
