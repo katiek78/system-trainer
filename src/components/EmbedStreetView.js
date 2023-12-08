@@ -6,6 +6,7 @@ const EmbedStreetView = ({width, height, location, heading, pitch, fov}) => {
     if (!fov) fov=100;
     return(
         <iframe
+        className="mx-auto"
         width={width}
         height={height}
         style={{border:0, padding:'10px'}}

@@ -375,7 +375,7 @@ const JourneyPage = ({ user, journey }) => {
                         <p className={`point-name max-w-xs text-center h-12 whitespace-normal`} style={{ maxWidth: 300 }} >{point.name}</p>
                      
                    
-                        <div className="street-view-container relative w-max">
+                        <div className="street-view-container relative">
                           {point.location && 
                           <EmbedStreetView
                             width={300}
