@@ -39,7 +39,7 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
       }
 
       const { data } = await res.json()
-  
+    console.log(data);
      // mutate(`/api/journeys/${id}`, data, false) // Update the local data without a revalidation
       router.push(`/journeys/${journeyId}`)
     } catch (error) {
@@ -81,6 +81,10 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
     return err
   }
 
+  const isLocationStreetView = (location) => {
+    return /^\d/.test(location);
+  }
+
    const validateLocation = (locationValue) => {
     if (!locationValue || locationValue === '') return {...form, location: ''};
     function getPosition(str, char, index) {
@@ -108,7 +112,8 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
         locationValue = locationValue.replaceAll(/[\(\)\s]/g,'');
         return {...form, location: locationValue};
     }
-  
+    
+    //else assume it's an image URL
     return {...form, location: locationValue};
 }
 
@@ -171,17 +176,16 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
           required          
         />
 
-        <label htmlFor="location">Co-ordinates/address from Google Street View</label>
+        <label htmlFor="location">Co-ordinates/address from Google Street View OR image address</label>
         <input className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          type="text"
-          maxLength="100"
+          type="text"       
           name="location"
           value={form.location}
           onChange={handleChange}          
         />
         <LocationExplanation />
 
-        {form.location && <div>
+        {form.location && isLocationStreetView() && <div>
           <EmbedStreetView width={400} height={330} location={form.location} heading={form.heading} pitch={form.pitch} fov={form.fov} />
           <p>Adjust the values below to customise your view:</p>
           <label htmlFor="heading">Heading (orientation, -180 to 360)</label>

@@ -10,7 +10,8 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 0, 219, 220;
+  /* --background-start-rgb: 0, 219, 220; turquoise */
+  --background-start-rgb: 30, 253, 102;
   --background-end-rgb: 255, 255, 255;
 }
 

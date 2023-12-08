@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView"
+import EmbedImage from "@/components/EmbedImage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons"
@@ -292,6 +293,10 @@ const JourneyPage = ({ user, journey }) => {
   //   setMessage('Failed to save image')
   // }
 
+  const isLocationStreetView = (location) => {
+    return /^\d/.test(location);
+  }
+
   const handleSlideshow = () => {
     setIsListView(false);
     setCurrentSlideshowPoint(0);
@@ -378,6 +383,7 @@ const JourneyPage = ({ user, journey }) => {
                    
                         <div className="street-view-container relative">
                           {point.location && 
+                          isLocationStreetView(point.location) &&
                           <EmbedStreetView
                             width={300}
                             height={200}
@@ -385,6 +391,14 @@ const JourneyPage = ({ user, journey }) => {
                             heading={point.heading || 90}
                             pitch={point.pitch || 0}
                             fov={point.fov || 100}
+                          />}      
+
+                          {point.location && 
+                          !isLocationStreetView(point.location) &&
+                          <EmbedImage
+                            width={300}
+                            height={200}
+                            location={point.location}                            
                           />}                                              
 
                           <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
@@ -415,8 +429,9 @@ const JourneyPage = ({ user, journey }) => {
                   <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
                     <p className="point-name text-center h-12 whitespace-normal">{journey.points[currentSlideshowPoint].name}</p>
                     <button onClick={handlePrevious}>Previous</button>   <button onClick={handleNext}>Next</button>
-                    <div className="street-view-container relative w-max">
-                    {journey.points[currentSlideshowPoint].location && 
+                    <div className="street-view-container relative">
+                    {journey.points[currentSlideshowPoint].location 
+                    && isLocationStreetView(journey.points[currentSlideshowPoint].location) &&
                       <EmbedStreetView
                         width={width}
                         height={height}
@@ -424,6 +439,14 @@ const JourneyPage = ({ user, journey }) => {
                         heading={journey.points[currentSlideshowPoint].heading || 90}
                         pitch={journey.points[currentSlideshowPoint].pitch || 0}
                         fov={journey.points[currentSlideshowPoint].fov || 100}
+                      />
+                    }
+                    {journey.points[currentSlideshowPoint].location 
+                    && !isLocationStreetView(journey.points[currentSlideshowPoint].location) &&
+                      <EmbedImage
+                        width={width}
+                        height={height}
+                        location={journey.points[currentSlideshowPoint].location}                       
                       />
                     }
                       <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
