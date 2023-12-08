@@ -573,7 +573,8 @@ const handleSubmitImportPhonetics = async (e) => {
     return(
  <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-5xl">{isEditable ? <input onChange={handleChangeTitle} className='text-4xl' size='50' value={imageForm.name}></input> : imageForm.name}</h1> 
+    <h1 className="py-2 font-mono text-4xl">Image set: </h1>
+    <h2 className="py-2 font-mono text-3xl">{isEditable ? <input onChange={handleChangeTitle} className='text-3xl' size='50' value={imageForm.name}></input> : imageForm.name}</h2> 
    {!isShowingPhoneticsDiv && <button onClick={handleShowPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Change/add phonetics</button>}
    {!isShowingImportPhoneticsDiv && <button onClick={handleShowImportPhoneticsDiv} className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline">Import images</button>}
     

@@ -150,9 +150,9 @@ console.log(planEntries)
             <br />
             <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded" style={{ maxWidth: '100vw', overflowX: 'auto' }}>
                 <h2 className="text-2xl font-semibold">My training plan</h2>                
-              <br />
+            
               {/* <button className="btn bg-green-400 hover:bg-green-700 text-black font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"> */}
-              <Link href="/newPlanEntry"><button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+              <Link href="/newPlanEntry"><button className="btn bg-black hover:bg-gray-700 text-white font-bold my-4 py-2 px-6 rounded focus:outline-none focus:shadow-outline">
                     Add entry
                 </button></Link>
               <button onClick={handleClickAutoGenerate} disabled={isAGButtonDisabled} className={`btn ${isAGButtonDisabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-br from-purple-500 to-blue-500 hover:from-purple-700 hover:to-blue-700'} text-white font-bold mt-3 py-2 px-6 rounded focus:outline-none focus:shadow-outline flex items-center`}>

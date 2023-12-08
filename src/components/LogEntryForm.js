@@ -4,26 +4,12 @@ import { useRouter } from 'next/router'
 import { mutate } from 'swr'
 import { ML_DISCIPLINES } from '@/lib/disciplines'; 
 import { TRADITIONAL_DISCIPLINES } from '@/lib/disciplines'; 
+import { getTodayDate, formatDate } from "@/utilities/day";
 
 // import { getPopulatedImageArray } from '@/lib/getPopulatedImageArray'
 // import { getPopulatedPhoneticsArray } from '@/lib/getPopulatedPhoneticsArray'
 
-const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    let month = today.getMonth() + 1;
-    let day = today.getDate();
-  
-    // Pad month and day with leading zeros if needed
-    if (month < 10) {
-      month = `0${month}`;
-    }
-    if (day < 10) {
-      day = `0${day}`;
-    }
-  
-    return `${year}-${month}-${day}`;
-  };
+
 
 const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, forNewEntry = true,  }) => {
   const router = useRouter()
@@ -31,15 +17,6 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
 
-  const formatDate = (dateString) => {
-    try {
-      const formattedDate = new Date(dateString).toISOString().split('T')[0];
-      return formattedDate;
-    }
-    catch {
-      return dateString;
-    }
-    };
 
   const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
   const sortedPublicJourneys = publicJourneys.sort((a, b) => a.name.localeCompare(b.name));

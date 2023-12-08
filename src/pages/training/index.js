@@ -2,6 +2,7 @@
 import { withPageAuthRequired, getSession} from "@auth0/nextjs-auth0";
 import { useState, useEffect, useRef} from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import dbConnect from "@/lib/dbConnect";
 // import Journey from "@/models/Journey";
 // import MemoSystem from "@/models/MemoSystem";
@@ -316,9 +317,10 @@ const handleToggleStarredDisplay = () => {
   return(
     <>
     <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">Training Center</h1>
-    <p className="font-mono">Hello {user.nickname} - there are {imageSet.images.length} images in this set.</p>
-
+    {/* <h1 className="py-2 font-mono text-4xl">Training Centre</h1> */} 
+    {/* Soon this will be part of a Training Centre where you can do drills etc. but not yet */}
+  <h2 className="text-4xl">Image set training</h2>
+  <Link href="/imageSets/[id]" as={`/imageSets/${imageSet._id}`} legacyBehavior>&lt;&lt; Back to image set page</Link>
     {imageSet && !isLoading &&
     <>
     <div className="flex flex-col justify-center items-center">
