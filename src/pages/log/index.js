@@ -172,6 +172,7 @@ export const getServerSideProps = withPageAuthRequired({
         const user = (auth0User).user
         const currentPage = parseInt(page);
         const entriesPerPage = 20;
+        const { ObjectId } = require('mongodb');
 
         //fetch all training log entries (Eventually will need paginations)
         // const result2 = await LogEntry.find({ userId: user.sub })
@@ -179,16 +180,51 @@ export const getServerSideProps = withPageAuthRequired({
         // Function to fetch log entries with pagination
         const fetchLogEntries = async (userId, page, limit) => {
             try {
-            const result2 = await LogEntry.find({ userId })
+              let result2;
+              if (sortBy === 'journey') {
+                result2 = await LogEntry.aggregate([
+                  { $match: { userId: userId } }, // Match documents for the userId - this is working
+                  {
+                    $lookup: {
+                from: 'journeys', // Name of the 'Journey' collection
+                let: { journeyId: '$journey' }, // Store 'journey' field from LogEntry in a variable
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          { $toString: '$_id' }, // Convert '_id' in 'Journey' collection to a string
+                          '$$journeyId' // Compare converted string with 'journey' field in LogEntry collection
+                        ]
+                      }
+                    }
+                  }
+                ],
+                as: 'journeyDetails'
+              }
+                  },
+                  { $unwind: '$journeyDetails' },
+                  {
+                    $sort: {
+                      'journeyDetails.name': 1,
+                      '_id': -1 // Secondary sort for stability
+                    }
+                  },
+                  { $skip: (page - 1) * limit }, // Skip records based on page number
+                  { $limit: limit } // Limit records per page */}
+                ]).exec();
+              } else {
+              result2 = await LogEntry.find({ userId })
                 .sort({ [sortBy]: sortBy === 'entryDate' ? -1 : 1, _id: -1 }) // Sort by chosen heading
                 .skip((page - 1) * limit) // Skip records based on page number
                 .limit(limit);
-
-                const logEntries = result2.map((doc) => {
-                    const logEntry = JSON.parse(JSON.stringify(doc));
-                    logEntry._id = logEntry._id.toString()
-                    return logEntry
-                })
+              }
+              
+              const logEntries = result2.map((doc) => {
+                  const logEntry = JSON.parse(JSON.stringify(doc));
+                  logEntry._id = logEntry._id.toString()
+                  return logEntry
+              })
                 return logEntries;
             } catch (error) {
             console.error('Error fetching log entries:', error);
