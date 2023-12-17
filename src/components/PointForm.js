@@ -82,7 +82,7 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
   }
 
   const isLocationStreetView = (location) => {
-    return /^\d/.test(location);
+    return /^[-\d]/.test(location);
   }
 
    const validateLocation = (locationValue) => {

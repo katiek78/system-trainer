@@ -28,7 +28,7 @@ const PlanPage = ({ user, planEntries }) => {
 
     useEffect(() => {
       const currentDate = new Date();
-      const currentDay = WEEKDAYS[currentDate.getDay() - 1 % WEEKDAYS.length];
+      const currentDay = WEEKDAYS[(currentDate.getDay() - 1 + WEEKDAYS.length) % WEEKDAYS.length];    
       setToday(currentDay);
       setActiveTab(currentDay);    
     }, [WEEKDAYS]);

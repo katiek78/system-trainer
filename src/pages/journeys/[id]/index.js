@@ -294,7 +294,7 @@ const JourneyPage = ({ user, journey }) => {
   // }
 
   const isLocationStreetView = (location) => {
-    return /^\d/.test(location);
+    return /^[-\d]/.test(location);
   }
 
   const handleSlideshow = () => {
