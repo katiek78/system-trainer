@@ -27,7 +27,7 @@ export default async function handler(req, res) {
           const logEntry = await LogEntry.findOneAndUpdate(
             { _id: id },
             { $set: { 
-              date: req.body.date,
+              entryDate: req.body.entryDate,
               discipline: req.body.discipline,
               journey: req.body.journey,
               score: req.body.score,

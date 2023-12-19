@@ -48,7 +48,7 @@ const LogEntryForm = ({ userId, journeys, publicJourneys, formId, logEntryForm, 
         },
         body: JSON.stringify(form),
       })
-
+console.log(form.entryDate)
       // Throw error with status code in case Fetch API req failed
       if (!res.ok) {
         throw new Error(res.status)
