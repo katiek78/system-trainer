@@ -244,12 +244,13 @@ const TimingPage = ({ user }) => {
 
         {bpm &&
         <>
-        <p className="mt-5 text-5xl">Your required BPM is: {bpm.join(" / ")}</p>
+       
        
 
         <div className="text-center">
+        <p className="mt-5 text-5xl">Your required BPM is: {bpm.join(" / ")}</p>
       <div className="mx-4 md:mx-auto md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
-  <p className="mt-2 text-2xl font-bold">Songs with this BPM include:</p>
+  <p className="mt-4 text-2xl font-bold">Songs with this BPM include:</p>
   <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
 
 
