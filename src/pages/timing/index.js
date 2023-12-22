@@ -1,13 +1,11 @@
 
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
+import { useState, useEffect } from "react";
 import dbConnect from "@/lib/dbConnect";
-import Link from "next/link";
-import { refreshData } from "@/lib/refreshData";
-import { useState } from "react";
-import { useRouter } from "next/router";
 import { getRequiredBPM } from "@/utilities/timing";
 import { ML_DISCIPLINES } from '@/lib/disciplines'; 
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const TimingPage = ({ user }) => {
   const [errors, setErrors] = useState({})
@@ -19,6 +17,123 @@ const TimingPage = ({ user }) => {
     grabTime: ''
   })
   const [bpm, setBpm] = useState(null);
+  const [accessToken, setAccessToken] = useState('');
+  const [songs, setSongs] = useState([]);
+  const [audio, setAudio] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlayPreview = (previewUrl) => {
+    if (audio) {
+      if (audio.src === previewUrl && isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        audio.src = previewUrl;
+        audio.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const spotify_client_id = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
+  const spotify_client_secret = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET;
+
+  /* The POST method adds a new entry in the mongodb database. */
+  const getAccessToken = async () => {
+   
+    const authOptions = {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${spotify_client_id}:${spotify_client_secret}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    };
+  
+    try {
+      const response = await fetch('https://accounts.spotify.com/api/token', authOptions);
+      const data = await response.json();
+      return data.access_token;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      return null;
+    }
+  }
+
+  const getSongs = async() => {
+    const songRecommendations = [];
+    // const seedGenres = 'funk,pop,rock,alt-rock,british,dance,hip-hop,indie,electro,electronic'
+    const seedGenres = 'funk,pop,rock'
+    console.log(accessToken)
+
+    try {
+      for (const targetTempo of bpm) {
+        console.log(`Fetching recommendations for target tempo: ${targetTempo}`);
+        const response = await fetch(`https://api.spotify.com/v1/recommendations?seed_genres=${seedGenres}&target_tempo=${targetTempo}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          songRecommendations.push(...data.tracks); // Collect tracks from recommendations
+        } else {
+          throw new Error('Failed to fetch recommendations');
+        }
+      }
+
+       // Shuffle the song recommendations randomly
+    const shuffledRecommendations = songRecommendations.sort(() => Math.random() - 0.5);
+    
+    // Return the first 20 shuffled song recommendations
+    return shuffledRecommendations.slice(0, 20);
+  
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      throw new Error('Internal Server Error');
+    }
+
+  }
+
+  useEffect(() => {
+    setAudio(new Audio());
+  }, []);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+       
+        const token = await getAccessToken(); // Your async function call
+        setAccessToken(token);
+      
+      } catch (error) {
+        // Handle errors
+        console.error('Error fetching access token:', error);
+      }
+    }
+
+    fetchData(); // Call the async function immediately inside useEffect
+  }, []); 
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+          if (accessToken && bpm.length > 0) {
+          const songs = await getSongs(); // Your async function call
+          setSongs(songs);
+        }
+      } catch (error) {
+        // Handle errors
+        console.error('Error fetching songs:', error);
+      }
+    }
+
+    fetchData(); // Call the async function immediately inside useEffect
+  }, [bpm, accessToken]); 
+
 
   const getUnits = (discipline) => {
     // Split the input string into words
@@ -128,7 +243,64 @@ const TimingPage = ({ user }) => {
 
 
         {bpm &&
+        <>
         <p className="mt-5 text-5xl">Your required BPM is: {bpm.join(" / ")}</p>
+       
+
+        <div className="text-center">
+      <div className="mx-4 md:mx-auto md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
+  <p className="mt-2 text-2xl font-bold">Songs with this BPM include:</p>
+  <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+
+
+    {/* {songs?.tracks && songs.tracks.map((song, index) => ( */}
+    {songs && songs.map((song, index) => ( 
+      <li
+            key={index}
+            className="border rounded relative group overflow-hidden mb-4 sm:mb-0"
+            onClick={() => handlePlayPreview(song.preview_url)}
+          >
+            <div className="flex items-start">
+              <img
+                src={song.album.images[0].url}
+                alt={`${song.name} Album Cover`}
+                className="w-20 h-full rounded-md object-cover"
+              />
+              <div className="ml-2">
+                <p className="text-lg font-semibold">
+                  {song.artists[0].name} - {song.name}
+                </p>
+                {song.preview_url && ( // Render play icon only if preview_url exists
+                    <div className="text-gray-500">
+                      <FontAwesomeIcon icon={faPlay} />
+                    </div>
+                  )}
+              </div>
+            </div>
+            <div className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 ${isPlaying && audio.src === song.preview_url ? 'block' : 'hidden'}`}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-white"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8 5v10l6-5-6-5z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+          </li>
+
+
+          
+        ))}
+
+  </ul>
+</div>
+</div>
+        </>
         }
 
       <div>
