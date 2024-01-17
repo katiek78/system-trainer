@@ -9,7 +9,7 @@ export const getRequiredBPM = (ML_discipline, grouping, grabData, grabTime, targ
   };
 
   const result = (DISCIPLINE_TOTALS[ML_discipline] - grabData) / grouping / (target - grabTime) * 60;
-
+console.log(result);
   // Initialize a Set to store feasible BPM options
   const feasibleBPMs = new Set();
 

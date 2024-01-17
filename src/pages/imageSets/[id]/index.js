@@ -303,7 +303,7 @@ const ImageSetPage = ({user, allNames, imageSets}) => {
     }
 
     const handleTraining = () => {
-        router.push("/training?imageSet=" + imageSet._id)
+        router.push("/training/set-learning?imageSet=" + imageSet._id)
     }
 
     const toggleRotate = (e, toFront = false) => {
