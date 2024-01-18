@@ -14,6 +14,7 @@ import { getPopulatedPhoneticsArray } from "@/lib/getPopulatedPhoneticsArray";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
+import { determineSetType } from "@/utilities/setType";
 
 const ImageSetPage = ({user, allNames, imageSets}) => {
     const router = useRouter()    
@@ -51,7 +52,7 @@ const ImageSetPage = ({user, allNames, imageSets}) => {
       const data = await res.json();
       setImageSet(data.data);
       let setType = data.data.setType;
-      if (!setType || setType === "") setType = determineSetType();
+      if (!setType || setType === "") setType = determineSetType(allNames.images.length);
       console.log(setType)
       setImageForm({name: data.data.name, setType: setType,      
         images: data.data.images } )
@@ -69,18 +70,6 @@ const ImageSetPage = ({user, allNames, imageSets}) => {
       setIsLoading(false);
     }, [currentPage]);
 
- 
-
-    const determineSetType = () => {
-      console.log(allNames.images.length)
-      if (allNames.images.length === 100) return '2d';
-      if (allNames.images.length === 1000) return '3d';
-      if (allNames.images.length === 10000) return '4d';
-      if (allNames.images.length === 52) return '1c';
-      if (allNames.images.length === 2704) return '2c';
-      if (allNames.images.length === 1352) return '2cv';
-      return 'other'
-    }
 
     const renderPageNumbers = () => {   
       if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div> 

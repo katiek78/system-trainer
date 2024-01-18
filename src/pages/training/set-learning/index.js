@@ -15,6 +15,7 @@ import { faCheck, faXmark, faEdit, faImage, faStar } from "@fortawesome/free-sol
 import { faStar as faStarOutline }  from "@fortawesome/free-regular-svg-icons";
 import { confidenceLabels, getConfidenceLevel } from "@/utilities/confidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
+import { determineSetType } from "@/utilities/setType";
 
 // import SiteUser from "@/models/SiteUser";
 
@@ -40,6 +41,8 @@ const TrainingCenter = ({user, imageSet}) => {
   const [cardsAvailable, setCardsAvailable] = useState(false);
 // let filteredData = [];
 
+  const setType = determineSetType(imageSet.images.length);
+
   useEffect(() => {
     if (isLoading) return;
     setIsLoading(true);
@@ -50,7 +53,14 @@ const TrainingCenter = ({user, imageSet}) => {
 
     //const filterData = () => {
       let newSet = [...imageSet.images];      
-      if (imageGroup !== 'all') newSet = newSet.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup));
+      if (imageGroup !== 'all' && imageGroup !== 'bf' && imageGroup !== 'rf') newSet = newSet.filter(image => getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup));
+      if (imageGroup === 'bf') {
+        newSet = newSet.filter((image) => /^[^\p{L}]*[♠♣].*[♦♥]/u.test(image.name) || /^[^\p{L}]*[♠♣].*[♠♣]/u.test(image.name));
+      }
+      if (imageGroup === 'rf') {
+        newSet = newSet.filter((image) =>  /^[^\p{L}]*[♦♥].*[♠♣]/u.test(image.name) || /^[^\p{L}]*[♦♥].*[♦♥]/u.test(image.name));
+      }
+ 
       if (starredOnly) newSet = newSet.filter(image => image.starred)
       setFilteredData(newSet, starredOnly);
    // }
@@ -331,7 +341,13 @@ const handleToggleStarredDisplay = () => {
 
     <select id="selSet" className="w-full rounded-md dark:bg-slate-800" onChange={handleChangeSelect}>
       <option value="all">All 🌍</option>
-      {confidenceLabels.map((label, i) => <option value={i}>{label} ({groupTotals && groupTotals[i]})</option>)}      
+      {confidenceLabels.map((label, i) => <option value={i}>{label} ({groupTotals && groupTotals[i]})</option>)}   
+      {setType === '2c' &&
+        <>
+        <option value="bf">Black-first</option>
+        <option value="rf">Red-first</option>
+        </>
+      }   
     </select>
     </div>
 
