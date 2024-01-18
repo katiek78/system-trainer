@@ -3,6 +3,8 @@ import { cardValues, suitValues } from "./cardConstants";
 const majorValues =  ['s', 't', 'n', 'm', 'r', 'l', 'sh', 'k', 'f', 'p'];
 const benVowels = ['oo', 'a', 'e', 'i', 'o', 'u', 'ai', 'ee', 'ae', 'oh']
 const kBenCardValues = {'A':'t', '2':'n', '3':'m', '4':'r', '5':'l', '6':'sh', '7':'k', '8':'f', '9':'p', '10':'s', 'J':'g', 'Q':'d', 'K':'h'};
+const kBenCardValues2704 = {'red' : {'A':'st', '2':'', '3':'sp', '4':'tr', '5':'bl', '6':'pr', '7':'kr', '8':'fl', '9':'br', '10':'z', 'J':'gr', 'Q':'cl', 'K':'w'},
+                            'black': {'A':'t', '2':'n', '3':'m', '4':'r', '5':'l', '6':'sh', '7':'k', '8':'f', '9':'p', '10':'s', 'J':'g', 'Q':'d', 'K':'h'}};
 const kBenSuitPairs = {'ss': 'oo', 'hh': 'oo', 'sd' : 'a', 'ds' : 'a', 'sc' : 'e', 'cs': 'i', 'hd' : 'e', 'dh' : 'i', 'ch' : 'u', 'hc' : 'u', 'sh' : 'ai', 'hs' : 'ai', 'cc' : 'ee', 'dd' : 'ee', 'cd' : 'oh', 'dc' : 'oh'}
 //const kBenSuitPairs = {'♠️♠️': 'oo', '♥️♥️': 'oo', '♠️♦️' : 'a', '♦️♠️' : 'a', '♠️♣️' : 'e', '♣️♠️': 'i', '♥️♦️' : 'e', '♦️♥️' : 'i', '♣️♥️' : 'u', '♥️♣️' : 'u', '♠️♥️' : 'ai', '♥️♠️' : 'ai', '♣️♣️' : 'ee', '♦️♦️' : 'ee', '♣️♦️' : 'oh', '♦️♣️' : 'oh'}
 const rModifiedConsonantArray = ["s","t","n","m","th","l","sh","k","f","p"];
@@ -176,6 +178,13 @@ const getKBenCardPhonetics = (text) => {
     return kBenCardValues[cardVal1] + kBenSuitPairs[suitPair] + kBenCardValues[cardVal2]
 }
 
+const getKBenCardPhonetics2704 = (text) => {    
+    const { cardVal1, cardVal2, suit1, suit2 } = getCardParts(text);
+    const suitPair = convertCardTextToProcessableString(suit1 + suit2)
+    const colourFirst = suitPair[0] === 'd' || suitPair[0] === 'h' ? 'red' : 'black';
+    return kBenCardValues2704[colourFirst][cardVal1] + kBenSuitPairs[suitPair] + kBenCardValues[cardVal2]
+}
+
 const convertCardTextToProcessableString = (text) => {
     
     text = text.toString()
@@ -287,7 +296,7 @@ export const getPopulatedPhoneticsArray = (setType, phoneticsType) => {
                         for (let j = 0; j < cardValues.length; j++) {
                             for (let k = 0; k < suitValues.length; k++) {
                                 for (let l = 0; l < cardValues.length; l++) {
-                                    const twoCardPhonetics = getKBenCardPhonetics(cardValues[j] + suitValues[i] + cardValues[l] + suitValues[k]);
+                                    const twoCardPhonetics = getKBenCardPhonetics2704(cardValues[j] + suitValues[i] + cardValues[l] + suitValues[k]);
                                     phoneticsArray.push(twoCardPhonetics);  
                                 }
                             }

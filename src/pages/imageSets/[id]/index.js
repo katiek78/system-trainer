@@ -457,6 +457,8 @@ const handleSubmitImportPhonetics = async (e) => {
       const { data } = await res.json()
      
      getImageSet(imageSet._id);
+     
+     setIsShowingImportPhoneticsDiv(false);
        
     } catch (error) {
       setMessage('Failed to update images.' + error)
@@ -598,22 +600,22 @@ const handleSubmitImportPhonetics = async (e) => {
     {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.map((img) => (
       <>
 
-      <div class="group [perspective:1000px]">
-    <div class="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-      <div class="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
-      <div class="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <h1 class="text-3xl font-bold"><RedHeartsAndDiamonds text={img.name} /></h1>         
+      <div className="group [perspective:1000px]">
+    <div className="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+      <div className="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
+      <div className="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <h1 className="text-3xl font-bold"><RedHeartsAndDiamonds text={img.name} /></h1>         
         </div> 
       </div>
-      <div class="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">
-         <div class="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <h1 class="text-3xl font-bold">{img.imageItem}</h1>
-          <h5 class="absolute top-24 text-md">{img.phonetics}</h5>   
-          <h5 class="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>   
+      <div className="absolute inset-0 h-full w-full  rounded-xl  [transform:rotateY(180deg)] [backface-visibility:hidden]">
+         <div className="flex-col rounded-xl bg-black/60 px-12  text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <h1 className="text-3xl font-bold">{img.imageItem}</h1>
+          <h5 className="absolute top-24 text-md">{img.phonetics}</h5>   
+          <h5 className="mt-3 text-2xl"><TrafficLights recentAttempts={img.recentAttempts} /></h5>   
           <ConfidenceLevel recentAttempts={img.recentAttempts} />  
           {img.starred ? <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-yellow-500' icon={faStar} />  : <FontAwesomeIcon onClick={() => handleToggleStar(img._id)} className='absolute top-7 left-3 text-white' icon={faStarOutline} /> }      
         </div> 
-        <img class="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={img.URL && img.URL.length > 0 ? img.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
+        <img className="h-full w-full rounded-xl object-cover shadow-xl shadow-black/40" src={img.URL && img.URL.length > 0 ? img.URL : "https://images.unsplash.com/photo-1689910707971-05202a536ee7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE0fDZzTVZqVExTa2VRfHxlbnwwfHx8fHw%3D&auto=format&fit=crop&w=500&q=60')"} alt="" />
       </div>
     </div>
   </div>
