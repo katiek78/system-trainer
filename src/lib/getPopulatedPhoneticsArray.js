@@ -334,18 +334,45 @@ const getKBenCardPhonetics = (text) => {
   );
 };
 
+// const getHBHMPhonetics = (text) => {
+//   const { cardVal1, cardVal2, suit1, suit2 } = getCardParts(text);
+//   const suitPair = convertCardTextToProcessableString(suit1 + suit2);
+//   const colourFirst =
+//     suitPair[0] === "d" || suitPair[0] === "h" ? "red" : "black";
+//   return colourFirst === "red"
+//     ? kBenCardValues[cardVal1] +
+//         HBHMSuitPairs[suitPair] +
+//         kBenCardValues[cardVal2]
+//     : kBenCardValues[cardVal1] +
+//         kBenSuitPairs[suitPair] +
+//         kBenCardValues[cardVal2];
+// };
+
 const getHBHMPhonetics = (text) => {
   const { cardVal1, cardVal2, suit1, suit2 } = getCardParts(text);
   const suitPair = convertCardTextToProcessableString(suit1 + suit2);
   const colourFirst =
     suitPair[0] === "d" || suitPair[0] === "h" ? "red" : "black";
-  return colourFirst === "red"
-    ? kBenCardValues[cardVal1] +
-        HBHMSuitPairs[suitPair] +
-        kBenCardValues[cardVal2]
-    : kBenCardValues[cardVal1] +
-        kBenSuitPairs[suitPair] +
-        kBenCardValues[cardVal2];
+
+  if (colourFirst === "red") {
+    if (cardVal2 === "K") {
+      // Special syllable for second card being "K"
+      return kBenCardValues2704["red"][cardVal1] + kBenSuitPairs[suitPair];
+    }
+    // Default red case
+    return (
+      kBenCardValues[cardVal1] +
+      HBHMSuitPairs[suitPair] +
+      kBenCardValues[cardVal2]
+    );
+  } else {
+    // Default black case
+    return (
+      kBenCardValues[cardVal1] +
+      kBenSuitPairs[suitPair] +
+      kBenCardValues[cardVal2]
+    );
+  }
 };
 
 const getKBenCardPhonetics2704 = (text) => {
