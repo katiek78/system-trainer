@@ -48,11 +48,20 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
     setType: "other",
   });
 
-  const pageLimit = 20;
+  const isCardSet = () => {
+    // return imageForm && imageForm.setType && imageForm.setType.includes("c");
+    return determineSetType(allNames.images.length).includes("c");
+  };
+
+  const pageLimit = isCardSet() ? 26 : 20;
 
   const getImageSet = async (id) => {
     //get image set from DB
-    const res = await fetch(`/api/imageSets/${id}/${currentPage - 1}`, {
+    // const res = await fetch(`/api/imageSets/${id}/${currentPage - 1}`, {
+    const url = `/api/imageSets/${id}/${
+      currentPage - 1
+    }?isCardSet=${isCardSet()}`;
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         Accept: contentType,
@@ -184,10 +193,14 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
     }
 
     let jump;
-    if (allNames.images.length > 1000) {
-      jump = 500;
-    } else if (allNames.images.length > 100) {
-      jump = 100;
+    if (isCardSet()) {
+      jump = 104;
+    } else {
+      if (allNames.images.length > 1000) {
+        jump = 500;
+      } else if (allNames.images.length > 100) {
+        jump = 100;
+      }
     }
 
     const options = allNames.images.map((item, index) => {
