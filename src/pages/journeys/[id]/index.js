@@ -38,6 +38,8 @@ const JourneyPage = ({ journey, points, totalPages }) => {
   const [journeyForm, setJourneyForm] = useState({});
 
   //console.log(journey);
+  console.log("Journey:", journey);
+  console.log("Journey ID:", journey?._id);
   //const pageLimit = 20;
 
   useEffect(() => {
@@ -45,6 +47,8 @@ const JourneyPage = ({ journey, points, totalPages }) => {
     setJourneyForm({ name: journey.name });
     const id = router.query.id;
     setIsLoading(false);
+    console.log("Journey:", journey);
+    console.log("Journey ID:", journey?._id);
   }, [currentPage]);
 
   useEffect(() => {
@@ -304,18 +308,20 @@ const JourneyPage = ({ journey, points, totalPages }) => {
         </h2>
 
         <div class="journey-btn-container">
-          <Link
-            href="/journeys/[id]/new"
-            as={`/journeys/${journey._id}/new`}
-            legacyBehavior
-          >
-            <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
-              Add a location
-            </button>
-          </Link>
+          {journey.id && (
+            <Link
+              href="/journeys/[id]/new"
+              as={`/journeys/${journey._id}/new`}
+              legacyBehavior
+            >
+              <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+                Add a location
+              </button>
+            </Link>
+          )}
           <Link
             href="/journeys/[id]/import"
-            as={`/journeys/${journey._id}/import`}
+            as={`/journeys/${journey.id}/import`}
             legacyBehavior
           >
             <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -415,19 +421,21 @@ const JourneyPage = ({ journey, points, totalPages }) => {
                   </div>
                 ))}
 
-                <div className="plusIcon flex items-center justify-center mb-16">
-                  <Link
-                    href="/journeys/[id]/new"
-                    as={`/journeys/${journey._id}/new`}
-                    legacyBehavior
-                  >
-                    <FontAwesomeIcon
-                      className="cursor-pointer bg-gray-200 rounded p-10 dark:bg-black"
-                      icon={faPlus}
-                      size="5x"
-                    />
-                  </Link>
-                </div>
+                {journey && journey.id && (
+                  <div className="plusIcon flex items-center justify-center mb-16">
+                    <Link
+                      href="/journeys/[id]/new"
+                      as={`/journeys/${journey.id}/new`}
+                      legacyBehavior
+                    >
+                      <FontAwesomeIcon
+                        className="cursor-pointer bg-gray-200 rounded p-10 dark:bg-black"
+                        icon={faPlus}
+                        size="5x"
+                      />
+                    </Link>
+                  </div>
+                )}
               </div>
             </>
           ) : (
