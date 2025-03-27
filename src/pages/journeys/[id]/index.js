@@ -37,23 +37,15 @@ const JourneyPage = ({ journey, points, totalPages }) => {
 
   const [journeyForm, setJourneyForm] = useState({});
 
-  //console.log(journey);
-  console.log("Journey:", journey);
-  console.log("Journey ID:", journey?._id);
-  //const pageLimit = 20;
-
   useEffect(() => {
     setIsLoading(true);
     setJourneyForm({ name: journey.name });
     const id = router.query.id;
     setIsLoading(false);
-    console.log("Journey:", journey);
-    console.log("Journey ID:", journey?._id);
   }, [currentPage]);
 
   useEffect(() => {
     const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
-    console.log(pageFromUrl);
     setCurrentPage(pageFromUrl);
   }, [router.query.page]);
 
@@ -311,7 +303,7 @@ const JourneyPage = ({ journey, points, totalPages }) => {
           {journey.id && (
             <Link
               href="/journeys/[id]/new"
-              as={`/journeys/${journey._id}/new`}
+              as={`/journeys/${journey.id}/new`}
               legacyBehavior
             >
               <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -480,7 +472,7 @@ const JourneyPage = ({ journey, points, totalPages }) => {
                       <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                         <Link
                           href="/journeys/[id]/points/[id]/editPoint"
-                          as={`/journeys/${journey._id}/points/${points[currentSlideshowPoint]._id}/editPoint`}
+                          as={`/journeys/${journey.id}/points/${points[currentSlideshowPoint]._id}/editPoint`}
                           legacyBehavior
                         >
                           <FontAwesomeIcon icon={faEdit} size="2x" />
