@@ -18,7 +18,13 @@ import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import "./styles.css";
 
-const JourneyPage = ({ journey, points, totalPages }) => {
+const JourneyPage = ({
+  journey,
+  points,
+  totalPages,
+  isPublicJourney,
+  user,
+}) => {
   const router = useRouter();
   const contentType = "application/json";
   // const [journey, setJourney] = useState({});
@@ -36,6 +42,7 @@ const JourneyPage = ({ journey, points, totalPages }) => {
   const [height, setHeight] = useState(0);
 
   const [journeyForm, setJourneyForm] = useState({});
+  const isAdmin = () => user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   useEffect(() => {
     setIsLoading(true);
@@ -256,6 +263,8 @@ const JourneyPage = ({ journey, points, totalPages }) => {
     setHeight(height);
   }, []);
 
+  console.log(isPublicJourney);
+
   return (
     <>
       <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
@@ -283,64 +292,74 @@ const JourneyPage = ({ journey, points, totalPages }) => {
           ) : (
             <>
               {" "}
-              <FontAwesomeIcon
-                className="hover:text-gray-700 hover:cursor-pointer ml-5"
-                onClick={handleToggleEditable}
-                icon={faEdit}
-                size="1x"
-              />
-              <FontAwesomeIcon
-                className="hover:text-gray-700 hover:cursor-pointer ml-5"
-                onClick={handleDelete}
-                icon={faTrash}
-                size="1x"
-              />{" "}
+              {(!isPublicJourney || isAdmin()) && (
+                <>
+                  <FontAwesomeIcon
+                    className="hover:text-gray-700 hover:cursor-pointer ml-5"
+                    onClick={handleToggleEditable}
+                    icon={faEdit}
+                    size="1x"
+                  />
+                  <FontAwesomeIcon
+                    className="hover:text-gray-700 hover:cursor-pointer ml-5"
+                    onClick={handleDelete}
+                    icon={faTrash}
+                    size="1x"
+                  />{" "}
+                </>
+              )}
             </>
           )}
         </h2>
 
-        <div class="journey-btn-container">
+        <div className="journey-btn-container">
           {journey.id && (
-            <Link
-              href="/journeys/[id]/new"
-              as={`/journeys/${journey.id}/new`}
-              legacyBehavior
-            >
-              <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
-                Add a location
-              </button>
-            </Link>
+            <>
+              {(!isPublicJourney || !isAdmin()) && (
+                <>
+                  <Link
+                    href="/journeys/[id]/new"
+                    as={`/journeys/${journey.id}/new`}
+                    legacyBehavior
+                  >
+                    <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+                      Add a location
+                    </button>
+                  </Link>
+
+                  <Link
+                    href="/journeys/[id]/import"
+                    as={`/journeys/${journey.id}/import`}
+                    legacyBehavior
+                  >
+                    <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+                      Import locations
+                    </button>
+                  </Link>
+                </>
+              )}
+
+              {points.length > 0 ? (
+                isListView ? (
+                  <button
+                    onClick={handleSlideshow}
+                    className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+                  >
+                    Slideshow
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleGallery}
+                    className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+                  >
+                    Gallery
+                  </button>
+                )
+              ) : (
+                <></>
+              )}
+            </>
           )}
-          <Link
-            href="/journeys/[id]/import"
-            as={`/journeys/${journey.id}/import`}
-            legacyBehavior
-          >
-            <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
-              Import locations
-            </button>
-          </Link>
-          {points.length > 0 ? (
-            isListView ? (
-              <button
-                onClick={handleSlideshow}
-                className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-              >
-                Slideshow
-              </button>
-            ) : (
-              <button
-                onClick={handleGallery}
-                className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-              >
-                Gallery
-              </button>
-            )
-          ) : (
-            <></>
-          )}
-          {/* <Link href="/journeys/[id]/view" as={`/${journey.points[0]._id}/view`} legacyBehavior> */}
-          {/* </Link> */}
         </div>
 
         <div
@@ -392,21 +411,23 @@ const JourneyPage = ({ journey, points, totalPages }) => {
                               />
                             )}
 
-                          <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                            <Link
-                              href="/journeys/[id]/editPoint"
-                              as={`/journeys/${point._id}/editPoint`}
-                              legacyBehavior
-                            >
-                              <FontAwesomeIcon icon={faEdit} size="2x" />
-                            </Link>
-                            <FontAwesomeIcon
-                              className="ml-5"
-                              icon={faTrash}
-                              size="2x"
-                              onClick={() => handleDeletePoint(point._id)}
-                            />
-                          </div>
+                          {(!isPublicJourney || isAdmin()) && (
+                            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                              <Link
+                                href="/journeys/[id]/editPoint"
+                                as={`/journeys/${point._id}/editPoint`}
+                                legacyBehavior
+                              >
+                                <FontAwesomeIcon icon={faEdit} size="2x" />
+                              </Link>
+                              <FontAwesomeIcon
+                                className="ml-5"
+                                icon={faTrash}
+                                size="2x"
+                                onClick={() => handleDeletePoint(point._id)}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -503,7 +524,7 @@ const JourneyPage = ({ journey, points, totalPages }) => {
 };
 
 export default JourneyPage;
-// const publicJourneyResult = await Journey.find({ $or: [{ userId: null }, { userId: { $exists: false } }] }, { name: 1 });
+
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ params, query, req, res }) => {
     const auth0User = await getSession(req, res);
@@ -549,6 +570,8 @@ export const getServerSideProps = withPageAuthRequired({
         },
         points: points,
         totalPages: Math.ceil(journey.points.length / pageLimit),
+        isPublicJourney: journey.userId === null || !journey.userId,
+        user,
       },
     };
   },

@@ -13,6 +13,7 @@ import {
   faGrip,
   faList,
   faStar,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
@@ -23,7 +24,7 @@ import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
 import { determineSetType } from "@/utilities/setType";
 
-const ImageSetPage = ({ user, allNames, imageSets }) => {
+const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
   const router = useRouter();
   const contentType = "application/json";
   const [imageSet, setImageSet] = useState({});
@@ -47,6 +48,8 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
   const [populateForm, setPopulateForm] = useState({
     setType: "other",
   });
+
+  const isAdmin = () => user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   const isCardSet = () => {
     // return imageForm && imageForm.setType && imageForm.setType.includes("c");
@@ -235,6 +238,23 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
         </>
       );
     return div;
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this set?"
+    );
+    if (confirmed) {
+      try {
+        const { id } = router.query;
+        await fetch(`/api/imageSets/${id}`, {
+          method: "Delete",
+        });
+        router.push(`/imageSets`);
+      } catch (error) {
+        setMessage("Failed to delete the set.");
+      }
+    }
   };
 
   const handlePageChange = (page) => {
@@ -567,12 +587,9 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
 
   return (
     <>
-      {/* <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
-    <h1 className="py-2 font-mono text-4xl">Image set: </h1> */}
-
       <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
         <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">
-          Image set:{" "}
+          Image set{isPublicImageSet && " (PUBLIC)"}:{" "}
         </h1>
         <h2 className="py-2 font-mono  text-2xl md:text-3xl lg:text-5xl">
           {isEditable ? (
@@ -583,10 +600,20 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
               value={imageForm.name}
             ></input>
           ) : (
-            imageForm.name
+            <span>
+              {imageForm.name}{" "}
+              {(!isPublicImageSet || isAdmin()) && (
+                <FontAwesomeIcon
+                  className="hover:text-gray-700 hover:cursor-pointer ml-5"
+                  onClick={handleDelete}
+                  icon={faTrash}
+                  size="1x"
+                />
+              )}
+            </span>
           )}
         </h2>
-        {!isShowingPhoneticsDiv && (
+        {!isShowingPhoneticsDiv && (!isPublicImageSet || isAdmin()) && (
           <button
             onClick={handleShowPhoneticsDiv}
             className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -594,7 +621,7 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
             Change/add phonetics
           </button>
         )}
-        {!isShowingImportPhoneticsDiv && (
+        {!isShowingImportPhoneticsDiv && (!isPublicImageSet || isAdmin()) && (
           <button
             onClick={handleShowImportPhoneticsDiv}
             className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -740,17 +767,19 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
                 size="3x"
               />
             ) : (
-              <FontAwesomeIcon
-                className="hover:text-gray-700 hover:cursor-pointer"
-                onClick={handleToggleEditable}
-                icon={faEdit}
-                size="3x"
-              />
+              (!isPublicImageSet || isAdmin()) && (
+                <FontAwesomeIcon
+                  className="hover:text-gray-700 hover:cursor-pointer"
+                  onClick={handleToggleEditable}
+                  icon={faEdit}
+                  size="3x"
+                />
+              )
             )}
           </div>
 
           <div className="basis-1/3">
-            {!isEditable && (
+            {!isEditable && !isPublicImageSet && (
               <FontAwesomeIcon
                 className="hover:text-gray-700 hover:cursor-pointer"
                 onClick={handleTraining}
@@ -804,7 +833,7 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
                           }
                         ></input>
                       </div>
-                      <div className="col-span-1 lg:col-span-2 ">
+                      <div className="col-span-1 lg:col-span-2 mr-2">
                         <input
                           onChange={handleChangeImageForm}
                           value={img.URL ? img.URL : ""}
@@ -812,22 +841,26 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
                           name={"inpURL" + (i + (currentPage - 1) * pageLimit)}
                         ></input>
                       </div>
-                      <div className="col-span-1">
-                        {" "}
-                        {img.starred ? (
-                          <FontAwesomeIcon
-                            onClick={() => handleToggleStar(img._id)}
-                            className="text-yellow-500"
-                            icon={faStar}
-                          />
-                        ) : (
-                          <FontAwesomeIcon
-                            onClick={() => handleToggleStar(img._id)}
-                            className="text-black"
-                            icon={faStarOutline}
-                          />
-                        )}
-                      </div>
+
+                      {!isPublicImageSet ? (
+                        <div className="col-span-1">
+                          {img.starred ? (
+                            <FontAwesomeIcon
+                              onClick={() => handleToggleStar(img._id)}
+                              className="text-yellow-500"
+                              icon={faStar}
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              onClick={() => handleToggleStar(img._id)}
+                              className="text-black"
+                              icon={faStarOutline}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="col-span-1"></div>
+                      )}
                     </>
                   );
                 } else
@@ -847,22 +880,27 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
                           <img className="h-8" src={img.URL}></img>
                         )}
                       </div>
-                      <div className="col-span-1">
-                        {" "}
-                        {img.starred ? (
-                          <FontAwesomeIcon
-                            onClick={() => handleToggleStar(img._id)}
-                            className="text-yellow-500"
-                            icon={faStar}
-                          />
-                        ) : (
-                          <FontAwesomeIcon
-                            onClick={() => handleToggleStar(img._id)}
-                            className="text-black"
-                            icon={faStarOutline}
-                          />
-                        )}
-                      </div>
+
+                      {!isPublicImageSet ? (
+                        <div className="col-span-1">
+                          {" "}
+                          {img.starred ? (
+                            <FontAwesomeIcon
+                              onClick={() => handleToggleStar(img._id)}
+                              className="text-yellow-500"
+                              icon={faStar}
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              onClick={() => handleToggleStar(img._id)}
+                              className="text-black"
+                              icon={faStarOutline}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
                     </>
                   );
               })}
@@ -904,18 +942,22 @@ const ImageSetPage = ({ user, allNames, imageSets }) => {
                           <ConfidenceLevel
                             recentAttempts={img.recentAttempts}
                           />
-                          {img.starred ? (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="absolute top-7 left-3 text-yellow-500"
-                              icon={faStar}
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="absolute top-7 left-3 text-white"
-                              icon={faStarOutline}
-                            />
+                          {!isPublicImageSet && (
+                            <>
+                              {img.starred ? (
+                                <FontAwesomeIcon
+                                  onClick={() => handleToggleStar(img._id)}
+                                  className="absolute top-7 left-3 text-yellow-500"
+                                  icon={faStar}
+                                />
+                              ) : (
+                                <FontAwesomeIcon
+                                  onClick={() => handleToggleStar(img._id)}
+                                  className="absolute top-7 left-3 text-white"
+                                  icon={faStarOutline}
+                                />
+                              )}
+                            </>
                           )}
                         </div>
                         <img
@@ -998,7 +1040,7 @@ export const getServerSideProps = withPageAuthRequired({
     // const allNames = await ImageSet.findOne({_id: params.id}, {images: {_id: 1, name: 1, phonetics: 1, imageItem: 1}});
     const allNames = await ImageSet.findOne(
       { _id: params.id },
-      { images: { name: 1 } }
+      { images: { name: 1 }, userId: 1 }
     );
     const serializedNames = JSON.parse(JSON.stringify(allNames));
 
@@ -1010,6 +1052,14 @@ export const getServerSideProps = withPageAuthRequired({
       return imageSet;
     });
 
-    return { props: { user, allNames: serializedNames, imageSets: imageSets } };
+    return {
+      props: {
+        user,
+        allNames: serializedNames,
+        imageSets: imageSets,
+        isPublicImageSet:
+          serializedNames.userId === null || !serializedNames.userId,
+      },
+    };
   },
 });
