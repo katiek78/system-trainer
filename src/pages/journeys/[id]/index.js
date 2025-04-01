@@ -503,18 +503,27 @@ const JourneyPage = ({ journey, points, totalPages }) => {
 };
 
 export default JourneyPage;
-
+// const publicJourneyResult = await Journey.find({ $or: [{ userId: null }, { userId: { $exists: false } }] }, { name: 1 });
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ params, query, req, res }) => {
     const auth0User = await getSession(req, res);
     const user = auth0User.user;
     await dbConnect();
 
-    const journeyResult = await Journey.find({
-      userId: user.sub,
+    const journeyResult = await Journey.findOne({
       _id: params.id,
+      $or: [
+        { userId: user.sub },
+        { userId: null },
+        { userId: { $exists: false } }, // Handle missing userId
+      ],
     });
-    const journey = JSON.parse(JSON.stringify(journeyResult))[0];
+
+    if (!journeyResult) {
+      return { notFound: true };
+    }
+
+    const journey = JSON.parse(JSON.stringify(journeyResult));
 
     const page = parseInt(query.page) || 1; // Get the current page from the query string
     const pageLimit = 10; // Number of points per page
