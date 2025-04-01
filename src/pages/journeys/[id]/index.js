@@ -269,7 +269,7 @@ const JourneyPage = ({
     <>
       <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
         <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">
-          Journey:{" "}
+          Journey{isPublicJourney && " (PUBLIC)"}:
         </h1>
         <h2 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">
           {isEditable ? (
@@ -434,7 +434,7 @@ const JourneyPage = ({
                   </div>
                 ))}
 
-                {journey && journey.id && (
+                {journey && journey.id && (!isPublicJourney || isAdmin()) && (
                   <div className="plusIcon flex items-center justify-center mb-16">
                     <Link
                       href="/journeys/[id]/new"
@@ -490,23 +490,29 @@ const JourneyPage = ({
                             location={points[currentSlideshowPoint].location}
                           />
                         )}
-                      <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                        <Link
-                          href="/journeys/[id]/points/[id]/editPoint"
-                          as={`/journeys/${journey.id}/points/${points[currentSlideshowPoint]._id}/editPoint`}
-                          legacyBehavior
-                        >
-                          <FontAwesomeIcon icon={faEdit} size="2x" />
-                        </Link>
-                        <FontAwesomeIcon
-                          className="ml-5"
-                          icon={faTrash}
-                          size="2x"
-                          onClick={() =>
-                            handleDeletePoint(points[currentSlideshowPoint]._id)
-                          }
-                        />
-                      </div>
+                      {!isPublicJourney || !isAdmin() ? (
+                        <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                          <Link
+                            href="/journeys/[id]/points/[id]/editPoint"
+                            as={`/journeys/${journey.id}/points/${points[currentSlideshowPoint]._id}/editPoint`}
+                            legacyBehavior
+                          >
+                            <FontAwesomeIcon icon={faEdit} size="2x" />
+                          </Link>
+                          <FontAwesomeIcon
+                            className="ml-5"
+                            icon={faTrash}
+                            size="2x"
+                            onClick={() =>
+                              handleDeletePoint(
+                                points[currentSlideshowPoint]._id
+                              )
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
                     </div>
                   </div>
                 </div>
