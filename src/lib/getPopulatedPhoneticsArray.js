@@ -1,130 +1,16 @@
 import { cardValues, suitValues } from "./cardConstants";
+import {
+  majorValues,
+  benVowels,
+  kBenCardValues,
+  kBenCardValues2704,
+  kBenSuitPairs,
+  HBHMSuitPairs,
+  rModifiedConsonantArray,
+  specialVoicedConsonantArray,
+  voicedConsonantArray,
+} from "./phoneticsConstants";
 
-const majorValues = ["s", "t", "n", "m", "r", "l", "sh", "k", "f", "p"];
-//const HBHMRedValues = { A: 't', 2: 'n', 3: 'm', 4: 'r', 5: 'l', 6: 'sh', 7: 'k', 8: 'f', 9: 'p', 10: 's', J: 'g', Q: 'd', K: 'h' };
-const benVowels = ["oo", "a", "e", "i", "o", "u", "ai", "ee", "ae", "oh"];
-const kBenCardValues = {
-  A: "t",
-  2: "n",
-  3: "m",
-  4: "r",
-  5: "l",
-  6: "sh",
-  7: "k",
-  8: "f",
-  9: "p",
-  10: "s",
-  J: "g",
-  Q: "d",
-  K: "h",
-};
-const kBenCardValues2704 = {
-  red: {
-    A: "st",
-    2: "",
-    3: "sp",
-    4: "tr",
-    5: "bl",
-    6: "pr",
-    7: "kr",
-    8: "fl",
-    9: "br",
-    10: "z",
-    J: "gr",
-    Q: "cl",
-    K: "w",
-  },
-  black: {
-    A: "t",
-    2: "n",
-    3: "m",
-    4: "r",
-    5: "l",
-    6: "sh",
-    7: "k",
-    8: "f",
-    9: "p",
-    10: "s",
-    J: "g",
-    Q: "d",
-    K: "h",
-  },
-};
-const kBenSuitPairs = {
-  ss: "oo",
-  hh: "oo",
-  sd: "a",
-  ds: "a",
-  sc: "e",
-  cs: "i",
-  hd: "e",
-  dh: "i",
-  ch: "u",
-  hc: "u",
-  sh: "ai",
-  hs: "ai",
-  cc: "ee",
-  dd: "ee",
-  cd: "oh",
-  dc: "oh",
-};
-
-const HBHMSuitPairs = {
-  ss: "s",
-  hh: "s",
-  sd: "t",
-  ds: "t",
-  sc: "n",
-  cs: "r",
-  hd: "n",
-  dh: "r",
-  ch: "l",
-  hc: "l",
-  sh: "f",
-  hs: "f",
-  cc: "k",
-  dd: "k",
-  cd: "p",
-  dc: "p",
-};
-
-//const kBenSuitPairs = {'♠️♠️': 'oo', '♥️♥️': 'oo', '♠️♦️' : 'a', '♦️♠️' : 'a', '♠️♣️' : 'e', '♣️♠️': 'i', '♥️♦️' : 'e', '♦️♥️' : 'i', '♣️♥️' : 'u', '♥️♣️' : 'u', '♠️♥️' : 'ai', '♥️♠️' : 'ai', '♣️♣️' : 'ee', '♦️♦️' : 'ee', '♣️♦️' : 'oh', '♦️♣️' : 'oh'}
-const rModifiedConsonantArray = [
-  "s",
-  "t",
-  "n",
-  "m",
-  "th",
-  "l",
-  "sh",
-  "k",
-  "f",
-  "p",
-];
-const voicedConsonantArray = [
-  "z",
-  "d",
-  "n",
-  "m",
-  "r",
-  "l",
-  "ch",
-  "g",
-  "v",
-  "b",
-];
-const specialVoicedConsonantArray = [
-  "z",
-  "d",
-  "h",
-  "y",
-  "tr",
-  "w",
-  "ch",
-  "g",
-  "v",
-  "b",
-];
 //♥️', '♦️', '♣️', '♠️
 const getBen4Phonetics = (text) => {
   const RULES = [
@@ -423,7 +309,16 @@ const getCardParts = (text) => {
   return cardParts;
 };
 
-export const getPopulatedPhoneticsArray = (setType, phoneticsType) => {
+export const getPopulatedPhoneticsArray = (
+  setType,
+  phoneticsType,
+  replacementMajorValues = [],
+  replacementBenVowels = []
+) => {
+  const majorValuesToUse =
+    replacementMajorValues.length > 0 ? replacementMajorValues : majorValues;
+  const benVowelsToUse =
+    replacementBenVowels.length > 0 ? replacementBenVowels : benVowels;
   //get the array that we want to populate the image set with
   let phoneticsArray = [];
   switch (phoneticsType) {
@@ -431,32 +326,32 @@ export const getPopulatedPhoneticsArray = (setType, phoneticsType) => {
       if (setType === "2d") {
         for (let i = 0; i < 100; i++) {
           const twoDigitPhonetics =
-            majorValues[i.toString().padStart(2, "0")[0]] +
+            majorValuesToUse[i.toString().padStart(2, "0")[0]] +
             "+" +
-            majorValues[i.toString().padStart(2, "0")[1]];
+            majorValuesToUse[i.toString().padStart(2, "0")[1]];
           phoneticsArray.push(twoDigitPhonetics);
         }
       }
       if (setType === "3d") {
         for (let i = 0; i < 1000; i++) {
           const threeDigitPhonetics =
-            majorValues[i.toString().padStart(3, "0")[0]] +
+            majorValuesToUse[i.toString().padStart(3, "0")[0]] +
             "+" +
-            majorValues[i.toString().padStart(3, "0")[1]] +
+            majorValuesToUse[i.toString().padStart(3, "0")[1]] +
             "+" +
-            majorValues[i.toString().padStart(3, "0")[2]];
+            majorValuesToUse[i.toString().padStart(3, "0")[2]];
           phoneticsArray.push(threeDigitPhonetics);
         }
       }
       if (setType === "4d") {
         for (let i = 0; i < 10000; i++) {
           const fourDigitPhonetics =
-            majorValues[i.toString().padStart(4, "0")[0]] +
+            majorValuesToUse[i.toString().padStart(4, "0")[0]] +
             "+" +
-            majorValues[i.toString().padStart(4, "0")[1]] +
+            majorValuesToUse[i.toString().padStart(4, "0")[1]] +
             "+" +
-            majorValues[i.toString().padStart(4, "0")[2]] +
-            majorValues[i.toString().padStart(4, "0")[3]];
+            majorValuesToUse[i.toString().padStart(4, "0")[2]] +
+            majorValuesToUse[i.toString().padStart(4, "0")[3]];
           phoneticsArray.push(fourDigitPhonetics);
         }
       }
@@ -465,9 +360,9 @@ export const getPopulatedPhoneticsArray = (setType, phoneticsType) => {
       if (setType === "3d") {
         for (let i = 0; i < 1000; i++) {
           const threeDigitPhonetics =
-            majorValues[i.toString().padStart(3, "0")[0]] +
-            benVowels[i.toString().padStart(3, "0")[1]] +
-            majorValues[i.toString().padStart(3, "0")[2]];
+            majorValuesToUse[i.toString().padStart(3, "0")[0]] +
+            benVowelsToUse[i.toString().padStart(3, "0")[1]] +
+            majorValuesToUse[i.toString().padStart(3, "0")[2]];
           phoneticsArray.push(threeDigitPhonetics);
         }
       }

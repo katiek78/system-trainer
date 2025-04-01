@@ -19,6 +19,7 @@ import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import { getPopulatedPhoneticsArray } from "@/lib/getPopulatedPhoneticsArray";
+import { majorValues, benVowels } from "@/lib/phoneticsConstants";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
@@ -30,6 +31,9 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
   const [imageSet, setImageSet] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [phoneticsType, setPhoneticsType] = useState("");
+  const [swapDigit1, setSwapDigit1] = useState("");
+  const [swapDigit2, setSwapDigit2] = useState("");
+
   const [message, setMessage] = useState("");
 
   const [isListView, setIsListView] = useState(true);
@@ -479,6 +483,18 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
     setPhoneticsType(value);
   };
 
+  const handleSwap1Change = (e) => {
+    const target = e.target;
+    const value = target.value;
+    setSwapDigit1(value);
+  };
+
+  const handleSwap2Change = (e) => {
+    const target = e.target;
+    const value = target.value;
+    setSwapDigit2(value);
+  };
+
   const handleImportPhoneticsChange = (e) => {
     const target = e.target;
     const value = target.value;
@@ -508,11 +524,20 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
     setIsShowingImportPhoneticsDiv(false);
   };
 
+  const getReplacementMajorConsonants = (s1, s2) => {
+    if (s1 === s2 || s1 === "-" || s2 === "-") return majorValues;
+    let majorValuesCopy = [...majorValues];
+    majorValuesCopy[s1] = majorValues[s2];
+    majorValuesCopy[s2] = majorValues[s1];
+    return majorValuesCopy;
+  };
+
   const handleSubmitPhonetics = async (e) => {
     e.preventDefault();
     const phoneticsArray = getPopulatedPhoneticsArray(
       imageForm.setType,
-      phoneticsType
+      phoneticsType,
+      getReplacementMajorConsonants(swapDigit1, swapDigit2)
     );
 
     try {
@@ -635,9 +660,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
             id="changePhoneticsDiv"
             className="px-2 py-2 my-5 rounded-xl bg-gray-200"
           >
-            <label htmlFor="phoneticsType">
-              Select phonetics you wish to use:
-            </label>
+            <label htmlFor="phoneticsType">Change phonetics system:</label>
             <select
               name="phoneticsType"
               value={phoneticsType || "none"}
@@ -660,7 +683,47 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                 <option value="kben">Katie Ben System</option>
               )}
             </select>
-
+            <br />
+            <span>Swap consonants:</span>
+            <select
+              name="swapDigit1"
+              value={swapDigit1 || "-"}
+              onChange={handleSwap1Change}
+            >
+              <options>
+                <option value="-">-</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+              </options>
+            </select>
+            and
+            <select
+              name="swapDigit2"
+              value={swapDigit2 || "-"}
+              onChange={handleSwap2Change}
+            >
+              <options>
+                <option value="-">-</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+              </options>
+            </select>
             <br />
             <button
               onClick={handleCancelPhonetics}
