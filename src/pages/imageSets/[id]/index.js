@@ -873,7 +873,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                 return (
                   <div
                     key={img._id}
-                    className="grid grid-cols-1 sm:grid-cols-7 border border-gray-300 sm:border-gray-500 p-4 sm:p-2 rounded-lg bg-white sm:bg-none sm:rounded-none shadow-md sm:shadow-none mb-4 sm:mb-0"
+                    className="grid grid-cols-1 sm:grid-cols-7 border border-gray-300 sm:border-gray-500 p-4 sm:p-2 rounded-lg bg-white dark:bg-gray-800 rounded sm:rounded-none shadow-md sm:shadow-none mb-4 sm:mb-0"
                   >
                     {/* Name */}
                     <div className="col-span-1 font-bold text-xl">
@@ -929,7 +929,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                         ) : (
                           <FontAwesomeIcon
                             onClick={() => handleToggleStar(img._id)}
-                            className="text-black"
+                            className="black dark:text-gray-500"
                             icon={faStarOutline}
                           />
                         )
