@@ -13,10 +13,15 @@ import {
   faEdit,
   faPlus,
   faTrash,
+  faArrowLeft,
+  faArrowRight,
+  faChevronLeft,
+  faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
+//import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import "./styles.css";
+//import { setLazyProp } from "next/dist/server/api-utils";
 
 const JourneyPage = ({
   journey,
@@ -26,6 +31,7 @@ const JourneyPage = ({
   user,
 }) => {
   const router = useRouter();
+  //const { paginatedPoints, journey } = props;
   const contentType = "application/json";
   // const [journey, setJourney] = useState({});
   const [message, setMessage] = useState("");
@@ -33,8 +39,12 @@ const JourneyPage = ({
     router.query.page ? parseInt(router.query.page) : 1
   );
 
-  const [isListView, setIsListView] = useState(true);
+  const [isListView, setIsListView] = useState(!router.query.slideshow);
   const [currentSlideshowPoint, setCurrentSlideshowPoint] = useState(0);
+  //const [points, setPoints] = useState(null);
+  const [allPoints, setAllPoints] = useState(null);
+  const [loadingAllPoints, setLoadingAllPoints] = useState(false);
+
   const [isEditable, setIsEditable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,16 +55,21 @@ const JourneyPage = ({
   const isAdmin = () => user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   useEffect(() => {
+    const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
+    setCurrentPage(pageFromUrl); // Update the page state
+
+    // Handle loading the points based on the current page and view mode
     setIsLoading(true);
     setJourneyForm({ name: journey.name });
-    const id = router.query.id;
-    setIsLoading(false);
-  }, [currentPage]);
 
-  useEffect(() => {
-    const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
-    setCurrentPage(pageFromUrl);
-  }, [router.query.page]);
+    if (!isListView && !allPoints) {
+      fetchAllPoints();
+      //if (allPoints) setPoints(allPoints);
+    } else {
+      //setPoints(points); // Only show paginated points if in gallery mode
+    }
+    setIsLoading(false);
+  }, [router.query.page, isListView]);
 
   const renderPageNumbers = () => {
     const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -72,9 +87,25 @@ const JourneyPage = ({
       </Link>
     ));
   };
-  // const handlePageChange = (page) => {
-  //     setCurrentPage(page);
-  //   }
+
+  const fetchAllPoints = async () => {
+    console.log(allPoints);
+    if (allPoints) {
+      //setPoints(allPoints);
+      return;
+    }
+    if (loadingAllPoints) return; // Avoid duplicate fetches
+    //if (loadingAllPoints) return;
+    setLoadingAllPoints(true);
+    const response = await fetch(`/api/journeys/${router.query.id}`);
+    const data = await response.json();
+    const loadedPoints = data.data.points;
+    setAllPoints(loadedPoints);
+    //setPoints(loadedPoints);
+    console.log(loadedPoints.length);
+    setCurrentSlideshowPoint(0);
+    setLoadingAllPoints(false);
+  };
 
   const putDataJourney = async (journeyForm) => {
     const { id } = router.query;
@@ -99,44 +130,6 @@ const JourneyPage = ({
       setMessage("Failed to update journey");
     }
   };
-
-  //   const putDataImages = async (imageForm) => {
-
-  //    const { id } = router.query
-
-  //    try {
-
-  //      const res = await fetch(`/api/imageSets/${id}/${currentPage}`, {
-  //        method: 'PUT',
-  //        headers: {
-  //          Accept: contentType,
-  //          'Content-Type': contentType,
-  //        },
-  //        body: JSON.stringify({name: imageForm.name, images: imageForm.images}),
-  //      })
-
-  //      // Throw error with status code in case Fetch API req failed
-  //      if (!res.ok) {
-  //        throw new Error(res.status)
-  //      }
-
-  //      const { data } = await res.json()
-
-  //    } catch (error) {
-  //      setMessage('Failed to update images')
-  //    }
-  //  }
-
-  //   const handleChangePointForm = (e) => {
-  //     const target = e.target
-  //     const value = target.value
-  //     const name = target.name
-
-  //     const updatedForm = { ...pointForm };
-
-  //     let thisIndex;
-
-  // }
 
   const handleDelete = async () => {
     const journeyID = router.query.id;
@@ -172,14 +165,6 @@ const JourneyPage = ({
     setIsEditable(!isEditable);
   };
 
-  //   /* Makes sure image set info is filled */
-  //   const formValidate = () => {
-  //     let err = {}
-  //     if (!form.name) err.name = 'Name is required'
-
-  //     return err
-  //   }
-
   const handleSubmitJourneyForm = (e) => {
     e.preventDefault();
 
@@ -187,44 +172,36 @@ const JourneyPage = ({
     setIsEditable(false);
   };
 
-  // const updatedForm = { ...pointForm };
-  // const thisIndex = findIndexById(updatedForm.images, id);
-  // if (thisIndex) updatedForm.images[thisIndex].starred = thisImage.starred
-
-  // setPointForm(updatedForm);
-
-  // try {
-
-  //   const res = await fetch(`/api/imageSets/${journey._id}`, {
-  //     method: 'PUT',
-  //     headers: {
-  //       Accept: contentType,
-  //       'Content-Type': contentType,
-  //     },
-  //     body: JSON.stringify(thisImage),
-  //   })
-
-  //   // Throw error with status code in case Fetch API req failed
-  //   if (!res.ok) {
-  //     throw new Error(res.status)
-  //   }
-  //   const { data } = await res.json()
-
-  // } catch (error) {
-  //   setMessage('Failed to save image')
-  // }
-
   const isLocationStreetView = (location) => {
     return /^[-\d]/.test(location);
   };
 
-  const handleSlideshow = () => {
+  const handleSlideshow = async () => {
+    router.push(
+      {
+        pathname: router.pathname, // Keep the current page
+        query: { id: router.query.id, slideshow: "true" }, // Ensure `id` is present
+      },
+      undefined,
+      { shallow: true }
+    );
     setIsListView(false);
-    setCurrentSlideshowPoint(0);
+    await fetchAllPoints();
+    //setCurrentSlideshowPoint(0);
   };
 
   const handleGallery = () => {
-    setIsListView(true);
+    // Use replace to ensure we reload the page without adding a new entry to the history
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { id: router.query.id, page: "1" }, // Reset to page 1
+      },
+      undefined,
+      { shallow: false } // This ensures a full reload and that getServerSideProps runs
+    );
+
+    setIsListView(true); // Switch to gallery view
   };
 
   const handlePrevious = () => {
@@ -235,10 +212,18 @@ const JourneyPage = ({
 
   const handleNext = () => {
     setCurrentSlideshowPoint(
-      currentSlideshowPoint < points.length - 1
+      currentSlideshowPoint < allPoints.length - 1
         ? currentSlideshowPoint + 1
-        : points.length - 1
+        : allPoints.length - 1
     );
+  };
+
+  const handleGoToStart = () => {
+    setCurrentSlideshowPoint(0);
+  };
+
+  const handleGoToEnd = () => {
+    setCurrentSlideshowPoint(allPoints.length - 1);
   };
 
   useEffect(() => {
@@ -262,8 +247,6 @@ const JourneyPage = ({
     setWidth(width);
     setHeight(height);
   }, []);
-
-  console.log(isPublicJourney);
 
   return (
     <>
@@ -339,7 +322,7 @@ const JourneyPage = ({
                 </>
               )}
 
-              {points.length > 0 ? (
+              {points?.length > 0 ? (
                 isListView ? (
                   <button
                     onClick={handleSlideshow}
@@ -374,7 +357,10 @@ const JourneyPage = ({
               <div>{renderPageNumbers()}</div>
               <div className="p-2 lg:p-5 flex flex-wrap justify-center">
                 {points?.map((point) => (
-                  <div className="point-card-container flex justify-center">
+                  <div
+                    className="point-card-container flex justify-center"
+                    key={point.id}
+                  >
                     <div
                       className={`point-card ${
                         point.location ? "" : "small-point-card"
@@ -452,72 +438,118 @@ const JourneyPage = ({
               </div>
             </>
           ) : (
-            <div className="p-2 lg:p-5 flex flex-wrap justify-center">
-              <div className="point-card-container flex justify-center">
-                <div
-                  className="point-card-big flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300"
-                  key={points[currentSlideshowPoint]._id}
-                >
-                  <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
-                    <p className="point-name text-center h-12 whitespace-normal">
-                      {points[currentSlideshowPoint].name}
-                    </p>
-                    <button onClick={handlePrevious}>Previous</button>{" "}
-                    <button onClick={handleNext}>Next</button>
-                    <div className="street-view-container relative">
-                      {points[currentSlideshowPoint].location &&
-                        isLocationStreetView(
-                          points[currentSlideshowPoint].location
-                        ) && (
-                          <EmbedStreetView
-                            width={width}
-                            height={height}
-                            location={points[currentSlideshowPoint].location}
-                            heading={
-                              points[currentSlideshowPoint].heading || 90
-                            }
-                            pitch={points[currentSlideshowPoint].pitch || 0}
-                            fov={points[currentSlideshowPoint].fov || 100}
-                          />
-                        )}
-                      {points[currentSlideshowPoint].location &&
-                        !isLocationStreetView(
-                          points[currentSlideshowPoint].location
-                        ) && (
-                          <EmbedImage
-                            width={width}
-                            height={height}
-                            location={points[currentSlideshowPoint].location}
-                          />
-                        )}
-                      {!isPublicJourney || !isAdmin() ? (
-                        <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                          <Link
-                            href="/journeys/[id]/points/[id]/editPoint"
-                            as={`/journeys/${journey.id}/points/${points[currentSlideshowPoint]._id}/editPoint`}
-                            legacyBehavior
-                          >
-                            <FontAwesomeIcon icon={faEdit} size="2x" />
-                          </Link>
-                          <FontAwesomeIcon
-                            className="ml-5"
-                            icon={faTrash}
-                            size="2x"
-                            onClick={() =>
-                              handleDeletePoint(
-                                points[currentSlideshowPoint]._id
-                              )
-                            }
-                          />
+            allPoints &&
+            allPoints[currentSlideshowPoint] && (
+              <div className="p-2 lg:p-5 flex flex-wrap justify-center">
+                <div className="point-card-container flex justify-center">
+                  <div
+                    className="point-card-big flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300"
+                    key={allPoints[currentSlideshowPoint]._id}
+                  >
+                    <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
+                      <p className="point-name text-center h-12 whitespace-normal">
+                        {allPoints[currentSlideshowPoint].name}
+                      </p>
+                      <div className="street-view-container relative">
+                        {allPoints[currentSlideshowPoint].location &&
+                          isLocationStreetView(
+                            allPoints[currentSlideshowPoint].location
+                          ) && (
+                            <EmbedStreetView
+                              width={width}
+                              height={height}
+                              location={
+                                allPoints[currentSlideshowPoint].location
+                              }
+                              heading={
+                                allPoints[currentSlideshowPoint].heading || 90
+                              }
+                              pitch={
+                                allPoints[currentSlideshowPoint].pitch || 0
+                              }
+                              fov={allPoints[currentSlideshowPoint].fov || 100}
+                            />
+                          )}
+                        {allPoints[currentSlideshowPoint].location &&
+                          !isLocationStreetView(
+                            allPoints[currentSlideshowPoint].location
+                          ) && (
+                            <EmbedImage
+                              width={width}
+                              height={height}
+                              location={
+                                allPoints[currentSlideshowPoint].location
+                              }
+                            />
+                          )}
+
+                        <div className="icon-container flex flex-row justify-center items-center">
+                          {(currentSlideshowPoint > 0 || currentPage > 1) && (
+                            <FontAwesomeIcon
+                              className="ml-5"
+                              icon={faChevronLeft}
+                              size="2x"
+                              onClick={handleGoToStart}
+                            />
+                          )}
+
+                          {(currentSlideshowPoint > 0 || currentPage > 0) && (
+                            <FontAwesomeIcon
+                              className="ml-5"
+                              icon={faArrowLeft}
+                              size="2x"
+                              onClick={handlePrevious}
+                            />
+                          )}
+
+                          {currentSlideshowPoint < points.length - 1 && (
+                            <FontAwesomeIcon
+                              className="ml-5"
+                              icon={faArrowRight}
+                              size="2x"
+                              onClick={handleNext}
+                            />
+                          )}
+
+                          {currentSlideshowPoint < points.length - 1 && (
+                            <FontAwesomeIcon
+                              className="ml-5"
+                              icon={faChevronRight}
+                              size="2x"
+                              onClick={handleGoToEnd}
+                            />
+                          )}
                         </div>
-                      ) : (
-                        <div></div>
-                      )}
+
+                        {!isPublicJourney || !isAdmin() ? (
+                          <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                            <Link
+                              href="/journeys/[id]/points/[id]/editPoint"
+                              as={`/journeys/${journey.id}/points/${allPoints[currentSlideshowPoint]._id}/editPoint`}
+                              legacyBehavior
+                            >
+                              <FontAwesomeIcon icon={faEdit} size="2x" />
+                            </Link>
+                            <FontAwesomeIcon
+                              className="ml-5"
+                              icon={faTrash}
+                              size="2x"
+                              onClick={() =>
+                                handleDeletePoint(
+                                  allPoints[currentSlideshowPoint]._id
+                                )
+                              }
+                            />
+                          </div>
+                        ) : (
+                          <div></div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )
           )}
         </div>
 
@@ -552,20 +584,11 @@ export const getServerSideProps = withPageAuthRequired({
 
     const journey = JSON.parse(JSON.stringify(journeyResult));
 
-    const page = parseInt(query.page) || 1; // Get the current page from the query string
-    const pageLimit = 10; // Number of points per page
-
-    // Calculate the offset for the current page
+    const page = query.page ? parseInt(query.page) : 1;
+    const pageLimit = 10;
     const offset = (page - 1) * pageLimit;
 
-    // Get the points for the current page
     const points = journey.points.slice(offset, offset + pageLimit);
-
-    {
-      /* if (journey && journey._id) journey._id = journey._id.toString();
-
-    return { props: { user, journey } }; */
-    }
 
     return {
       props: {
@@ -574,9 +597,9 @@ export const getServerSideProps = withPageAuthRequired({
           name: journey.name,
           // Add any other necessary journey fields here
         },
-        points: points,
+        points,
         totalPages: Math.ceil(journey.points.length / pageLimit),
-        isPublicJourney: journey.userId === null || !journey.userId,
+        isPublicJourney: !journey.userId,
         user,
       },
     };
