@@ -1,5 +1,4 @@
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { useRouter } from "next/router";
@@ -1096,32 +1095,39 @@ export default ImageSetPage;
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ params, req, res }) => {
     const auth0User = await getSession(req, res);
-    const user = auth0User.user;
+    if (!auth0User || !auth0User.user) {
+      return { props: { user: null, allNames: null, imageSets: [] } }; // Prevent unauthorized access
+    }
     await dbConnect();
 
     //get all names
     // const allNames = await ImageSet.findOne({_id: params.id}, {images: {_id: 1, name: 1, phonetics: 1, imageItem: 1}});
+    const userId = auth0User.user.sub; // Get the current user's Auth0 ID
+
     const allNames = await ImageSet.findOne(
-      { _id: params.id },
+      { _id: params.id, userId },
       { images: { name: 1 }, userId: 1 }
     );
+
+    if (!allNames) {
+      return { notFound: true }; // Prevent access if the image set doesn't belong to the user
+    }
+
     const serializedNames = JSON.parse(JSON.stringify(allNames));
 
     //get all image sets name and ids
-    const result2 = await ImageSet.find({}, { name: 1 });
-    const imageSets = result2.map((doc) => {
-      const imageSet = JSON.parse(JSON.stringify(doc));
-      imageSet._id = imageSet._id.toString();
-      return imageSet;
-    });
+    const result2 = await ImageSet.find({ userId }, { name: 1 });
+
+    const imageSets = result2.map((doc) => ({
+      ...doc.toObject(),
+      _id: doc._id.toString(),
+    }));
 
     return {
       props: {
-        user,
+        user: auth0User.user,
         allNames: serializedNames,
-        imageSets: imageSets,
-        isPublicImageSet:
-          serializedNames.userId === null || !serializedNames.userId,
+        imageSets,
       },
     };
   },
