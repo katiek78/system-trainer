@@ -44,6 +44,8 @@ const TrainingCenter = ({ user, imageSet }) => {
   const [imageGroup, setImageGroup] = useState("all");
   const [imageGroupD1, setImageGroupD1] = useState("all");
   const [imageGroupD2, setImageGroupD2] = useState("all");
+  const [imageGroupS1, setImageGroupS1] = useState("all");
+  const [imageGroupS2, setImageGroupS2] = useState("all");
   const [filteredData, setFilteredData] = useState(imageSet.images);
   const [needNewCard, setNeedNewCard] = useState(false);
   const [field, setField] = useState("imageItem");
@@ -52,49 +54,103 @@ const TrainingCenter = ({ user, imageSet }) => {
   // let filteredData = [];
 
   const setType = determineSetType(imageSet.images.length);
+  const isCardSet = setType.includes("c");
 
   useEffect(() => {
     if (isLoading) return;
     setIsLoading(true);
     setCardsAvailable(false);
 
-    //console.log(imageSet.images[1926]); //outdated 'starred' but correct name and recentAttempts?
-    //console.log(filteredData.filter(el => el.imageItem.includes("nightshade"))); //correct
-
-    //const filterData = () => {
+    //Filter by confidence level
     let newSet = [...imageSet.images];
-    if (imageGroup !== "all" && imageGroup !== "bf" && imageGroup !== "rf")
+    if (imageGroup !== "all")
       newSet = newSet.filter(
         (image) =>
-          getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup) &&
-          (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
-          (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
+          getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup)
       );
 
-    if (
-      imageGroup === "all" &&
-      (imageGroupD1 !== "all" || imageGroupD2 !== "all")
-    ) {
-      newSet = newSet.filter(
-        (image) =>
-          (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
-          (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
-      );
+    //Filter by digits
+    if (imageGroupD1 !== "all" || imageGroupD2 !== "all") {
+      if (isCardSet) {
+        newSet = newSet.filter((image) => {
+          // Extract card values (A, 2-10, J, Q, K)
+          const values = image.name.match(/(A|10|[2-9]|J|Q|K)/g);
+
+          if (!values || values.length < 2) return false; // Ensure at least two values
+
+          const [firstValue, secondValue] = values; // Extract first and second card values
+
+          // console.log(
+          //   image.name,
+          //   firstValue,
+          //   secondValue,
+          //   imageGroupD1,
+          //   imageGroupD2
+          // );
+
+          return (
+            (firstValue === imageGroupD1 || imageGroupD1 === "all") &&
+            (secondValue === imageGroupD2 || imageGroupD2 === "all")
+          );
+        });
+      } else {
+        newSet = newSet.filter(
+          (image) =>
+            (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
+            (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
+        );
+      }
     }
 
-    if (imageGroup === "bf") {
-      newSet = newSet.filter(
-        (image) =>
-          /^[^\p{L}]*[♠♣].*[♦♥]/u.test(image.name) ||
-          /^[^\p{L}]*[♠♣].*[♠♣]/u.test(image.name)
-      );
-    }
-    if (imageGroup === "rf") {
-      newSet = newSet.filter(
-        (image) =>
-          /^[^\p{L}]*[♦♥].*[♠♣]/u.test(image.name) ||
-          /^[^\p{L}]*[♦♥].*[♦♥]/u.test(image.name)
-      );
+    //Filter by suits
+    if (imageGroupS1 && (imageGroupS1 !== "all" || imageGroupS2 !== "all")) {
+      newSet = newSet.filter((image) => {
+        // Mapping for suit emojis to plain suits
+        const suitRegexMap = {
+          "♥️": "♥",
+          "♠️": "♠",
+          "♣️": "♣",
+          "♦️": "♦",
+        };
+
+        // Convert imageGroupS1 and imageGroupS2 to the correct suit symbols
+        const firstSuit = suitRegexMap[imageGroupS1] || imageGroupS1; // Default to the input if it's not an emoji
+        const secondSuit = suitRegexMap[imageGroupS2] || imageGroupS2;
+
+        // Handle special cases for "b" (black suits) and "r" (red suits)
+        const getSuitRegex = (suit) => {
+          if (suit === "b") return "[♠♣]"; // Black suits (♠ or ♣)
+          if (suit === "r") return "[♦♥]"; // Red suits (♦ or ♥)
+          if (suit === "all") return "[♠♣♦♥]"; // All suits
+          return suit; // Return the specific suit for other cases
+        };
+
+        // Convert the image name to match plain suit characters (e.g., replace ♥️ with ♥)
+        const convertedName = image.name
+          .replace(/♥️/g, "♥")
+          .replace(/♠️/g, "♠")
+          .replace(/♣️/g, "♣")
+          .replace(/♦️/g, "♦");
+
+        // Now we need to check if the converted name contains both suits
+        const suits = convertedName.match(/[♠♣♦♥]/g); // Match all suits after conversion
+
+        if (suits && suits.length === 2) {
+          const [firstSuitInName, secondSuitInName] = suits;
+
+          const firstSuitMatches = new RegExp(getSuitRegex(firstSuit)).test(
+            firstSuitInName
+          );
+
+          // Ensure second suit matches `imageGroupS2`
+          const secondSuitMatches = new RegExp(getSuitRegex(secondSuit)).test(
+            secondSuitInName
+          );
+
+          return firstSuitMatches && secondSuitMatches;
+        }
+        return false; // If there are not exactly 2 suits, return false
+      });
     }
 
     if (starredOnly) newSet = newSet.filter((image) => image.starred);
@@ -156,42 +212,15 @@ const TrainingCenter = ({ user, imageSet }) => {
 
   const groupTotals = getGroupTotals();
 
-  // const getImageSet = async (id) => {
-  //   //get image set from DB
-  //   const res = await fetch(`/api/imageSets/${id}`, {
-  //     method: 'GET',
-  //     headers: {
-  //       Accept: contentType,
-  //       'Content-Type': contentType,
-  //     },
-  //   })
-  //   const data = await res.json();
-  //   setImageSet(data.data);
-  // }
-
   function handleKeyDown(e) {
     e.stopPropagation();
-    //   //can't do preventDefault or it stops us typing
-    // console.log(e.target)
-    //   //console.log("just pressed a key and form.imageItem is " + form.imageItem) //if we've pressed return, this has somehow been reset to ''
-
-    //   if (document.getElementsByName('imageItem').length > 0) {
-    //     //console.log("special key down thing called")
-    //     if (e.keyCode === 13) handleSubmitEdit(e, formItem);
-    //   } else {
 
     if (e.keyCode === 39) setNeedNewCard(true);
-    //     // if (e.keyCode === 13 || e.keyCode === 32) toggleRotate();
-    // }
   }
 
   const handleStartTraining = () => {
-    //get random image from set
-    // const randIndex = Math.floor(Math.random() * imageSet.images.length);
-    // setRandImage(imageSet.images[randIndex]);
-
     document.addEventListener("keydown", handleKeyDown);
-    // getImage()
+
     setNeedNewCard(true);
     setIsStarted(true);
   };
@@ -210,22 +239,11 @@ const TrainingCenter = ({ user, imageSet }) => {
     setIsStarred(filteredData[randIndex].starred);
   };
 
-  //   function handleKeyDownEdit(k) {
-  //     console.log("special key down thing called")
-  //    // k.stopPropagation();
-  //     if (k.keyCode === 13) console.log("pressed return on input");
-  // }
-
   const handleEdit = (e, field) => {
     //Now entering editable mode
     e.stopPropagation();
     setIsEditable(true);
     setField(field);
-
-    //document.addEventListener('keydown', handleKeyDown);
-    //  document.removeEventListener('keydown', handleKeyDown, true);
-    //  console.log("normal key down thing should be off now");
-    //  document.addEventListener('keydown', handleKeyDownEdit)
   };
 
   const handleCorrect = (e) => {
@@ -331,6 +349,18 @@ const TrainingCenter = ({ user, imageSet }) => {
     setNeedNewCard(true);
   };
 
+  const handleChangeSelectS1 = () => {
+    const suit1 = document.getElementById("selSuit1").value;
+    setImageGroupS1(suit1);
+    setNeedNewCard(true);
+  };
+
+  const handleChangeSelectS2 = () => {
+    const suit2 = document.getElementById("selSuit2").value;
+    setImageGroupS2(suit2);
+    setNeedNewCard(true);
+  };
+
   const handleToggleStar = async (id) => {
     if (randImage.starred === undefined) randImage.starred = false;
     randImage.starred = !randImage.starred;
@@ -381,8 +411,9 @@ const TrainingCenter = ({ user, imageSet }) => {
               <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
 
               <div>
-                <p>Which images do you want to train?</p>
+                <p className="text-xl">Which images do you want to train?</p>
 
+                <label htmlFor="selSet">Confidence level</label>
                 <select
                   id="selSet"
                   className="w-full rounded-md dark:bg-slate-800"
@@ -394,37 +425,79 @@ const TrainingCenter = ({ user, imageSet }) => {
                       {label} ({groupTotals && groupTotals[i]})
                     </option>
                   ))}
-                  {setType === "2c" && (
-                    <>
-                      <option value="bf">Black-first</option>
-                      <option value="rf">Red-first</option>
-                    </>
-                  )}
                 </select>
 
-                <label for="selDigit1">Digit 1</label>
+                <label for="selDigit1">
+                  {isCardSet ? "Value 1" : "Digit 1"}
+                </label>
                 <select
                   id="selDigit1"
                   className="w-full rounded-md dark:bg-slate-800"
                   onChange={handleChangeSelectD1}
                 >
                   <option value="all">All</option>
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                    <option value={digit}>{digit}</option>
-                  ))}
+                  {isCardSet &&
+                    ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                      (digit) => <option value={digit}>{digit}</option>
+                    )}
+                  {!isCardSet &&
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                      <option value={digit}>{digit}</option>
+                    ))}
                 </select>
 
-                <label for="selDigit2">Digit 2</label>
+                <label for="selDigit2">
+                  {isCardSet ? "Value 2" : "Digit 2"}
+                </label>
                 <select
                   id="selDigit2"
                   className="w-full rounded-md dark:bg-slate-800"
                   onChange={handleChangeSelectD2}
                 >
                   <option value="all">All</option>
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                    <option value={digit}>{digit}</option>
-                  ))}
+                  {isCardSet &&
+                    ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                      (digit) => <option value={digit}>{digit}</option>
+                    )}
+                  {!isCardSet &&
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                      <option value={digit}>{digit}</option>
+                    ))}
                 </select>
+
+                {setType === "2c" && (
+                  <>
+                    <label for="selSuit1">Suit 1</label>
+                    <select
+                      id="selSuit1"
+                      className="w-full rounded-md dark:bg-slate-800"
+                      onChange={handleChangeSelectS1}
+                    >
+                      <option value="all">All</option>
+                      <option value="b">Black</option>
+                      <option value="r">Red</option>
+                      <option value="♥️">♥️</option>
+                      <option value="♦️">♦️</option>
+                      <option value="♣️">♣️</option>
+                      <option value="♠️">♠️</option>
+                    </select>
+
+                    <label for="selSuit2">Suit 2</label>
+                    <select
+                      id="selSuit2"
+                      className="w-full rounded-md dark:bg-slate-800"
+                      onChange={handleChangeSelectS2}
+                    >
+                      <option value="all">All</option>
+                      <option value="b">Black</option>
+                      <option value="r">Red</option>
+                      <option value="♥️">♥️</option>
+                      <option value="♦️">♦️</option>
+                      <option value="♣️">♣️</option>
+                      <option value="♠️">♠️</option>
+                    </select>
+                  </>
+                )}
               </div>
 
               <div>
