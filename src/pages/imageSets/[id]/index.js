@@ -853,118 +853,90 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
         </div>
 
         <div>{renderPageNumbers()}</div>
-
         {isListView && (
-          <div className="mt-6 w-full grid lg:grid-cols-7 gap-y-10">
-            {/* {!isLoading && imageSet && imageSet.images && imageSet.images.length > 0 && imageSet.images.filter((img, i) => i < currentPage*pageLimit && i >= (currentPage - 1)*pageLimit).map((img,i) => { */}
-            <div className="col-span-1 font-bold">Item</div>
-            <div className="col-span-1 font-bold">Phonetics</div>
-            <div className="col-span-1 lg:col-span-2 font-bold">
-              Image description
+          <div className="mt-6 w-full">
+            {/* Table Headers (only visible on larger screens) */}
+            <div className="hidden sm:grid grid-cols-7 font-bold border-b border-gray-400 py-2">
+              <div className="col-span-1">Item</div>
+              <div className="col-span-1">Phonetics</div>
+              <div className="col-span-2">Image description</div>
+              <div className="col-span-2">Picture URL</div>
+              <div className="col-span-1"> </div>
             </div>
-            <div className="col-span-1 lg:col-span-2 font-bold">
-              Picture URL
-            </div>
-            <div className="col-span-1 font-bold"> </div>
+
+            {/* Table Rows (Cards on Mobile) */}
             {!isLoading &&
               imageSet &&
               imageSet.images &&
               imageSet.images.length > 0 &&
               imageSet.images.map((img, i) => {
-                if (isEditable) {
-                  return (
-                    <>
-                      <div
-                        key={img._id}
-                        className="col-span-1 font-bold text-xl"
-                      >
-                        {" "}
-                        <RedHeartsAndDiamonds text={img.name} />
-                      </div>
-                      <div className="col-span-1">
-                        {" "}
-                        <RedHeartsAndDiamonds text={img.phonetics} />
-                      </div>
-                      <div className="col-span-1 lg:col-span-2 ">
+                return (
+                  <div
+                    key={img._id}
+                    className="grid grid-cols-1 sm:grid-cols-7 border border-gray-300 sm:border-gray-500 p-4 sm:p-2 rounded-lg bg-white sm:bg-none sm:rounded-none shadow-md sm:shadow-none mb-4 sm:mb-0"
+                  >
+                    {/* Name */}
+                    <div className="col-span-1 font-bold text-xl">
+                      <RedHeartsAndDiamonds text={img.name} />
+                    </div>
+
+                    {/* Phonetics */}
+                    <div className="col-span-1">
+                      <RedHeartsAndDiamonds text={img.phonetics} />
+                    </div>
+
+                    {/* Image Description */}
+                    <div className="col-span-2">
+                      {isEditable ? (
                         <input
+                          className="border border-gray-400 p-2 rounded-md w-full focus:border-blue-500 focus:ring focus:ring-blue-300"
                           onChange={handleChangeImageForm}
                           value={img.imageItem}
                           id={"inpImage" + (i + (currentPage - 1) * pageLimit)}
                           name={
                             "inpImage" + (i + (currentPage - 1) * pageLimit)
                           }
-                        ></input>
-                      </div>
-                      <div className="col-span-1 lg:col-span-2 mr-2">
+                        />
+                      ) : (
+                        img.imageItem || "<none entered>"
+                      )}
+                    </div>
+
+                    {/* Picture URL */}
+                    <div className="col-span-2">
+                      {isEditable ? (
                         <input
+                          className="border border-gray-400 p-2 rounded-md w-full focus:border-blue-500 focus:ring focus:ring-blue-300"
                           onChange={handleChangeImageForm}
                           value={img.URL ? img.URL : ""}
                           id={"inpURL" + (i + (currentPage - 1) * pageLimit)}
                           name={"inpURL" + (i + (currentPage - 1) * pageLimit)}
-                        ></input>
-                      </div>
+                        />
+                      ) : img.URL && img.URL.length ? (
+                        <img className="h-8" src={img.URL} />
+                      ) : null}
+                    </div>
 
+                    {/* Star Button */}
+                    <div className="col-span-1">
                       {!isPublicImageSet ? (
-                        <div className="col-span-1">
-                          {img.starred ? (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="text-yellow-500"
-                              icon={faStar}
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="text-black"
-                              icon={faStarOutline}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div className="col-span-1"></div>
-                      )}
-                    </>
-                  );
-                } else
-                  return (
-                    <>
-                      <div className="col-span-1 font-bold text-xl">
-                        <RedHeartsAndDiamonds text={img.name} />
-                      </div>
-                      <div className="col-span-1">
-                        <RedHeartsAndDiamonds text={img.phonetics} />
-                      </div>
-                      <div className="col-span-1 lg:col-span-2 ">
-                        {img.imageItem || "<none entered>"}
-                      </div>
-                      <div className="col-span-1 lg:col-span-2 ">
-                        {img.URL && img.URL.length && (
-                          <img className="h-8" src={img.URL}></img>
-                        )}
-                      </div>
-
-                      {!isPublicImageSet ? (
-                        <div className="col-span-1">
-                          {" "}
-                          {img.starred ? (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="text-yellow-500"
-                              icon={faStar}
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              onClick={() => handleToggleStar(img._id)}
-                              className="text-black"
-                              icon={faStarOutline}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div></div>
-                      )}
-                    </>
-                  );
+                        img.starred ? (
+                          <FontAwesomeIcon
+                            onClick={() => handleToggleStar(img._id)}
+                            className="text-yellow-500"
+                            icon={faStar}
+                          />
+                        ) : (
+                          <FontAwesomeIcon
+                            onClick={() => handleToggleStar(img._id)}
+                            className="text-black"
+                            icon={faStarOutline}
+                          />
+                        )
+                      ) : null}
+                    </div>
+                  </div>
+                );
               })}
           </div>
         )}

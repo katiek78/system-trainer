@@ -492,7 +492,7 @@ const JourneyPage = ({
                               onClick={handleGoToStart}
                             />
                           )}
-
+                          <div className="w-20"></div>
                           {(currentSlideshowPoint > 0 || currentPage > 0) && (
                             <FontAwesomeIcon
                               className="ml-5"
