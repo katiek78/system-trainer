@@ -67,7 +67,7 @@ const TrainingCenter = ({ user, imageSet }) => {
       newSet = newSet.filter(
         (image) =>
           getConfidenceLevel(image.recentAttempts) === parseInt(imageGroup) &&
-          (image.name[0] === imageGroupD1 || imaageGroupD1 === "all") &&
+          (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
           (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
       );
 
@@ -99,9 +99,6 @@ const TrainingCenter = ({ user, imageSet }) => {
 
     if (starredOnly) newSet = newSet.filter((image) => image.starred);
     setFilteredData(newSet, starredOnly);
-    // }
-
-    //  filterData();
 
     if (filteredData.length) {
       getImage();
@@ -323,8 +320,14 @@ const TrainingCenter = ({ user, imageSet }) => {
   };
 
   const handleChangeSelectD1 = () => {
-    const digit1 = document.getElementById("selSetD1").value;
+    const digit1 = document.getElementById("selDigit1").value;
     setImageGroupD1(digit1);
+    setNeedNewCard(true);
+  };
+
+  const handleChangeSelectD2 = () => {
+    const digit2 = document.getElementById("selDigit2").value;
+    setImageGroupD2(digit2);
     setNeedNewCard(true);
   };
 
