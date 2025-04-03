@@ -641,7 +641,7 @@ const ImageSetPage = ({
 
   return (
     <>
-      <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
+      <div className="z-10 justify-between w-full font-mono pl-2 md:pl-2 lg:pl-0">
         <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">
           Image set{isPublicImageSet && " (PUBLIC)"}:{" "}
         </h1>
@@ -888,7 +888,7 @@ const ImageSetPage = ({
         {isListView && (
           <div className="mt-6 w-full">
             {/* Table Headers (only visible on larger screens) */}
-            <div className="hidden sm:grid grid-cols-7 font-bold border-b border-gray-400 py-2">
+            <div className="hidden sm:grid grid-cols-7 font-bold text-lg border-b border-gray-400 py-2">
               <div className="col-span-1">Item</div>
               <div className="col-span-1">Phonetics</div>
               <div className="col-span-2">Image description</div>
@@ -938,14 +938,6 @@ const ImageSetPage = ({
                     <div className="sm:ml-3 col-span-2">
                       {isEditable ? (
                         <>
-                          {/* <div class="gcse-search"></div> */}
-                          {/* <input
-                          className="border border-gray-400 p-2 rounded-md w-full focus:border-blue-500 focus:ring focus:ring-blue-300"
-                          onChange={handleChangeImageForm}
-                          value={img.URL ? img.URL : ""}
-                          id={"inpURL" + (i + (currentPage - 1) * pageLimit)}
-                          name={"inpURL" + (i + (currentPage - 1) * pageLimit)}
-                        /> */}
                           {!img.URL && (
                             <>
                               <ImageSearch
@@ -961,7 +953,9 @@ const ImageSetPage = ({
                         </>
                       ) : img.URL && img.URL.length ? (
                         <img className="h-8" src={img.URL} />
-                      ) : null}
+                      ) : (
+                        <div></div>
+                      )}
                     </div>
 
                     {/* Star Button */}

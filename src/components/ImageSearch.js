@@ -1,24 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const ImageSearch = ({ img, index, onImageSelect }) => {
-  const [query, setQuery] = useState(""); // Local state for the search query for this item
+  const [query, setQuery] = useState(img.imageItem); // Local state for the search query for this item
   const [searchResults, setSearchResults] = useState([]); // Local state for search results of this item
   const [isSearchVisible, setSearchVisible] = useState(false); // State to toggle visibility
+  const [error, setError] = useState(null);
 
   const handleSearch = async () => {
     if (!query) return;
 
+    setError(null); // Reset error before a new request
+    setSearchResults([]); // Clear previous results
+
     try {
-      const res = await fetch(`/api/imageSearch?query=${query}`);
-      const data = await res.json();
-      console.log(data);
-      if (data) {
-        setSearchResults(data);
+      const response = await fetch(`/api/imageSearch?query=${query}`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    } catch (error) {
-      console.error("Error fetching image search results:", error);
+
+      const data = await response.json();
+      if (!data || data.length === 0) {
+        throw new Error("No images found.");
+      }
+
+      setSearchResults(data);
+    } catch (err) {
+      console.error("Image search error:", err);
+      setError(err.message || "Something went wrong.");
     }
   };
 
@@ -29,6 +39,10 @@ const ImageSearch = ({ img, index, onImageSelect }) => {
   const handleToggleSearch = () => {
     setSearchVisible(!isSearchVisible); // Toggle the search visibility
   };
+
+  useEffect(() => {
+    if (!index) setSearchVisible(true);
+  }, []);
 
   return (
     <div>
@@ -59,16 +73,9 @@ const ImageSearch = ({ img, index, onImageSelect }) => {
             </button>
           )}
 
-          <div className="image-results mt-2">
-            {/* {searchResults.map((image) => (
-          <img
-            key={image.link}
-            src={image.link}
-            alt={image.title}
-            className="w-24 h-24 m-2 cursor-pointer"
-            onClick={() => onImageSelect(index, image.link)} // Placeholder for selection
-          />
-        ))} */}
+          <div
+            className={`image-results mt-2 ${!index && "sm:flex sm:flex-row"}`}
+          >
             {searchResults.map((image) => {
               // Check if the image URL is secure (starts with 'https://')
               if (image.link.startsWith("https://")) {

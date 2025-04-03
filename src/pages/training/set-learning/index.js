@@ -10,6 +10,7 @@ import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import QuickEditForm from "@/components/QuickEditForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ImageSearch from "@/components/ImageSearch";
 import {
   faCheck,
   faXmark,
@@ -32,6 +33,8 @@ const TrainingCenter = ({ user, imageSet }) => {
   const contentType = "application/json";
 
   const [message, setMessage] = useState("");
+  const [showOptions, setShowOptions] = useState(true);
+  const [showImageSearch, setShowImageSearch] = useState(false);
   const imageSetID = router.query.imageSet;
   //const [updatableImageSet, setUpdatableImageSet] = useState(imageSet);
   //const [imageSet, setImageSet] = useState({});
@@ -170,6 +173,16 @@ const TrainingCenter = ({ user, imageSet }) => {
     setIsLoading(false);
   }, [needNewCard]);
 
+  const handleImageSelect = (index, imageUrl) => {
+    randImage.URL = imageUrl;
+    saveData();
+    setShowImageSearch(false);
+  };
+
+  const handleShowImageSearch = () => {
+    setShowImageSearch(true);
+  };
+
   const toggleRotate = (e, toFront = false) => {
     if (!isEditable) {
       if (
@@ -220,9 +233,15 @@ const TrainingCenter = ({ user, imageSet }) => {
 
   const handleStartTraining = () => {
     document.addEventListener("keydown", handleKeyDown);
-
+    setShowOptions(false);
     setNeedNewCard(true);
     setIsStarted(true);
+  };
+
+  const handleStopTraining = () => {
+    document.removeEventListener("keydown", handleKeyDown);
+    setShowOptions(true);
+    setIsStarted(false);
   };
 
   const handleNextImage = (e) => {
@@ -267,31 +286,7 @@ const TrainingCenter = ({ user, imageSet }) => {
 
     randImage.recentAttempts.push(isCorrect ? 1 : 0);
 
-    try {
-      const res = await fetch(`/api/imageSets/${imageSetID}`, {
-        method: "PUT",
-        headers: {
-          Accept: contentType,
-          "Content-Type": contentType,
-        },
-        body: JSON.stringify(randImage),
-      });
-
-      // Throw error with status code in case Fetch API req failed
-      if (!res.ok) {
-        throw new Error(res.status);
-      }
-      const { data } = await res.json();
-
-      //imageSet.images = updatedImages;
-
-      const level = document.getElementById("selSet").value;
-      setImageGroup(level); //this makes sure the categories are updated, I think this works by causing a re-render which causes updating of groupTotals
-    } catch (error) {
-      setMessage(error + "Failed to save training data");
-    }
-
-    //   refreshData();
+    saveData();
   };
 
   const handleSubmitEdit = async (e, field, item) => {
@@ -309,6 +304,12 @@ const TrainingCenter = ({ user, imageSet }) => {
       setIsStarred(randImage.starred);
     }
 
+    saveData();
+
+    //   refreshData();
+  };
+
+  const saveData = async () => {
     try {
       const res = await fetch(`/api/imageSets/${imageSetID}`, {
         method: "PUT",
@@ -327,8 +328,6 @@ const TrainingCenter = ({ user, imageSet }) => {
     } catch (error) {
       setMessage("Failed to save training data");
     }
-
-    //   refreshData();
   };
 
   const handleChangeSelect = () => {
@@ -410,104 +409,99 @@ const TrainingCenter = ({ user, imageSet }) => {
             <div className="flex flex-col justify-center items-center">
               <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
 
-              <div>
-                <p className="text-xl">Which images do you want to train?</p>
-
-                <label htmlFor="selSet">Confidence level</label>
-                <select
-                  id="selSet"
-                  className="w-full rounded-md dark:bg-slate-800"
-                  onChange={handleChangeSelect}
-                >
-                  <option value="all">All 🌍</option>
-                  {confidenceLabels.map((label, i) => (
-                    <option value={i}>
-                      {label} ({groupTotals && groupTotals[i]})
-                    </option>
-                  ))}
-                </select>
-
-                <label for="selDigit1">
-                  {isCardSet ? "Value 1" : "Digit 1"}
-                </label>
-                <select
-                  id="selDigit1"
-                  className="w-full rounded-md dark:bg-slate-800"
-                  onChange={handleChangeSelectD1}
-                >
-                  <option value="all">All</option>
-                  {isCardSet &&
-                    ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
-                      (digit) => <option value={digit}>{digit}</option>
-                    )}
-                  {!isCardSet &&
-                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                      <option value={digit}>{digit}</option>
+              {showOptions && (
+                <div>
+                  <p className="text-xl">Which images do you want to train?</p>
+                  <label htmlFor="selSet">Confidence level</label>
+                  <select
+                    id="selSet"
+                    className="w-full rounded-md dark:bg-slate-800"
+                    onChange={handleChangeSelect}
+                  >
+                    <option value="all">All 🌍</option>
+                    {confidenceLabels.map((label, i) => (
+                      <option value={i}>
+                        {label} ({groupTotals && groupTotals[i]})
+                      </option>
                     ))}
-                </select>
+                  </select>
+                  <label for="selDigit1">
+                    {isCardSet ? "Value 1" : "Digit 1"}
+                  </label>
+                  <select
+                    id="selDigit1"
+                    className="w-full rounded-md dark:bg-slate-800"
+                    onChange={handleChangeSelectD1}
+                  >
+                    <option value="all">All</option>
+                    {isCardSet &&
+                      ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                        (digit) => <option value={digit}>{digit}</option>
+                      )}
+                    {!isCardSet &&
+                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                        <option value={digit}>{digit}</option>
+                      ))}
+                  </select>
+                  <label for="selDigit2">
+                    {isCardSet ? "Value 2" : "Digit 2"}
+                  </label>
+                  <select
+                    id="selDigit2"
+                    className="w-full rounded-md dark:bg-slate-800"
+                    onChange={handleChangeSelectD2}
+                  >
+                    <option value="all">All</option>
+                    {isCardSet &&
+                      ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                        (digit) => <option value={digit}>{digit}</option>
+                      )}
+                    {!isCardSet &&
+                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                        <option value={digit}>{digit}</option>
+                      ))}
+                  </select>
+                  {setType === "2c" && (
+                    <>
+                      <label for="selSuit1">Suit 1</label>
+                      <select
+                        id="selSuit1"
+                        className="w-full rounded-md dark:bg-slate-800"
+                        onChange={handleChangeSelectS1}
+                      >
+                        <option value="all">All</option>
+                        <option value="b">Black</option>
+                        <option value="r">Red</option>
+                        <option value="♥️">♥️</option>
+                        <option value="♦️">♦️</option>
+                        <option value="♣️">♣️</option>
+                        <option value="♠️">♠️</option>
+                      </select>
 
-                <label for="selDigit2">
-                  {isCardSet ? "Value 2" : "Digit 2"}
-                </label>
-                <select
-                  id="selDigit2"
-                  className="w-full rounded-md dark:bg-slate-800"
-                  onChange={handleChangeSelectD2}
-                >
-                  <option value="all">All</option>
-                  {isCardSet &&
-                    ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
-                      (digit) => <option value={digit}>{digit}</option>
-                    )}
-                  {!isCardSet &&
-                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                      <option value={digit}>{digit}</option>
-                    ))}
-                </select>
-
-                {setType === "2c" && (
-                  <>
-                    <label for="selSuit1">Suit 1</label>
-                    <select
-                      id="selSuit1"
-                      className="w-full rounded-md dark:bg-slate-800"
-                      onChange={handleChangeSelectS1}
-                    >
-                      <option value="all">All</option>
-                      <option value="b">Black</option>
-                      <option value="r">Red</option>
-                      <option value="♥️">♥️</option>
-                      <option value="♦️">♦️</option>
-                      <option value="♣️">♣️</option>
-                      <option value="♠️">♠️</option>
-                    </select>
-
-                    <label for="selSuit2">Suit 2</label>
-                    <select
-                      id="selSuit2"
-                      className="w-full rounded-md dark:bg-slate-800"
-                      onChange={handleChangeSelectS2}
-                    >
-                      <option value="all">All</option>
-                      <option value="b">Black</option>
-                      <option value="r">Red</option>
-                      <option value="♥️">♥️</option>
-                      <option value="♦️">♦️</option>
-                      <option value="♣️">♣️</option>
-                      <option value="♠️">♠️</option>
-                    </select>
-                  </>
-                )}
-              </div>
-
-              <div>
-                Starred only?{" "}
-                <input
-                  type="checkbox"
-                  value="false"
-                  onChange={handleToggleStarredDisplay}
-                ></input>
-              </div>
+                      <label for="selSuit2">Suit 2</label>
+                      <select
+                        id="selSuit2"
+                        className="w-full rounded-md dark:bg-slate-800"
+                        onChange={handleChangeSelectS2}
+                      >
+                        <option value="all">All</option>
+                        <option value="b">Black</option>
+                        <option value="r">Red</option>
+                        <option value="♥️">♥️</option>
+                        <option value="♦️">♦️</option>
+                        <option value="♣️">♣️</option>
+                        <option value="♠️">♠️</option>
+                      </select>
+                    </>
+                  )}
+                  Starred only?{" "}
+                  <input
+                    type="checkbox"
+                    value="false"
+                    onChange={handleToggleStarredDisplay}
+                  ></input>
+                </div>
+              )}
 
               {!isStarted && (
                 <button
@@ -515,6 +509,14 @@ const TrainingCenter = ({ user, imageSet }) => {
                   className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
                   Start
+                </button>
+              )}
+              {isStarted && (
+                <button
+                  onClick={handleStopTraining}
+                  className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Back to options
                 </button>
               )}
               {isStarted && cardsAvailable && (
@@ -592,7 +594,7 @@ const TrainingCenter = ({ user, imageSet }) => {
                             <FontAwesomeIcon
                               className="absolute cursor-pointer left-[87%] top-3/4 text-white h-6 lg:h-8"
                               icon={faImage}
-                              onClick={(e) => handleEdit(e, "URL")}
+                              onClick={handleShowImageSearch}
                             />
                           </>
                         )}
@@ -635,6 +637,13 @@ const TrainingCenter = ({ user, imageSet }) => {
             </div>
           </>
         )}
+        {showImageSearch && (
+          <ImageSearch
+            img={randImage}
+            index={null}
+            onImageSelect={handleImageSelect}
+          />
+        )}
         <div>{message}</div>
       </div>
     </>
@@ -663,32 +672,8 @@ export const getServerSideProps = withPageAuthRequired({
       user = auth0User.user;
     }
 
-    /* find all the data in our database */
-    {
-      /* const result = await Journey.find({})
-  const journeys = result.map((doc) => {
-    const journey = JSON.parse(JSON.stringify(doc));
-    journey._id = journey._id.toString()
-    return journey
-  })
-
-  const result2 = await MemoSystem.find({})
-  const systems = result2.map((doc) => {
-    const system = JSON.parse(JSON.stringify(doc));
-    system._id = system._id.toString()
-    return system
-  })
-
-  const result3 = await ImageSet.find({})
-  const imageSets = result3.map((doc) => {
-    const imageSet = JSON.parse(JSON.stringify(doc));
-    imageSet._id = imageSet._id.toString()
-    return imageSet
-  }) */
-    }
-
-    /* find this image set */
-    const result = await ImageSet.findOne({ _id: id });
+    /* find this image set and make sure it belongs to the user */
+    const result = await ImageSet.findOne({ _id: id, userId: user.sub });
     const imageSetToPass = JSON.parse(JSON.stringify(result));
 
     return { props: { user: user, imageSet: imageSetToPass } };
