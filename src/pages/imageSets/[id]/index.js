@@ -432,6 +432,12 @@ const ImageSetPage = ({
     setIsListView(!isListView);
   };
 
+  const handleRemovePicture = (index) => {
+    const updatedForm = { ...imageForm };
+    updatedForm.images[index].URL = "";
+    setImageForm(updatedForm);
+  };
+
   const handleTraining = () => {
     router.push("/training/set-learning?imageSet=" + imageSet._id);
   };
@@ -948,11 +954,28 @@ const ImageSetPage = ({
                             </>
                           )}
                           {img.URL && img.URL.length ? (
-                            <img className="h-8" src={img.URL} alt="item" />
-                          ) : null}
+                            <div className="flex items-center">
+                              <img
+                                className="h-20 sm:h-14"
+                                src={img.URL}
+                                alt="item"
+                              />
+                              <button
+                                className="ml-auto p-2"
+                                onClick={() => handleRemovePicture(i)}
+                              >
+                                <FontAwesomeIcon
+                                  className="text-red-500"
+                                  icon={faTrash}
+                                />
+                              </button>
+                            </div>
+                          ) : (
+                            <span></span>
+                          )}
                         </>
                       ) : img.URL && img.URL.length ? (
-                        <img className="h-8" src={img.URL} />
+                        <img className="h-20 sm:h-14" src={img.URL} />
                       ) : (
                         <div></div>
                       )}
