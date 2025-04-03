@@ -36,7 +36,7 @@ const ImageSearch = ({ img, index, onImageSelect }) => {
       </button>
 
       <div className="image-results mt-2">
-        {searchResults.map((image) => (
+        {/* {searchResults.map((image) => (
           <img
             key={image.link}
             src={image.link}
@@ -44,7 +44,23 @@ const ImageSearch = ({ img, index, onImageSelect }) => {
             className="w-24 h-24 m-2 cursor-pointer"
             onClick={() => onImageSelect(index, image.link)} // Placeholder for selection
           />
-        ))}
+        ))} */}
+        {searchResults.map((image) => {
+          // Check if the image URL is secure (starts with 'https://')
+          if (image.link.startsWith("https://")) {
+            return (
+              <img
+                key={image.link}
+                src={image.link}
+                alt={image.title}
+                className="w-24 h-24 m-2 cursor-pointer"
+                onClick={() => onImageSelect(index, image.link)}
+              />
+            );
+          } else {
+            return null; // Don't render the image if it's not secure
+          }
+        })}
       </div>
     </div>
   );
