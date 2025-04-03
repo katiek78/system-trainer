@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     console.log("API Response:", data);
+    console.log("API key", apiKey);
 
     // Return the image search results
     if (data.items) {
