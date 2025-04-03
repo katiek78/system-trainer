@@ -657,14 +657,14 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
         {isShowingPhoneticsDiv && (
           <div
             id="changePhoneticsDiv"
-            className="px-2 py-2 my-5 rounded-xl bg-gray-200"
+            className="px-2 py-2 my-5 rounded-xl bg-gray-200 dark:bg-gray-800"
           >
             <label htmlFor="phoneticsType">Change phonetics system:</label>
             <select
               name="phoneticsType"
               value={phoneticsType || "none"}
               onChange={handlePhoneticsChange}
-              className="ml-3"
+              className="text-black ml-3 mr-3 px-3 py-3 w-56 rounded text-lg"
               required
             >
               <option value="none">None</option>
@@ -688,6 +688,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
               name="swapDigit1"
               value={swapDigit1 || "-"}
               onChange={handleSwap1Change}
+              className="text-black mt-3 ml-3 mr-3 px-3 py-3 w-20 rounded text-lg"
             >
               <options>
                 <option value="-">-</option>
@@ -708,6 +709,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
               name="swapDigit2"
               value={swapDigit2 || "-"}
               onChange={handleSwap2Change}
+              className="text-black mt-3 ml-3 mr-3 px-3 py-3 w-20 rounded text-lg"
             >
               <options>
                 <option value="-">-</option>
