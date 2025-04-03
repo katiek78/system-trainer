@@ -11,6 +11,8 @@ export default async function handler(req, res) {
     const response = await fetch(url);
     const data = await response.json();
 
+    console.log("API Response:", data);
+
     // Return the image search results
     if (data.items) {
       res.status(200).json(data.items);
