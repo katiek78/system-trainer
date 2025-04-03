@@ -34,8 +34,8 @@ const TimingPage = ({ user }) => {
     }
   };
 
-  const spotify_client_id = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
-  const spotify_client_secret = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET;
+  const spotify_client_id = process.env.SPOTIFY_CLIENT_ID;
+  const spotify_client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 
   /* The POST method adds a new entry in the mongodb database. */
   const getAccessToken = async () => {

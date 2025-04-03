@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { useRouter } from "next/router";
 import dbConnect from "@/lib/dbConnect";
+import { isAdmin } from "@/lib/adminCheck";
 import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView";
 import EmbedImage from "@/components/EmbedImage";
@@ -29,6 +30,7 @@ const JourneyPage = ({
   totalPages,
   isPublicJourney,
   user,
+  isAdmin,
 }) => {
   const router = useRouter();
   //const { paginatedPoints, journey } = props;
@@ -52,7 +54,6 @@ const JourneyPage = ({
   const [height, setHeight] = useState(0);
 
   const [journeyForm, setJourneyForm] = useState({});
-  const isAdmin = () => user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   useEffect(() => {
     const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
@@ -89,7 +90,6 @@ const JourneyPage = ({
   };
 
   const fetchAllPoints = async () => {
-    console.log(allPoints);
     if (allPoints) {
       //setPoints(allPoints);
       return;
@@ -275,7 +275,7 @@ const JourneyPage = ({
           ) : (
             <>
               {" "}
-              {(!isPublicJourney || isAdmin()) && (
+              {(!isPublicJourney || isAdmin) && (
                 <>
                   <FontAwesomeIcon
                     className="hover:text-gray-700 hover:cursor-pointer ml-5"
@@ -298,7 +298,7 @@ const JourneyPage = ({
         <div className="journey-btn-container">
           {journey.id && (
             <>
-              {(!isPublicJourney || !isAdmin()) && (
+              {(!isPublicJourney || !isAdmin) && (
                 <>
                   <Link
                     href="/journeys/[id]/new"
@@ -397,7 +397,7 @@ const JourneyPage = ({
                               />
                             )}
 
-                          {(!isPublicJourney || isAdmin()) && (
+                          {(!isPublicJourney || isAdmin) && (
                             <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                               <Link
                                 href="/journeys/[id]/editPoint"
@@ -420,7 +420,7 @@ const JourneyPage = ({
                   </div>
                 ))}
 
-                {journey && journey.id && (!isPublicJourney || isAdmin()) && (
+                {journey && journey.id && (!isPublicJourney || isAdmin) && (
                   <div className="plusIcon flex items-center justify-center mb-16">
                     <Link
                       href="/journeys/[id]/new"
@@ -521,7 +521,7 @@ const JourneyPage = ({
                           )}
                         </div>
 
-                        {!isPublicJourney || !isAdmin() ? (
+                        {!isPublicJourney || !isAdmin ? (
                           <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                             <Link
                               href="/journeys/[id]/points/[id]/editPoint"
@@ -569,6 +569,8 @@ export const getServerSideProps = withPageAuthRequired({
     const user = auth0User.user;
     await dbConnect();
 
+    const adminStatus = isAdmin(auth0User.user);
+
     const journeyResult = await Journey.findOne({
       _id: params.id,
       $or: [
@@ -601,6 +603,7 @@ export const getServerSideProps = withPageAuthRequired({
         totalPages: Math.ceil(journey.points.length / pageLimit),
         isPublicJourney: !journey.userId,
         user,
+        isAdmin: adminStatus,
       },
     };
   },

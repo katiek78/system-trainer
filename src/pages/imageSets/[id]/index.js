@@ -23,8 +23,16 @@ import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
 import { determineSetType } from "@/utilities/setType";
+import ImageSearch from "@/components/ImageSearch";
+import { isAdmin } from "@/lib/adminCheck";
 
-const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
+const ImageSetPage = ({
+  user,
+  allNames,
+  imageSets,
+  isPublicImageSet,
+  isAdmin,
+}) => {
   const router = useRouter();
   const contentType = "application/json";
   const [imageSet, setImageSet] = useState({});
@@ -52,14 +60,22 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
     setType: "other",
   });
 
-  const isAdmin = () => user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
   const isCardSet = () => {
     // return imageForm && imageForm.setType && imageForm.setType.includes("c");
     return determineSetType(allNames.images.length).includes("c");
   };
 
   const pageLimit = isCardSet() ? 26 : 20;
+
+  // Handler to update the image URL of a specific item
+  const handleImageSelect = (index, imageUrl) => {
+    // const updatedImages = [...images];
+    // updatedImages[index].URL = imageUrl; // Set the URL of the selected image
+    // setImages(updatedImages); // Update the state with the new image URL
+    const updatedForm = { ...imageForm };
+    updatedForm.images[index].URL = imageUrl;
+    setImageForm(updatedForm);
+  };
 
   const getImageSet = async (id) => {
     //get image set from DB
@@ -79,7 +95,6 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
     let setType = data.data.setType;
     if (!setType || setType === "")
       setType = determineSetType(allNames.images.length);
-    console.log(setType);
     setImageForm({
       name: data.data.name,
       setType: setType,
@@ -96,6 +111,24 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
 
     setIsLoading(false);
   }, [currentPage]);
+
+  // <script
+  //                           async
+  //                           src="https://cse.google.com/cse.js?cx=46c1e2702781e4955"
+  //                         ></script>
+
+  useEffect(() => {
+    // Dynamically load the Google Custom Search script
+    const script = document.createElement("script");
+    script.src = "https://cse.google.com/cse.js?cx=46c1e2702781e4955";
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Cleanup the script when the component is unmounted
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const renderPageNumbers = () => {
     if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div>;
@@ -331,9 +364,6 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
       }
 
       const { data } = await res.json();
-
-      //      mutate(`/api/imageSets/${id}`, data, false) // Update the local data without a revalidation
-      //    refreshData(router);
     } catch (error) {
       setMessage("Failed to update images");
     }
@@ -626,7 +656,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
           ) : (
             <span>
               {imageForm.name}{" "}
-              {(!isPublicImageSet || isAdmin()) && (
+              {(!isPublicImageSet || isAdmin) && (
                 <FontAwesomeIcon
                   className="hover:text-gray-700 hover:cursor-pointer ml-5"
                   onClick={handleDelete}
@@ -637,7 +667,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
             </span>
           )}
         </h2>
-        {!isShowingPhoneticsDiv && (!isPublicImageSet || isAdmin()) && (
+        {!isShowingPhoneticsDiv && (!isPublicImageSet || isAdmin) && (
           <button
             onClick={handleShowPhoneticsDiv}
             className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -645,7 +675,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
             Change/add phonetics
           </button>
         )}
-        {!isShowingImportPhoneticsDiv && (!isPublicImageSet || isAdmin()) && (
+        {!isShowingImportPhoneticsDiv && (!isPublicImageSet || isAdmin) && (
           <button
             onClick={handleShowImportPhoneticsDiv}
             className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -831,7 +861,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                 size="3x"
               />
             ) : (
-              (!isPublicImageSet || isAdmin()) && (
+              (!isPublicImageSet || isAdmin) && (
                 <FontAwesomeIcon
                   className="hover:text-gray-700 hover:cursor-pointer"
                   onClick={handleToggleEditable}
@@ -862,7 +892,7 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
               <div className="col-span-1">Item</div>
               <div className="col-span-1">Phonetics</div>
               <div className="col-span-2">Image description</div>
-              <div className="col-span-2">Picture URL</div>
+              <div className="col-span-2 sm:ml-3">Picture</div>
               <div className="col-span-1"> </div>
             </div>
 
@@ -900,20 +930,35 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                           }
                         />
                       ) : (
-                        img.imageItem || "<none entered>"
+                        img.imageItem || "<no image yet>"
                       )}
                     </div>
 
                     {/* Picture URL */}
-                    <div className="col-span-2">
+                    <div className="sm:ml-3 col-span-2">
                       {isEditable ? (
-                        <input
+                        <>
+                          {/* <div class="gcse-search"></div> */}
+                          {/* <input
                           className="border border-gray-400 p-2 rounded-md w-full focus:border-blue-500 focus:ring focus:ring-blue-300"
                           onChange={handleChangeImageForm}
                           value={img.URL ? img.URL : ""}
                           id={"inpURL" + (i + (currentPage - 1) * pageLimit)}
                           name={"inpURL" + (i + (currentPage - 1) * pageLimit)}
-                        />
+                        /> */}
+                          {!img.URL && (
+                            <>
+                              <ImageSearch
+                                img={img}
+                                index={i}
+                                onImageSelect={handleImageSelect}
+                              />
+                            </>
+                          )}
+                          {img.URL && img.URL.length ? (
+                            <img className="h-8" src={img.URL} alt="item" />
+                          ) : null}
+                        </>
                       ) : img.URL && img.URL.length ? (
                         <img className="h-8" src={img.URL} />
                       ) : null}
@@ -925,13 +970,13 @@ const ImageSetPage = ({ user, allNames, imageSets, isPublicImageSet }) => {
                         img.starred ? (
                           <FontAwesomeIcon
                             onClick={() => handleToggleStar(img._id)}
-                            className="text-yellow-500"
+                            className="ml-3 text-yellow-500 text-2xl"
                             icon={faStar}
                           />
                         ) : (
                           <FontAwesomeIcon
                             onClick={() => handleToggleStar(img._id)}
-                            className="black dark:text-gray-500"
+                            className="ml-3 mt-2 black dark:text-gray-500 text-2xl"
                             icon={faStarOutline}
                           />
                         )
@@ -1074,12 +1119,21 @@ export const getServerSideProps = withPageAuthRequired({
     }
     await dbConnect();
 
+    const adminStatus = isAdmin(auth0User.user);
+
     //get all names
     // const allNames = await ImageSet.findOne({_id: params.id}, {images: {_id: 1, name: 1, phonetics: 1, imageItem: 1}});
     const userId = auth0User.user.sub; // Get the current user's Auth0 ID
 
     const allNames = await ImageSet.findOne(
-      { _id: params.id, userId },
+      {
+        _id: params.id,
+        $or: [
+          { userId: userId }, // If the user is the owner
+          { userId: null }, // If the image set is public
+          { userId: { $exists: false } }, // If there's no userId field at all
+        ],
+      },
       { images: { name: 1 }, userId: 1 }
     );
 
@@ -1102,6 +1156,8 @@ export const getServerSideProps = withPageAuthRequired({
         user: auth0User.user,
         allNames: serializedNames,
         imageSets,
+        isPublicImageSet: !allNames.userId,
+        isAdmin: adminStatus,
       },
     };
   },
