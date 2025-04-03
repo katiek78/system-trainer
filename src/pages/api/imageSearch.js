@@ -1,4 +1,3 @@
-// pages/api/imageSearch.js
 export default async function handler(req, res) {
   const { query } = req.query; // The search query passed as a parameter
 
@@ -13,8 +12,8 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     // Return the image search results
-    if (data.items) {
-      res.status(200).json(data.items);
+    if (data) {
+      res.status(200).json(data);
     } else {
       res.status(404).json({ message: "No images found" });
     }
