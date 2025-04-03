@@ -12,8 +12,8 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     // Return the image search results
-    if (data) {
-      res.status(200).json(data);
+    if (data.items) {
+      res.status(200).json(data.items);
     } else {
       res.status(404).json({ message: "No images found" });
     }
