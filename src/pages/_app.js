@@ -40,10 +40,10 @@ function AppContent({ Component, pageProps }) {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const [showSubMenu, setShowSubMenu] = useState(false);
+  const [showUserSubMenu, setShowUserSubMenu] = useState(false);
 
-  const handleSubMenuToggle = () => {
-    setShowSubMenu(!showSubMenu);
+  const handleUserSubMenuToggle = () => {
+    setShowUserSubMenu(!showUserSubMenu);
   };
 
   return (
@@ -139,7 +139,7 @@ function AppContent({ Component, pageProps }) {
                     <div className="relative">
                       <button
                         className="flex items-center focus:outline-none"
-                        onClick={handleSubMenuToggle}
+                        onClick={handleUserSubMenuToggle}
                       >
                         {/* <FontAwesomeIcon icon={faUser} className="mt-1 mr-2" /> */}
                         <img
@@ -150,7 +150,7 @@ function AppContent({ Component, pageProps }) {
                         &nbsp;
                         <span className="font-medium">{user.email}</span>
                       </button>
-                      {user && showSubMenu && (
+                      {user && showUserSubMenu && (
                         <div
                           className="absolute bg-white shadow-md mt-2 rounded-lg text-gray-800"
                           style={{ minWidth: "7rem" }}

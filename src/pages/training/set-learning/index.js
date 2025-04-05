@@ -166,7 +166,9 @@ const TrainingCenter = ({ user, imageSet }) => {
       setMessage("");
       setCardsAvailable(true);
     } else {
-      setMessage("There are no cards of this type! Choose another.");
+      setMessage(
+        "There are no cards of this type! Change the options and try again."
+      );
       // setCardsAvailable(false);
     }
     setNeedNewCard(false);
@@ -240,8 +242,9 @@ const TrainingCenter = ({ user, imageSet }) => {
 
   const handleStopTraining = () => {
     document.removeEventListener("keydown", handleKeyDown);
-    setShowOptions(true);
     setIsStarted(false);
+    setShowOptions(true);
+    //handleChangeSelect();
   };
 
   const handleNextImage = (e) => {
@@ -331,7 +334,7 @@ const TrainingCenter = ({ user, imageSet }) => {
   };
 
   const handleChangeSelect = () => {
-    const level = document.getElementById("selSet").value;
+    const level = document.getElementById("selSet")?.value || "all";
     setImageGroup(level);
     setNeedNewCard(true);
   };
@@ -503,7 +506,7 @@ const TrainingCenter = ({ user, imageSet }) => {
                 </div>
               )}
 
-              {!isStarted && (
+              {!isStarted && cardsAvailable && (
                 <button
                   onClick={handleStartTraining}
                   className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -511,14 +514,7 @@ const TrainingCenter = ({ user, imageSet }) => {
                   Start
                 </button>
               )}
-              {isStarted && (
-                <button
-                  onClick={handleStopTraining}
-                  className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  Back to options
-                </button>
-              )}
+
               {isStarted && cardsAvailable && (
                 <div className="flex flex-col justify-center items-center">
                   <div class="group [perspective:1000px]">
@@ -631,6 +627,14 @@ const TrainingCenter = ({ user, imageSet }) => {
                     >
                       Next
                     </button>
+                    {isStarted && (
+                      <button
+                        onClick={handleStopTraining}
+                        className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+                      >
+                        Back to options
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
