@@ -85,7 +85,6 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
   };
 
   const validateLocation = (locationValue) => {
-    console.log("validation location");
     if (!locationValue || locationValue === "")
       return { ...form, location: "" };
     function getPosition(str, char, index) {
@@ -94,7 +93,6 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
     console.log(locationValue);
     //if it includes @ then parse as a Google Street View URL
     if (locationValue.includes("@")) {
-      console.log("it is a street view");
       const slicedLocationValue = locationValue.slice(
         locationValue.indexOf("@") + 1
       );

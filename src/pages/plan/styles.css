@@ -107,7 +107,3 @@ table.responsive-table-plan {
   .tabcontent.active {
     display: block;
   }
-
-  .active-view {
-    border-bottom: 5px solid blue; /* Replace 'blue' with your desired border color */
-  }

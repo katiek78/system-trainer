@@ -492,7 +492,7 @@ const JourneyPage = ({
                               onClick={handleGoToStart}
                             />
                           )}
-                          <div className="w-20"></div>
+                          <div className="w-10"></div>
                           {(currentSlideshowPoint > 0 || currentPage > 0) && (
                             <FontAwesomeIcon
                               className="ml-5"
@@ -501,7 +501,7 @@ const JourneyPage = ({
                               onClick={handlePrevious}
                             />
                           )}
-
+                          <div className="w-10"></div>
                           {currentSlideshowPoint < points.length - 1 && (
                             <FontAwesomeIcon
                               className="ml-5"
@@ -510,7 +510,7 @@ const JourneyPage = ({
                               onClick={handleNext}
                             />
                           )}
-
+                          <div className="w-10"></div>
                           {currentSlideshowPoint < points.length - 1 && (
                             <FontAwesomeIcon
                               className="ml-5"

@@ -102,7 +102,9 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
           <h3 className="font-semibold">What is a journey?</h3>
           <p className="font-mono">
             A journey (or memory palace) is a series of locations (or loci) that
-            you will use, and maybe re-use, to memorise information.
+            you will use, and maybe re-use, to memorise information. Once you've
+            created some journeys, you can click 'Competition assignments' to
+            assign your journeys to memory competition disciplines.
           </p>
         </div>
         <br />
@@ -206,14 +208,10 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
               </h3>
               <p className="font-mono">
                 Here you can assign your journeys to different competition
-                disciplines, such as 5-minute Numbers or Speed Cards. This helps
-                you keep track of which journeys you wish to use for which
-                disciplines.
-                <br />
-                <br />
-                You can assign as many journeys as you like to each discipline,
-                either to be used consecutively (for long disciplines where one
-                journey may not be long enough) or as a rotation (for shorter
+                disciplines, such as 5-minute Numbers or Speed Cards. You can
+                assign as many journeys as you like to each discipline, either
+                to be used consecutively (for long disciplines where one journey
+                may not be long enough) or as a rotation (for shorter
                 disciplines such as Memory League where you wish to have
                 multiple options).
               </p>
@@ -241,17 +239,17 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
                         <td className="lg:border border-gray-400 px-4 py-2"></td>
                         <td className="lg:border border-gray-400 px-4 py-2">
                           {" "}
-                          {/* <Link
-                            href="/plan/[id]/editEntry"
-                            as={`/plan/${entry._id}/editEntry`}
+                          <Link
+                            href="/disciplines/[id]/editAssignment"
+                            as={`/disciplines/${discipline}/editAssignment`}
                             legacyBehavior
-                          > */}
-                          <FontAwesomeIcon
-                            className="cursor-pointer"
-                            icon={faEdit}
-                            size="1x"
-                          />
-                          {/* </Link> */}
+                          >
+                            <FontAwesomeIcon
+                              className="cursor-pointer"
+                              icon={faEdit}
+                              size="1x"
+                            />
+                          </Link>
                         </td>
                       </tr>
                     ))}
