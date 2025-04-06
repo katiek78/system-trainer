@@ -1,5 +1,6 @@
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
+import { useSearchParams } from "next/navigation";
 import Journey from "@/models/Journey";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,9 +12,11 @@ import { TRADITIONAL_DISCIPLINES, ML_DISCIPLINES } from "@/lib/disciplines";
 
 const JourneysPage = ({ user, journeys, publicJourneys }) => {
   //let user = useUser(); //should we be using this instead?
-
+  const searchParams = useSearchParams();
+  const startWithJourneyView =
+    searchParams.get("startWithJourneyView") === "true";
   const [message, setMessage] = useState("");
-  const [isJourneyView, setIsJourneyView] = useState(true);
+  const [isJourneyView, setIsJourneyView] = useState(startWithJourneyView);
   const contentType = "application/json";
   const router = useRouter();
 
