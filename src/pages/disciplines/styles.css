@@ -1,0 +1,70 @@
+/* Default styles for larger screens */
+table.responsive-table-assignments {
+    width: 80%;
+    border:none;
+  }
+  table.responsive-table-assignments th {
+    text-align: left;
+  }
+  table.responsive-table-assignments td {
+    text-align: left;
+  }
+
+/* Styles for smaller screens */
+@media (max-width: 768px) {
+    table.responsive-table-assignments thead {
+      display: none; /* Hide table header on small screens */
+    }
+  
+    table.responsive-table-assignments tbody tr {
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+  
+    table.responsive-table-assignments td {
+     
+      display: flex;
+      flex-direction: row;
+      padding: 8px;
+      justify-content: flex-start;
+      border-top: 1px solid #777;
+    }
+  
+    table.responsive-table-assignments td:nth-child(1) {
+       border:none;
+      }
+
+    /* // Manually specify data labels
+    table.responsive-table td:nth-child(1):before {
+      content: "Option";
+      font-weight: bold;
+    }
+    table.responsive-table td:nth-child(2):before {
+      content: "Journey(s)";
+      font-weight: bold;
+    }
+    */
+       /* Targeting specific cells for icons */
+  table.responsive-table-assignments td.icon-cell {
+    flex: 1; /* Each icon takes up equal space */
+    text-align: center; /* Center align the icons */
+    padding: 12px; /* Increase padding for larger appearance */
+    background-color: #FFD8B7; /* Lighter shade of orange or coral */
+    border-radius: 8px; 
+    margin-right: 10px; /* Adjust margin as needed */
+    font-size:2em;
+  }
+
+  /* Clear the margin for the last cell */
+  table.responsive-table-assignments td.icon-cell:last-child {
+    margin-right: 0;
+    border-top:none;
+  }
+
+        /* Text color adjustments for dark mode */
+    @media (prefers-color-scheme: dark) {
+        table.responsive-table-assignments {
+        color: #222; /* Set darker text color in dark mode */
+        }
+           }
+  }

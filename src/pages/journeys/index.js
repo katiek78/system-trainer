@@ -9,8 +9,9 @@ import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { TRADITIONAL_DISCIPLINES, ML_DISCIPLINES } from "@/lib/disciplines";
+import JourneyAssignment from "@/models/JourneyAssignment";
 
-const JourneysPage = ({ user, journeys, publicJourneys }) => {
+const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
   //let user = useUser(); //should we be using this instead?
   const searchParams = useSearchParams();
   const startWithJourneyView =
@@ -19,6 +20,8 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
   const [isJourneyView, setIsJourneyView] = useState(startWithJourneyView);
   const contentType = "application/json";
   const router = useRouter();
+
+  console.log(assignments);
 
   const handleJourneyView = () => {
     setIsJourneyView(true);
@@ -94,6 +97,38 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
   const sortedPublicJourneys = publicJourneys.sort((a, b) =>
     a.name.localeCompare(b.name)
   );
+
+  const getNameFromJourneyID = (id) => {
+    const journey = journeys.find((journey) => journey._id === id);
+    return journey ? journey.name : "Unknown";
+  };
+
+  const getAssignmentsForDiscipline = (d) => {
+    const matchingAssignments = assignments.filter((a) => a.discipline === d);
+
+    if (matchingAssignments.length === 0) {
+      return <p></p>;
+    }
+
+    return (
+      <div>
+        {matchingAssignments.map((assignment) => (
+          <div key={assignment._id} className="mb-4 p-2">
+            {assignment.journeySets.map((set, i) => (
+              <div key={i} className="mb-1">
+                <strong>Option {i + 1}:</strong>{" "}
+                <span className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl text-white font-medium text-lg shadow-sm border border-blue-900 mr-2">
+                  {set.journeyIDs
+                    .map((id) => getNameFromJourneyID(id))
+                    .join(" + ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -239,7 +274,9 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
                         <td className="lg:border border-gray-400 px-4 py-2">
                           {discipline}
                         </td>
-                        <td className="lg:border border-gray-400 px-4 py-2"></td>
+                        <td className="lg:border border-gray-400 px-4 py-2">
+                          {getAssignmentsForDiscipline(discipline)}
+                        </td>
                         <td className="lg:border border-gray-400 px-4 py-2">
                           {" "}
                           <Link
@@ -261,19 +298,23 @@ const JourneysPage = ({ user, journeys, publicJourneys }) => {
                         <td className="lg:border border-gray-400 px-4 py-2">
                           {discipline}
                         </td>
-                        <td className="lg:border border-gray-400 px-4 py-2"></td>
                         <td className="lg:border border-gray-400 px-4 py-2">
                           {" "}
-                          {/* <Link
-                            href="/plan/[id]/editEntry"
-                            as={`/plan/${entry._id}/editEntry`}
+                          {getAssignmentsForDiscipline(discipline)}
+                        </td>
+                        <td className="lg:border border-gray-400 px-4 py-2">
+                          {" "}
+                          <Link
+                            href="/disciplines/[id]/editAssignment"
+                            as={`/disciplines/${discipline}/editAssignment`}
                             legacyBehavior
-                          > */}
-                          <FontAwesomeIcon
-                            className="cursor-pointer"
-                            icon={faEdit}
-                            size="1x"
-                          />
+                          >
+                            <FontAwesomeIcon
+                              className="cursor-pointer"
+                              icon={faEdit}
+                              size="1x"
+                            />
+                          </Link>
                           {/* </Link> */}
                         </td>
                       </tr>
@@ -317,6 +358,15 @@ export const getServerSideProps = withPageAuthRequired({
       return journey;
     });
 
+    const assignmentsResult = await JourneyAssignment.find({
+      userId: user.sub,
+    });
+    const assignments = assignmentsResult.map((doc) => {
+      const assignment = JSON.parse(JSON.stringify(doc));
+      assignment._id = assignment._id.toString();
+      return assignment;
+    });
+
     // let user = await db.user.findUnique({ where: { email: auth0User?.user.email } });
     // if (!user) {
     //    user = db.user.create(auth0User?.user);
@@ -328,6 +378,7 @@ export const getServerSideProps = withPageAuthRequired({
         // user: user,  //EVENTUALLY THIS
         journeys: journeys,
         publicJourneys: publicJourneys,
+        assignments,
       },
     };
   },

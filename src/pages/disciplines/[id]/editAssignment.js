@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Journey from "@/models/Journey";
 import Link from "next/link";
 import dbConnect from "@/lib/dbConnect";
+import "../styles.css";
 //import AssignmentForm from "@/components/AssignmentForm";
 
 const EditAssignment = ({ user, journeys }) => {
@@ -291,37 +292,32 @@ const EditAssignment = ({ user, journeys }) => {
             Back to Competition assignments
           </button>
         </Link>
-        {/* <AssignmentForm
-          userId={user.sub}
-          formId="edit-assignment-form"
-          assignmentForm={assignmentForm}
-        /> */}
 
+        <br />
         {!loading && assignment && (
           <>
-            {/* <h1>Journeys assigned to {assignment.discipline}</h1> */}
-            <table className="border responsive-table">
+            <table className="border-collapse w-full responsive-table-assignments">
               <thead>
                 <tr>
-                  <th>Option</th>
+                  <th className="w-20">Option</th>
                   <th>Journey(s)</th>
                 </tr>
               </thead>
               <tbody>
                 {assignment.journeySets.map((journeySet, i) => (
                   <tr key={journeySet._id}>
-                    <td>{i + 1}</td>
+                    <td className="w-20">{i + 1}</td>
                     <td>
                       {journeySet.journeyIDs.map((journey, index) => (
                         <>
                           <span
                             key={journey}
-                            className="inline-flex items-center space-x-2 p-3 bg-gray-200 rounded-full text-sm"
+                            className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl text-white font-medium text-lg shadow-sm border border-blue-900 mr-2"
                           >
                             <span>{getNameFromJourneyID(journey)}</span>
                             <button
                               onClick={() => handleRemoveJourney(i, index)}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-500 hover:text-red-700 focus:outline-none"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -340,15 +336,13 @@ const EditAssignment = ({ user, journeys }) => {
                             </button>
                           </span>
                           {index < journeySet.journeyIDs.length - 1 && (
-                            <span className="ml-2 mr-2 text-2xl font-bold">
-                              +
-                            </span>
+                            <span className="mr-2 text-2xl font-bold">+</span>
                           )}
                         </>
                       ))}
                       <button
                         onClick={() => handleChainJourney(i)}
-                        className={`btn font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline ${
+                        className={`btn font-bold ml-10 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline ${
                           isShowingNewOptionJourneyDropdown
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : isShowingChainJourneyDropdown &&
@@ -357,7 +351,7 @@ const EditAssignment = ({ user, journeys }) => {
                             : "bg-black hover:bg-gray-700 text-white"
                         }`}
                       >
-                        Chain extra journey to this option
+                        Chain another
                       </button>
                       {isShowingChainJourneyDropdown && chainSetIndex === i && (
                         <>
@@ -367,11 +361,13 @@ const EditAssignment = ({ user, journeys }) => {
                               handleChangeSelectedJourney(e.target.value);
                             }}
                           >
-                            {journeys.map((journey) => (
-                              <option key={journey._id} value={journey._id}>
-                                {journey.name}
-                              </option>
-                            ))}
+                            {journeys
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((journey) => (
+                                <option key={journey._id} value={journey._id}>
+                                  {journey.name}
+                                </option>
+                              ))}
                           </select>
                           <button
                             className="bg-black hover:bg-gray-700 text-white btn font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -404,7 +400,7 @@ const EditAssignment = ({ user, journeys }) => {
               : "bg-black hover:bg-gray-700 text-white"
           }`}
         >
-          Assign one of your journeys to this discipline
+          Assign a journey to this discipline
         </button>
         <br />
         {isShowingNewOptionJourneyDropdown && (
@@ -415,11 +411,13 @@ const EditAssignment = ({ user, journeys }) => {
                 handleChangeSelectedJourney(e.target.value);
               }}
             >
-              {journeys.map((journey) => (
-                <option key={journey._id} value={journey._id}>
-                  {journey.name}
-                </option>
-              ))}
+              {journeys
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((journey) => (
+                  <option key={journey._id} value={journey._id}>
+                    {journey.name}
+                  </option>
+                ))}
             </select>
             <br />
             <button
