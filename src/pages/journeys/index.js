@@ -15,13 +15,18 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
   //let user = useUser(); //should we be using this instead?
   const searchParams = useSearchParams();
   const startWithJourneyView =
-    searchParams.get("startWithJourneyView") === "true";
+    searchParams.get("startWithJourneyView") === "true" ||
+    searchParams.get("startWithJourneyView") === "";
   const [message, setMessage] = useState("");
   const [isJourneyView, setIsJourneyView] = useState(startWithJourneyView);
   const contentType = "application/json";
   const router = useRouter();
 
   console.log(assignments);
+
+  const handleClickJourney = (journeyId) => {
+    router.push(`/journeys/${journeyId}`);
+  };
 
   const handleJourneyView = () => {
     setIsJourneyView(true);
@@ -118,9 +123,29 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
               <div key={i} className="mb-1">
                 <strong>Option {i + 1}:</strong>{" "}
                 <span className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl text-white font-medium text-lg shadow-sm border border-blue-900 mr-2">
-                  {set.journeyIDs
-                    .map((id) => getNameFromJourneyID(id))
-                    .join(" + ")}
+                  {set.journeyIDs.map((id, j) => {
+                    const journeyName = getNameFromJourneyID(id);
+                    return (
+                      <>
+                        <span key={id} onClick={() => handleClickJourney(id)}>
+                          {getNameFromJourneyID(id)}
+                        </span>
+                        {j < set.journeyIDs.length - 1 && (
+                          <span className="mx-1"> + </span>
+                        )}
+                      </>
+                    );
+                  })}
+                </span>
+                <span className="ml-5">
+                  (total points:{" "}
+                  {set.journeyIDs.reduce((acc, id) => {
+                    const journey = journeys.find(
+                      (journey) => journey._id === id
+                    );
+                    return acc + (journey?.pointsCount || 0);
+                  }, 0)}
+                  )
                 </span>
               </div>
             ))}
@@ -178,7 +203,7 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
               <br />
               {journeys.length > 0 &&
                 sortedJourneys.map((journey) => (
-                  <p className="font-semibold">
+                  <p className="font-semibold text-xl">
                     {" "}
                     <Link
                       href="/journeys/[id]/"
@@ -187,6 +212,10 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
                     >
                       {journey.name}
                     </Link>
+                    <span className="font-light">
+                      {" "}
+                      ({journey.pointsCount} points)
+                    </span>
                     <FontAwesomeIcon
                       className="ml-5 cursor-pointer"
                       onClick={() => handleDelete(journey._id)}
@@ -254,74 +283,73 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
                 multiple options).
               </p>
               <br />
-              <p className="font-mono">
-                <h3 className="font-semibold">Disciplines</h3>
-                <table className="border-collapse border w-full responsive-table-plan">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="border border-gray-400 px-4 py-2">
-                        Discipline
-                      </th>
-                      <th className="border border-gray-400 px-4 py-2">
-                        Journeys (or journey groups)
-                      </th>
-                      <th className="border lg:border-gray-400 px-4 py-2"></th>
+
+              <h3 className="font-semibold">Disciplines</h3>
+              <table className="border-collapse border w-full responsive-table-plan">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="border border-gray-400 px-4 py-2">
+                      Discipline
+                    </th>
+                    <th className="border border-gray-400 px-4 py-2">
+                      Journeys (or journey groups)
+                    </th>
+                    <th className="border lg:border-gray-400 px-4 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ML_DISCIPLINES.map((discipline) => (
+                    <tr key={discipline}>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {discipline}
+                      </td>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {getAssignmentsForDiscipline(discipline)}
+                      </td>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {" "}
+                        <Link
+                          href="/disciplines/[id]/editAssignment"
+                          as={`/disciplines/${discipline}/editAssignment`}
+                          legacyBehavior
+                        >
+                          <FontAwesomeIcon
+                            className="cursor-pointer"
+                            icon={faEdit}
+                            size="1x"
+                          />
+                        </Link>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {ML_DISCIPLINES.map((discipline) => (
-                      <tr key={discipline}>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {discipline}
-                        </td>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {getAssignmentsForDiscipline(discipline)}
-                        </td>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {" "}
-                          <Link
-                            href="/disciplines/[id]/editAssignment"
-                            as={`/disciplines/${discipline}/editAssignment`}
-                            legacyBehavior
-                          >
-                            <FontAwesomeIcon
-                              className="cursor-pointer"
-                              icon={faEdit}
-                              size="1x"
-                            />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                    {TRADITIONAL_DISCIPLINES.map((discipline) => (
-                      <tr key={discipline}>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {discipline}
-                        </td>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {" "}
-                          {getAssignmentsForDiscipline(discipline)}
-                        </td>
-                        <td className="lg:border border-gray-400 px-4 py-2">
-                          {" "}
-                          <Link
-                            href="/disciplines/[id]/editAssignment"
-                            as={`/disciplines/${discipline}/editAssignment`}
-                            legacyBehavior
-                          >
-                            <FontAwesomeIcon
-                              className="cursor-pointer"
-                              icon={faEdit}
-                              size="1x"
-                            />
-                          </Link>
-                          {/* </Link> */}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </p>
+                  ))}
+                  {TRADITIONAL_DISCIPLINES.map((discipline) => (
+                    <tr key={discipline}>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {discipline}
+                      </td>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {" "}
+                        {getAssignmentsForDiscipline(discipline)}
+                      </td>
+                      <td className="lg:border border-gray-400 px-4 py-2">
+                        {" "}
+                        <Link
+                          href="/disciplines/[id]/editAssignment"
+                          as={`/disciplines/${discipline}/editAssignment`}
+                          legacyBehavior
+                        >
+                          <FontAwesomeIcon
+                            className="cursor-pointer"
+                            icon={faEdit}
+                            size="1x"
+                          />
+                        </Link>
+                        {/* </Link> */}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         )}
@@ -340,12 +368,25 @@ export const getServerSideProps = withPageAuthRequired({
     const user = auth0User.user;
 
     //only want to send the name and ID of private journeys
-    const result2 = await Journey.find({ userId: user.sub }, { name: 1 });
+    {
+      /* const result2 = await Journey.find({ userId: user.sub }, { name: 1 });
     const journeys = result2.map((doc) => {
       const journey = JSON.parse(JSON.stringify(doc));
       journey._id = journey._id.toString();
       return journey;
-    });
+    }); */
+    }
+
+    const journeys = await Journey.aggregate([
+      { $match: { userId: user.sub } },
+      {
+        $project: {
+          name: 1,
+          pointsCount: { $size: { $ifNull: ["$points", []] } },
+        },
+      },
+    ]);
+    journeys.forEach((j) => (j._id = j._id.toString()));
 
     //only want to send the name and ID of public images sets
     const publicJourneyResult = await Journey.find(

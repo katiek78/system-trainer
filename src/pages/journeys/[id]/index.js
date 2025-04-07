@@ -9,6 +9,7 @@ import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView";
 import EmbedImage from "@/components/EmbedImage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { PAGE_LIMIT } from "@/lib/journeyConstants";
 import {
   faCheck,
   faEdit,
@@ -16,6 +17,8 @@ import {
   faTrash,
   faArrowLeft,
   faArrowRight,
+  faArrowLeftLong,
+  faArrowRightLong,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
@@ -226,6 +229,42 @@ const JourneyPage = ({
     setCurrentSlideshowPoint(allPoints.length - 1);
   };
 
+  const movePointBackwards = async (pointIndex) => {
+    try {
+      await fetch(`/api/journeys/${router.query.id}/reorderPoint`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pointIndex,
+          direction: "b",
+        }),
+      });
+      refreshData(router);
+    } catch (error) {
+      setMessage("Failed to move the point.");
+    }
+  };
+
+  //TODO: Make these two functions the same function with a parameter
+  const movePointForwards = async (pointIndex) => {
+    try {
+      await fetch(`/api/journeys/${router.query.id}/reorderPoint`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pointIndex,
+          direction: "f",
+        }),
+      });
+      refreshData(router);
+    } catch (error) {
+      setMessage("Failed to move the point.");
+    }
+  };
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 600px)");
     const mobileView = mql.matches;
@@ -251,7 +290,17 @@ const JourneyPage = ({
   return (
     <>
       <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
-        <h1 className="py-2 font-mono text-sm md:text-md lg:text-lg ">
+        <h3 className="underline py-2 font-mono text-sm md:text-md lg:text-lg">
+          <Link
+            href={{
+              pathname: "/journeys",
+              query: { startWithJourneyView: "true" },
+            }}
+          >
+            Back to Journeys
+          </Link>
+        </h3>
+        <h1 className="py-2 font-mono text-sm sm:text-2xl">
           Journey{isPublicJourney && " (PUBLIC)"}:
         </h1>
         <h2 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">
@@ -356,7 +405,7 @@ const JourneyPage = ({
               </h2>
               <div>{renderPageNumbers()}</div>
               <div className="p-2 lg:p-5 flex flex-wrap justify-center">
-                {points?.map((point) => (
+                {points?.map((point, i) => (
                   <div
                     className="point-card-container flex justify-center"
                     key={point.id}
@@ -398,21 +447,52 @@ const JourneyPage = ({
                             )}
 
                           {(!isPublicJourney || isAdmin) && (
-                            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                              <Link
-                                href="/journeys/[id]/editPoint"
-                                as={`/journeys/${point._id}/editPoint`}
-                                legacyBehavior
-                              >
-                                <FontAwesomeIcon icon={faEdit} size="2x" />
-                              </Link>
-                              <FontAwesomeIcon
-                                className="ml-5"
-                                icon={faTrash}
-                                size="2x"
-                                onClick={() => handleDeletePoint(point._id)}
-                              />
-                            </div>
+                            <>
+                              <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-center items-center">
+                                {!(i === 0 && currentPage === 1) && (
+                                  <FontAwesomeIcon
+                                    onClick={() =>
+                                      movePointBackwards(
+                                        (currentPage - 1) * PAGE_LIMIT + i
+                                      )
+                                    }
+                                    icon={faArrowLeftLong}
+                                    size="2x"
+                                  />
+                                )}
+
+                                {!(
+                                  i === points.length - 1 &&
+                                  currentPage === totalPages
+                                ) && (
+                                  <FontAwesomeIcon
+                                    onClick={() =>
+                                      movePointForwards(
+                                        (currentPage - 1) * PAGE_LIMIT + i
+                                      )
+                                    }
+                                    className="ml-5"
+                                    icon={faArrowRightLong}
+                                    size="2x"
+                                  />
+                                )}
+                              </div>
+                              <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                                <Link
+                                  href="/journeys/[id]/editPoint"
+                                  as={`/journeys/${point._id}/editPoint`}
+                                  legacyBehavior
+                                >
+                                  <FontAwesomeIcon icon={faEdit} size="2x" />
+                                </Link>
+                                <FontAwesomeIcon
+                                  className="ml-5"
+                                  icon={faTrash}
+                                  size="2x"
+                                  onClick={() => handleDeletePoint(point._id)}
+                                />
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
@@ -587,7 +667,7 @@ export const getServerSideProps = withPageAuthRequired({
     const journey = JSON.parse(JSON.stringify(journeyResult));
 
     const page = query.page ? parseInt(query.page) : 1;
-    const pageLimit = 10;
+    const pageLimit = PAGE_LIMIT;
     const offset = (page - 1) * pageLimit;
 
     const points = journey.points.slice(offset, offset + pageLimit);
