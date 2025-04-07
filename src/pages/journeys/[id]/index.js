@@ -21,6 +21,7 @@ import {
   faArrowRightLong,
   faChevronLeft,
   faChevronRight,
+  faPlusCircle,
 } from "@fortawesome/free-solid-svg-icons";
 //import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
@@ -158,6 +159,10 @@ const JourneyPage = ({
     } catch (error) {
       setMessage("Failed to delete the point.");
     }
+  };
+
+  const handleInsertPointAt = async (insertAt) => {
+    router.push(`/journeys/${router.query.id}/new?insertAt=${insertAt}`);
   };
 
   const handleChangeTitle = (e) => {
@@ -449,6 +454,17 @@ const JourneyPage = ({
                           {(!isPublicJourney || isAdmin) && (
                             <>
                               <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-center items-center">
+                                <FontAwesomeIcon
+                                  onClick={() => {
+                                    handleInsertPointAt(
+                                      (currentPage - 1) * PAGE_LIMIT + i
+                                    );
+                                  }}
+                                  icon={faPlusCircle}
+                                  size="2x"
+                                  title="Insert point before"
+                                />
+
                                 {!(i === 0 && currentPage === 1) && (
                                   <FontAwesomeIcon
                                     onClick={() =>
@@ -458,6 +474,7 @@ const JourneyPage = ({
                                     }
                                     icon={faArrowLeftLong}
                                     size="2x"
+                                    title="Move point backwards"
                                   />
                                 )}
 
@@ -474,8 +491,20 @@ const JourneyPage = ({
                                     className="ml-5"
                                     icon={faArrowRightLong}
                                     size="2x"
+                                    title="Move point forwards"
                                   />
                                 )}
+
+                                <FontAwesomeIcon
+                                  onClick={() => {
+                                    handleInsertPointAt(
+                                      (currentPage - 1) * PAGE_LIMIT + i + 1
+                                    );
+                                  }}
+                                  icon={faPlusCircle}
+                                  size="2x"
+                                  title="Insert point after"
+                                />
                               </div>
                               <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
                                 <Link
@@ -483,9 +512,14 @@ const JourneyPage = ({
                                   as={`/journeys/${point._id}/editPoint`}
                                   legacyBehavior
                                 >
-                                  <FontAwesomeIcon icon={faEdit} size="2x" />
+                                  <FontAwesomeIcon
+                                    title="Edit this point"
+                                    icon={faEdit}
+                                    size="2x"
+                                  />
                                 </Link>
                                 <FontAwesomeIcon
+                                  title="Delete this point"
                                   className="ml-5"
                                   icon={faTrash}
                                   size="2x"

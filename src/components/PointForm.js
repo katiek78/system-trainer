@@ -8,7 +8,13 @@ const isLocationStreetView = (location) => {
   return /^[-\d]/.test(location);
 };
 
-const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
+const PointForm = ({
+  formId,
+  pointForm,
+  forNewPoint = true,
+  journeyId,
+  insertAt,
+}) => {
   const router = useRouter();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
@@ -55,6 +61,11 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
   const postData = async (form) => {
     const { id } = router.query;
 
+    console.log("Payload being sent:", {
+      ...form,
+      insertAt,
+    });
+
     try {
       const res = await fetch(`/api/points/${id}`, {
         method: "POST",
@@ -62,7 +73,10 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
           Accept: contentType,
           "Content-Type": contentType,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          insertAt, // add insertAt into the body
+        }),
       });
 
       // Throw error with status code in case Fetch API req failed
@@ -141,7 +155,7 @@ const PointForm = ({ formId, pointForm, forNewPoint = true, journeyId }) => {
     e.preventDefault();
     const errs = formValidate();
     if (Object.keys(errs).length === 0) {
-      forNewPoint ? postData(form) : putData(form);
+      forNewPoint ? postData(form, insertAt) : putData(form);
     } else {
       setErrors({ errs });
     }
