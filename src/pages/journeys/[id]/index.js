@@ -7,6 +7,7 @@ import dbConnect from "@/lib/dbConnect";
 import { isAdmin } from "@/lib/adminCheck";
 import Journey from "@/models/Journey";
 import EmbedStreetView from "@/components/EmbedStreetView";
+import EmbedStreetViewDynamic from "@/components/EmbedStreetViewDynamic";
 import EmbedImage from "@/components/EmbedImage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PAGE_LIMIT } from "@/lib/journeyConstants";
@@ -24,8 +25,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 //import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
+import { getStreetViewUrl } from "@/utilities/getStreetViewURL";
+import streetViewCache from "@/utilities/streetViewCache";
 import "./styles.css";
-//import { setLazyProp } from "next/dist/server/api-utils";
 
 const JourneyPage = ({
   journey,
@@ -36,9 +38,7 @@ const JourneyPage = ({
   isAdmin,
 }) => {
   const router = useRouter();
-  //const { paginatedPoints, journey } = props;
   const contentType = "application/json";
-  // const [journey, setJourney] = useState({});
   const [message, setMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(
     router.query.page ? parseInt(router.query.page) : 1
@@ -46,7 +46,6 @@ const JourneyPage = ({
 
   const [isListView, setIsListView] = useState(!router.query.slideshow);
   const [currentSlideshowPoint, setCurrentSlideshowPoint] = useState(0);
-  //const [points, setPoints] = useState(null);
   const [allPoints, setAllPoints] = useState(null);
   const [loadingAllPoints, setLoadingAllPoints] = useState(false);
 
@@ -68,12 +67,53 @@ const JourneyPage = ({
 
     if (!isListView && !allPoints) {
       fetchAllPoints();
-      //if (allPoints) setPoints(allPoints);
-    } else {
-      //setPoints(points); // Only show paginated points if in gallery mode
     }
     setIsLoading(false);
   }, [router.query.page, isListView]);
+
+  const preloadStreetViewImages = async () => {
+    const preloadPromises = points.map(async (point) => {
+      if (!isLocationStreetView(point.location)) return Promise.resolve();
+      const heading = point.heading || 90;
+      const pitch = point.pitch || 0;
+      const fov = point.fov || 100;
+      const key = `${point.location}-${heading}-${pitch}-${fov}-image`;
+
+      const url = await getStreetViewUrl(
+        point.location,
+        heading,
+        pitch,
+        fov,
+        "image"
+      );
+
+      if (url) {
+        // Store in cache
+        streetViewCache[key] = url;
+
+        // Preload the image
+        const img = new Image();
+        img.src = url;
+
+        // Return a promise that resolves when the image is loaded
+        return new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+      }
+
+      return Promise.resolve(); // if no URL, just resolve
+    });
+
+    await Promise.all(preloadPromises);
+  };
+
+  // Call preload function before rendering your gallery
+  useEffect(() => {
+    if (points) {
+      preloadStreetViewImages();
+    }
+  }, [points]);
 
   const renderPageNumbers = () => {
     const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -410,11 +450,11 @@ const JourneyPage = ({
                 {points?.map((point, i) => (
                   <div
                     className="point-card-container flex justify-center"
-                    key={point.id}
+                    key={i}
                   >
                     <div
                       className={`point-card flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300`}
-                      key={point._id}
+                      key={i}
                     >
                       <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
                         <p
@@ -564,7 +604,7 @@ const JourneyPage = ({
                           isLocationStreetView(
                             allPoints[currentSlideshowPoint].location
                           ) && (
-                            <EmbedStreetView
+                            <EmbedStreetViewDynamic
                               width={width}
                               height={height}
                               location={

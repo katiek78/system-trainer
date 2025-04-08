@@ -1,49 +1,101 @@
 import { useState, useEffect } from "react";
+import streetViewCache from "@/utilities/streetViewCache";
+import { getStreetViewUrl } from "@/utilities/getStreetViewURL";
 
-const EmbedStreetView = ({ width, height, location, heading, pitch, fov }) => {
-  const [streetViewUrl, setStreetViewUrl] = useState(null);
+const EmbedStreetView = ({
+  width,
+  height,
+  location,
+  heading = 90,
+  pitch = 0,
+  fov = 100,
+}) => {
+  const key = `${location}-${heading}-${pitch}-${fov}`;
+
+  //const embedKey = `${key}-embed`;
+  const imageKey = `${key}-image`;
+
+  //const cachedEmbedUrl = streetViewCache[embedKey];
+  const cachedImageUrl = streetViewCache[imageKey];
+
+  // const [embedUrl, setEmbedUrl] = useState(cachedEmbedUrl || null);
+  const [staticImageUrl, setStaticImageUrl] = useState(cachedImageUrl || null);
+  //const [iframeLoaded, setIframeLoaded] = useState(false);
 
   useEffect(() => {
-    if (location) {
-      // Default values for heading, pitch, and fov
-      heading = heading || 90;
-      pitch = pitch || 0;
-      fov = fov || 100;
+    const fetchUrls = async () => {
+      try {
+        // if (!cachedEmbedUrl) {
+        //   const embed = await getStreetViewUrl(
+        //     location,
+        //     heading,
+        //     pitch,
+        //     fov,
+        //     "embed"
+        //   );
+        //   streetViewCache[embedKey] = embed;
+        //   setEmbedUrl(embed);
+        // }
 
-      // Call the server-side API route to get the Street View URL
-      const fetchStreetViewUrl = async () => {
-        try {
-          const response = await fetch(
-            `/api/streetView?location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}`
+        if (!cachedImageUrl) {
+          const image = await getStreetViewUrl(
+            location,
+            heading,
+            pitch,
+            fov,
+            "image"
           );
-          const data = await response.json();
-          setStreetViewUrl(data.streetViewUrl);
-        } catch (error) {
-          console.error("Error fetching Street View URL:", error);
+          streetViewCache[imageKey] = image;
+          setStaticImageUrl(image);
         }
-      };
+      } catch (err) {
+        console.error("Failed to fetch Street View URLs", err);
+      }
+    };
 
-      fetchStreetViewUrl();
-    }
+    if (location) fetchUrls();
   }, [location, heading, pitch, fov]);
 
-  if (!streetViewUrl) {
+  // const onIframeLoad = () => setIframeLoaded(true);
+
+  if (!staticImageUrl) {
     return <div>Loading...</div>;
   }
 
   return (
-    <iframe
-      className="mx-auto"
-      width={width}
-      height={height}
-      style={{ border: 0, padding: "10px" }}
-      loading="lazy"
-      allowFullScreen
-      referrerPolicy="no-referrer-when-downgrade"
-      src={streetViewUrl}
-      // Disable unnecessary permissions like accelerometer
-      allow="geolocation; microphone; camera; fullscreen"
-    ></iframe>
+    <>
+      {/* {!iframeLoaded && staticImageUrl ? (
+        <img
+          src={staticImageUrl}
+          alt="Street View (static)"
+          className="placeholder-image"
+          width={width}
+          height={height}
+        />
+      ) : null}
+
+      {embedUrl && (
+        <iframe
+          className="mx-auto"
+          width={width}
+          height={height}
+          style={{ border: 0, padding: "10px" }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          onLoad={onIframeLoad}
+          src={embedUrl}
+          allow="geolocation; microphone; camera; fullscreen"
+        />
+      )} */}
+      <img
+        src={staticImageUrl}
+        alt="Street View (static)"
+        className="placeholder-image"
+        width={width}
+        height={height}
+      />
+    </>
   );
 };
 
