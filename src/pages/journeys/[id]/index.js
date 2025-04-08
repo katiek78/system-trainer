@@ -453,13 +453,12 @@ const JourneyPage = ({
                     key={i}
                   >
                     <div
-                      className={`point-card flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300`}
+                      className={`point-card flex justify-center relative mb-4 p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-xl transition duration-300`}
                       key={i}
                     >
                       <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
                         <p
-                          className={`point-name max-w-xs text-center h-12 whitespace-normal`}
-                          style={{ maxWidth: 300 }}
+                          className={`text-2xl point-name max-w-xs text-center h-12 whitespace-normal`}
                         >
                           {point.name}
                         </p>
@@ -485,6 +484,13 @@ const JourneyPage = ({
                                 location={point.location}
                               />
                             )}
+
+                          <p
+                            className={`point-memoItem text-xl mt-5 max-w-xs text-center h-12 whitespace-normal`}
+                            style={{ maxWidth: 300 }}
+                          >
+                            {point.memoItem}
+                          </p>
 
                           {(!isPublicJourney || isAdmin) && (
                             <>
@@ -631,6 +637,9 @@ const JourneyPage = ({
                               }
                             />
                           )}
+                        <p className="point-memoItem text-center h-12 whitespace-normal">
+                          {allPoints[currentSlideshowPoint].memoItem}
+                        </p>
                         <div className="icon-container flex flex-row justify-center items-center">
                           {/* Show the backward button if we're not on the first point */}
                           {currentSlideshowPoint > 0 && (

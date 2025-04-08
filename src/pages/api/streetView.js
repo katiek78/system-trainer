@@ -1,58 +1,5 @@
 // pages/api/streetview.js
 
-// export default async function handler(req, res) {
-//   if (req.method === "GET") {
-//     const { location, heading, pitch, fov } = req.query;
-
-//     const API_KEY = process.env.STREET_VIEW_API_KEY;
-
-//     // Construct the Street View URL with the provided parameters
-//     //  const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=${API_KEY}&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}`;
-//     const streetViewUrl = `https://www.googleapis.com/maps/api/streetview?key=${API_KEY}&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}`;
-
-//     // Respond with the constructed URL
-//     res.status(200).json({ streetViewUrl });
-//   } else {
-//     res.status(405).json({ message: "Method Not Allowed" });
-//   }
-// }
-
-// export default async function handler(req, res) {
-//   if (req.method === "GET") {
-//     const { location, heading, pitch, fov } = req.query;
-
-//     const API_KEY = process.env.STREET_VIEW_API_KEY;
-
-//     // Construct the Street View Static API URL (static image)
-//     const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=320x240&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}&key=${API_KEY}`;
-
-//     // Respond with the static image URL
-//     res.status(200).json({ streetViewUrl });
-//   } else {
-//     res.status(405).json({ message: "Method Not Allowed" });
-//   }
-// }
-
-// export default async function handler(req, res) {
-//   if (req.method === "GET") {
-//     const { location, heading, pitch, fov, type } = req.query;
-
-//     const API_KEY = process.env.STREET_VIEW_API_KEY;
-
-//     if (type === "image") {
-//       // Fetch static image URL
-//       const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}&key=${API_KEY}`;
-//       res.status(200).json({ streetViewUrl });
-//     } else {
-//       // Fetch embed URL for the iframe
-//       const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=${API_KEY}&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}`;
-//       res.status(200).json({ streetViewUrl });
-//     }
-//   } else {
-//     res.status(405).json({ message: "Method Not Allowed" });
-//   }
-// }
-
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { location, heading, pitch, fov, type } = req.query;

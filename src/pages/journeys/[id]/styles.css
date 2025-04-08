@@ -15,6 +15,12 @@
     flex-shrink: 0;
 }
 
+.point-memoItem {
+    flex: 1;
+    flex-shrink: 0;
+    font-size: 0.8em;
+}
+
 .small-point-card {
     height:100px;
 }

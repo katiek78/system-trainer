@@ -26,7 +26,7 @@ const PointForm = ({
     heading: pointForm.heading || 90,
     pitch: pointForm.pitch || 0,
     fov: pointForm.fov || 100,
-    item: pointForm.item || "",
+    memoItem: pointForm.memoItem || "",
   });
 
   /* The PUT method edits an existing entry in the mongodb database. */
@@ -238,6 +238,7 @@ const PointForm = ({
             <p>Adjust the values below to customise your view:</p>
             <label htmlFor="heading">Heading (orientation, -180 to 360)</label>
             <input
+              className="ml-7"
               type="number"
               maxLength="4"
               min="-180"
@@ -247,8 +248,10 @@ const PointForm = ({
               onChange={handleChange}
               step="any"
             />
+            <br />
             <label htmlFor="pitch">Pitch (up/down, -90 to 90)</label>
             <input
+              className="ml-7"
               type="number"
               maxLength="4"
               min="-90"
@@ -258,8 +261,10 @@ const PointForm = ({
               onChange={handleChange}
               step="any"
             />
+            <br />
             <label htmlFor="fov">FOV (field of view, 10 to 100)</label>
             <input
+              className="ml-7"
               type="number"
               maxLength="4"
               min="10"
@@ -271,6 +276,16 @@ const PointForm = ({
             />
           </div>
         )}
+        <br />
+        <br />
+        <label htmlFor="memoItem">Item / person to store here</label>
+        <input
+          className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          type="text"
+          name="memoItem"
+          value={form.memoItem}
+          onChange={handleChange}
+        />
         <button
           type="submit"
           className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"

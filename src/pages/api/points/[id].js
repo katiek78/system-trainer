@@ -35,6 +35,7 @@ export default async function handler(req, res) {
               "points.$.heading": req.body.heading,
               "points.$.pitch": req.body.pitch,
               "points.$.fov": req.body.fov,
+              "points.$.memoItem": req.body.memoItem,
             },
           },
           {
