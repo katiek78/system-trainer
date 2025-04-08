@@ -15,12 +15,11 @@ import {
   faEdit,
   faPlus,
   faTrash,
-  faArrowLeft,
-  faArrowRight,
+  faPlay,
   faArrowLeftLong,
   faArrowRightLong,
-  faChevronLeft,
-  faChevronRight,
+  faBackward,
+  faForward,
   faPlusCircle,
 } from "@fortawesome/free-solid-svg-icons";
 //import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
@@ -99,14 +98,13 @@ const JourneyPage = ({
       return;
     }
     if (loadingAllPoints) return; // Avoid duplicate fetches
-    //if (loadingAllPoints) return;
+
     setLoadingAllPoints(true);
     const response = await fetch(`/api/journeys/${router.query.id}`);
     const data = await response.json();
     const loadedPoints = data.data.points;
     setAllPoints(loadedPoints);
-    //setPoints(loadedPoints);
-    console.log(loadedPoints.length);
+
     setCurrentSlideshowPoint(0);
     setLoadingAllPoints(false);
   };
@@ -149,7 +147,6 @@ const JourneyPage = ({
   };
 
   const handleDeletePoint = async (pointID, e) => {
-    console.log("deleting point");
     try {
       await fetch(`/api/points/${pointID}`, {
         method: "Delete",
@@ -416,9 +413,7 @@ const JourneyPage = ({
                     key={point.id}
                   >
                     <div
-                      className={`point-card ${
-                        point.location ? "" : "small-point-card"
-                      } flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300`}
+                      className={`point-card flex justify-center relative mb-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition duration-300`}
                       key={point._id}
                     >
                       <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
@@ -596,39 +591,46 @@ const JourneyPage = ({
                               }
                             />
                           )}
-
                         <div className="icon-container flex flex-row justify-center items-center">
-                          {(currentSlideshowPoint > 0 || currentPage > 1) && (
+                          {/* Show the backward button if we're not on the first point */}
+                          {currentSlideshowPoint > 0 && (
                             <FontAwesomeIcon
                               className="ml-5"
-                              icon={faChevronLeft}
+                              icon={faBackward}
                               size="2x"
                               onClick={handleGoToStart}
                             />
                           )}
                           <div className="w-10"></div>
-                          {(currentSlideshowPoint > 0 || currentPage > 0) && (
+
+                          {/* Show previous button if we're not on the first point */}
+                          {currentSlideshowPoint > 0 && (
                             <FontAwesomeIcon
                               className="ml-5"
-                              icon={faArrowLeft}
+                              icon={faPlay}
+                              style={{ transform: "rotate(180deg)" }}
                               size="2x"
                               onClick={handlePrevious}
                             />
                           )}
                           <div className="w-10"></div>
-                          {currentSlideshowPoint < points.length - 1 && (
+
+                          {/* Show next button if we're not on the last point */}
+                          {currentSlideshowPoint < allPoints.length - 1 && (
                             <FontAwesomeIcon
                               className="ml-5"
-                              icon={faArrowRight}
+                              icon={faPlay}
                               size="2x"
                               onClick={handleNext}
                             />
                           )}
                           <div className="w-10"></div>
-                          {currentSlideshowPoint < points.length - 1 && (
+
+                          {/* Show forward button if we're not on the last point */}
+                          {currentSlideshowPoint < allPoints.length - 1 && (
                             <FontAwesomeIcon
                               className="ml-5"
-                              icon={faChevronRight}
+                              icon={faForward}
                               size="2x"
                               onClick={handleGoToEnd}
                             />
