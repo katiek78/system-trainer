@@ -12,6 +12,23 @@ export const benVowels = [
   "ae",
   "oh",
 ];
+export const dBenCardVowels = { J: "ow", Q: "ar", K: "or" };
+export const dBenCardValues = {
+  A: "t",
+  2: "n",
+  3: "m",
+  4: "r",
+  5: "l",
+  6: "sh",
+  7: "k",
+  8: "p",
+  9: "f",
+  10: "s",
+  J: "h",
+  Q: "d",
+  K: "g",
+};
+export const dMajorValues = ["s", "t", "n", "m", "r", "l", "sh", "k", "p", "f"];
 export const kBenCardValues = {
   A: "t",
   2: "n",

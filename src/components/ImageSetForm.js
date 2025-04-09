@@ -155,6 +155,8 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
           <option value="1c">1-card</option>
           <option value="2cv">2-card (1352)</option>
           <option value="2c">2-card (2704)</option>
+          <option value="3cv">3-card (values)</option>
+          <option value="3cs">3-card (suits)</option>
           <option value="other">other</option>
         </select>
         <br />
@@ -171,13 +173,17 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
               required
             >
               <option value="none">None</option>
-              {form.setType !== "1c" && (
+              {form.setType !== "1c" && form.setType !== "3cs" && (
                 <option value="maj">Major System</option>
               )}
               {(form.setType === "2c" ||
                 form.setType === "2cv" ||
-                form.setType === "3d") && (
-                <option value="ben">Ben System</option>
+                form.setType === "3d" ||
+                form.setType === "3cv") && (
+                <>
+                  <option value="ben">Ben System</option>
+                  <option value="dben">D Ben System</option>
+                </>
               )}
               {(form.setType === "2c" ||
                 form.setType === "2cv" ||

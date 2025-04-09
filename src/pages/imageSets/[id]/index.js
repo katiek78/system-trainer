@@ -1104,7 +1104,10 @@ const ImageSetPage = ({
                   <option value="3d">3-digit</option>
                   <option value="4d">4-digit</option>
                   <option value="1c">1-card</option>
-                  <option value="2c">2-card</option>
+                  <option value="2cv">2-card (1352)</option>
+                  <option value="2c">2-card (2704)</option>
+                  <option value="3cv">3-card (values)</option>
+                  <option value="3cs">3-card (suits)</option>
                   <option value="other">other</option>
                 </select>
                 <br />

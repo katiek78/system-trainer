@@ -5,6 +5,9 @@ import {
   kBenCardValues,
   kBenCardValues2704,
   kBenSuitPairs,
+  dBenCardVowels,
+  dMajorValues,
+  dBenCardValues,
   HBHMSuitPairs,
   rModifiedConsonantArray,
   specialVoicedConsonantArray,
@@ -315,6 +318,8 @@ export const getPopulatedPhoneticsArray = (
   replacementMajorValues = [],
   replacementBenVowels = []
 ) => {
+  console.log(setType); //3cv
+  console.log(phoneticsType); //dben
   const majorValuesToUse =
     replacementMajorValues.length > 0 ? replacementMajorValues : majorValues;
   const benVowelsToUse =
@@ -421,6 +426,55 @@ export const getPopulatedPhoneticsArray = (
         }
       }
       break;
+    case "dben": {
+      if (setType === "3d") {
+        for (let i = 0; i < 1000; i++) {
+          const threeDigitPhonetics =
+            dMajorValues[i.toString().padStart(3, "0")[0]] +
+            benVowelsToUse[i.toString().padStart(3, "0")[1]] +
+            dMajorValues[i.toString().padStart(3, "0")[2]];
+          phoneticsArray.push(threeDigitPhonetics);
+        }
+      }
+      if (setType === "3cv") {
+        const vowels = benVowels.concat([
+          dBenCardVowels["J"],
+          dBenCardVowels["Q"],
+          dBenCardVowels["K"],
+        ]);
+        console.log(vowels);
+        const cardValues = [
+          "A",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "J",
+          "Q",
+          "K",
+        ]; //TODO; move to constants
+        for (let i = 0; i < 13; i++) {
+          for (let j = 0; j < 13; j++) {
+            for (let k = 0; k < 13; k++) {
+              // kBenCardValues[cardVal1] +
+              // kBenSuitPairs[suitPair] +
+              // kBenCardValues[cardVal2]
+              const threeCardPhonetics =
+                dBenCardValues[cardValues[i]] +
+                vowels[j] +
+                dBenCardValues[cardValues[k]];
+              console.log(threeCardPhonetics);
+              phoneticsArray.push(threeCardPhonetics);
+            }
+          }
+        }
+      }
+    }
     case "hbhm":
       if (setType === "2c") {
         //Katie's 2-card HBHM here
