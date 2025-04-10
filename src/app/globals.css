@@ -40,4 +40,8 @@ body {
 
 .card-suit {
   font-family: "Arial", "Times New Roman", serif;
+  font-size: 2rem;
+  line-height: 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
