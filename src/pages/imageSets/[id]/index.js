@@ -1049,7 +1049,7 @@ const ImageSetPage = ({
                     <div className="z-3 relative m-2 h-40 w-60 rounded-xl shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
                       <div className="absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]">
                         <div className="flex-col rounded-xl px-12  text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                          <h1 className="text-3xl font-bold">
+                          <h1 className="card-suit text-3xl font-bold">
                             <RedHeartsAndDiamonds text={img.name} />
                           </h1>
                         </div>

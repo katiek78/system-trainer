@@ -3,48 +3,55 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import RedHeartsAndDiamonds from "./RedHD";
 
-const QuickEditForm = ({field, item, name, handleSubmitEdit}) => {
+const QuickEditForm = ({ field, item, name, handleSubmitEdit }) => {
+  const [formItem, setFormItem] = useState(item);
 
+  const handleEditChange = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const target = e.target;
+    const value = target.value;
+    //const name = target.name
 
+    // setForm({
+    //   ...form,
+    //   imageItem: value,
+    // })
+    setFormItem(value);
+  };
 
-    const [formItem, setFormItem] = useState(item);
+  const handleClickSubmit = (e, field, formItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSubmitEdit(e, field, formItem);
+  };
 
-    const handleEditChange = (e) => {       
-       e.stopPropagation();
-       e.preventDefault();
-        const target = e.target
-        const value = target.value
-        //const name = target.name
-    
-        // setForm({
-        //   ...form,
-        //   imageItem: value,
-        // })
-        setFormItem(value)
-      }
-    
-      const handleClickSubmit = (e, field, formItem) => {    
-        e.preventDefault();
-        e.stopPropagation();            
-        handleSubmitEdit(e, field, formItem);   
-      }
+  const handleClickForm = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-      const handleClickForm = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-return(
-<div>
-    <form onSubmit={(e) => handleClickSubmit(e, field, formItem)}><input autoFocus name='imageItem' 
-    onChange={(e) => handleEditChange(e)} 
-    onClick={(e) => handleClickForm(e)} 
-    className='text-black w-40 lg:w-60 text-lg rounded-xl absolute top-3/4 left-1 lg:left-5' 
-    value={formItem}></input><RedHeartsAndDiamonds text={name} />
-    <button type="submit"><FontAwesomeIcon className='absolute left-3/4 top-3/4 text-white h-8' icon={faCheck}  /> </button>
-    </form>
+  return (
+    <div>
+      <form onSubmit={(e) => handleClickSubmit(e, field, formItem)}>
+        <input
+          autoFocus
+          name="imageItem"
+          onChange={(e) => handleEditChange(e)}
+          onClick={(e) => handleClickForm(e)}
+          className="card-suit text-black w-40 lg:w-60 text-lg rounded-xl absolute top-3/4 left-1 lg:left-5"
+          value={formItem}
+        ></input>
+        <RedHeartsAndDiamonds text={name} />
+        <button type="submit">
+          <FontAwesomeIcon
+            className="absolute left-3/4 top-3/4 text-white h-8"
+            icon={faCheck}
+          />{" "}
+        </button>
+      </form>
     </div>
-)
-}
+  );
+};
 
-export default QuickEditForm
+export default QuickEditForm;

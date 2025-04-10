@@ -37,3 +37,7 @@ body {
 .active-view {
   border-bottom: 5px solid blue; /* Replace 'blue' with your desired border color */
 }
+
+.card-suit {
+  font-family: "Arial", "Times New Roman", serif;
+}

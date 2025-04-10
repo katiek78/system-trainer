@@ -518,15 +518,15 @@ const TrainingCenter = ({ user, imageSet }) => {
 
               {isStarted && cardsAvailable && (
                 <div className="flex flex-col justify-center items-center">
-                  <div class="group [perspective:1000px]">
-                    <div class="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl ">
+                  <div classHame="group [perspective:1000px]">
+                    <div className="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl ">
                       <div
                         id="card-front"
                         onClick={(e) => toggleRotate(e, false)}
                         className="card-flip absolute inset-0 rounded-xl border-4 border-slate-700 bg-white [backface-visibility:hidden]"
                       >
-                        <div class="flex-col rounded-xl px-12 bg-white text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                          <h1 class="text-3xl font-bold">
+                        <div className="flex-col rounded-xl px-12 bg-white text-center text-black absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                          <h1 className="card-suit text-3xl font-bold">
                             <RedHeartsAndDiamonds text={randImage.name} />
                           </h1>
                         </div>
@@ -536,8 +536,8 @@ const TrainingCenter = ({ user, imageSet }) => {
                         onClick={(e) => toggleRotate(e, false)}
                         className="card-flip absolute inset-0 h-full w-full  rounded-xl [transform:rotateY(180deg)] [backface-visibility:hidden]"
                       >
-                        <div class="flex-col rounded-xl bg-black/40 text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                          <h1 class="lg:text-3xl text-2xl font-bold">
+                        <div className="flex-col rounded-xl bg-black/40 text-center text-slate-200 absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                          <h1 className="lg:text-3xl text-2xl font-bold">
                             {isEditable ? (
                               <QuickEditForm
                                 formId="quick-edit-form"
