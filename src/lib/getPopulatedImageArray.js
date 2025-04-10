@@ -67,7 +67,7 @@ export const getPopulatedImageArray = (setType) => {
         for (let j = 0; j < cardValues.length; j++) {
           for (let k = 0; k < cardValues.length; k++) {
             imageArray.push({
-              name: cardValues[i] + cardValues[j] + cardValues[k],
+              name: cardValues[i] + " " + cardValues[j] + " " + cardValues[k],
               imageItem: "",
             });
           }

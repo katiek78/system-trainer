@@ -11,12 +11,8 @@ export default async function handler(req, res) {
 
   switch (method) {
     case "PUT" /* Update only the images where we have an image with matching ID */:
-      //     try {
-      //THIS DOES NOT WORK PROPERLY - IT IS UPDATING EVEN ON NO OVERWRITE
-
       const sourceSetID = req.body.sourceSetID;
       const overwrite = req.body.overwrite;
-      console.log(overwrite);
       const sourceImageSet = await ImageSet.findOne({ _id: sourceSetID });
       const sourceImages = sourceImageSet.images;
 
@@ -47,13 +43,15 @@ export default async function handler(req, res) {
             },
           };
 
+          console.log(overwrite ? "overwrite is true" : "overwrite is false");
+
           const arrayFilters = overwrite
             ? [{ "elem.phonetics": sourcePhonetics }]
             : [
                 {
                   "elem.phonetics": sourcePhonetics,
-                  "elem.imageItem": "",
-                  "elem.URL": "",
+                  "elem.imageItem": { $in: [null, ""] },
+                  "elem.URL": { $in: [null, ""] },
                 },
               ];
 

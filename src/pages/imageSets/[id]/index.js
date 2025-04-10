@@ -570,7 +570,7 @@ const ImageSetPage = ({
       ...importImagesForm,
       [name]: name === "overwrite" ? target.checked : value,
     });
-    setIsShowingImportPhoneticsDiv;
+    setIsShowingPhoneticsDiv(false);
   };
 
   const handleShowPhoneticsDiv = () => {
