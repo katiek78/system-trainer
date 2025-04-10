@@ -18,7 +18,7 @@ import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { getPopulatedImageArray } from "@/lib/getPopulatedImageArray";
 import { getPopulatedPhoneticsArray } from "@/lib/getPopulatedPhoneticsArray";
-import { majorValues, benVowels } from "@/lib/phoneticsConstants";
+import { majorValues } from "@/lib/phoneticsConstants";
 import TrafficLights from "@/components/TrafficLights";
 import ConfidenceLevel from "@/components/ConfidenceLevel";
 import RedHeartsAndDiamonds from "@/components/RedHD";
@@ -38,6 +38,7 @@ const ImageSetPage = ({
   const [imageSet, setImageSet] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [phoneticsType, setPhoneticsType] = useState("");
+  const [existingPhoneticsType, setExistingPhoneticsType] = useState("");
   const [swapDigit1, setSwapDigit1] = useState("");
   const [swapDigit2, setSwapDigit2] = useState("");
 
@@ -59,6 +60,34 @@ const ImageSetPage = ({
   const [populateForm, setPopulateForm] = useState({
     setType: "other",
   });
+
+  const determinePhonetics = () => {
+    if (!allNames.images.some((image) => image.phonetics)) {
+      return "";
+    }
+
+    console.log("ther are some phonetics in set ");
+
+    if (allNames.images.some((image) => image.phonetics === "soos")) {
+      return "ben";
+    }
+
+    if (allNames.images.some((image) => image.phonetics === "s+s+s")) {
+      return "maj";
+    }
+
+    if (allNames.images.some((image) => image.phonetics === "stoos")) {
+      return "kben";
+    }
+
+    return "";
+  };
+
+  useEffect(() => {
+    console.log(allNames);
+    const phonetics = determinePhonetics();
+    setPhoneticsType(phonetics);
+  }, []);
 
   const isCardSet = () => {
     // return imageForm && imageForm.setType && imageForm.setType.includes("c");
@@ -541,6 +570,7 @@ const ImageSetPage = ({
       ...importImagesForm,
       [name]: name === "overwrite" ? target.checked : value,
     });
+    setIsShowingImportPhoneticsDiv;
   };
 
   const handleShowPhoneticsDiv = () => {
@@ -714,8 +744,12 @@ const ImageSetPage = ({
               )}
               {(imageForm.setType === "2c" ||
                 imageForm.setType === "2cv" ||
-                imageForm.setType === "4d") && (
+                imageForm.setType === "4d" ||
+                imageForm.setType === "3cv") && (
                 <option value="kben">Katie Ben System</option>
+              )}
+              {imageForm.setType === "3cv" && (
+                <option value="dben">D Ben System</option>
               )}
             </select>
             <br />
@@ -726,19 +760,17 @@ const ImageSetPage = ({
               onChange={handleSwap1Change}
               className="text-black mt-3 ml-3 mr-3 px-3 py-3 w-20 rounded text-lg"
             >
-              <options>
-                <option value="-">-</option>
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-              </options>
+              <option value="-">-</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
             </select>
             and
             <select
@@ -747,19 +779,17 @@ const ImageSetPage = ({
               onChange={handleSwap2Change}
               className="text-black mt-3 ml-3 mr-3 px-3 py-3 w-20 rounded text-lg"
             >
-              <options>
-                <option value="-">-</option>
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-              </options>
+              <option value="-">-</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
             </select>
             <br />
             <button

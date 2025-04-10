@@ -181,7 +181,7 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
                 form.setType === "3d" ||
                 form.setType === "3cv") && (
                 <>
-                  <option value="ben">Ben System</option>
+                  <option value="kben">Katie Ben System</option>
                   <option value="dben">D Ben System</option>
                 </>
               )}

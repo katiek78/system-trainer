@@ -2,10 +2,10 @@ import { cardValues, suitValues } from "./cardConstants";
 import {
   majorValues,
   benVowels,
+  dBenCardVowels,
   kBenCardValues,
   kBenCardValues2704,
   kBenSuitPairs,
-  dBenCardVowels,
   dMajorValues,
   dBenCardValues,
   HBHMSuitPairs,
@@ -425,6 +425,22 @@ export const getPopulatedPhoneticsArray = (
           }
         }
       }
+
+      if (setType === "3cv") {
+        //Katie's 3-card Ben System here
+
+        for (let i = 0; i < 13; i++) {
+          for (let j = 0; j < 13; j++) {
+            for (let k = 0; k < 13; k++) {
+              const threeCardPhonetics =
+                kBenCardValues[cardValues[i]] +
+                dBenCardVowels[cardValues[j]] +
+                kBenCardValues[cardValues[k]];
+              phoneticsArray.push(threeCardPhonetics);
+            }
+          }
+        }
+      }
       break;
     case "dben": {
       if (setType === "3d") {
@@ -437,36 +453,12 @@ export const getPopulatedPhoneticsArray = (
         }
       }
       if (setType === "3cv") {
-        const vowels = benVowels.concat([
-          dBenCardVowels["J"],
-          dBenCardVowels["Q"],
-          dBenCardVowels["K"],
-        ]);
-        console.log(vowels);
-        const cardValues = [
-          "A",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "J",
-          "Q",
-          "K",
-        ]; //TODO; move to constants
         for (let i = 0; i < 13; i++) {
           for (let j = 0; j < 13; j++) {
             for (let k = 0; k < 13; k++) {
-              // kBenCardValues[cardVal1] +
-              // kBenSuitPairs[suitPair] +
-              // kBenCardValues[cardVal2]
               const threeCardPhonetics =
                 dBenCardValues[cardValues[i]] +
-                vowels[j] +
+                dBenCardVowels[cardValues[j]] +
                 dBenCardValues[cardValues[k]];
               console.log(threeCardPhonetics);
               phoneticsArray.push(threeCardPhonetics);

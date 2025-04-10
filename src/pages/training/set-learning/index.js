@@ -169,6 +169,7 @@ const TrainingCenter = ({ user, imageSet }) => {
       setMessage(
         "There are no cards of this type! Change the options and try again."
       );
+      setShowOptions(true);
       // setCardsAvailable(false);
     }
     setNeedNewCard(false);
