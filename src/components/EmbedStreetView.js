@@ -16,28 +16,24 @@ const EmbedStreetView = ({
   const imageKey = `${key}-image`;
 
   //const cachedEmbedUrl = streetViewCache[embedKey];
-  const cachedImageUrl = streetViewCache[imageKey];
+  //const cachedImageUrl = streetViewCache[imageKey];
 
   // const [embedUrl, setEmbedUrl] = useState(cachedEmbedUrl || null);
-  const [staticImageUrl, setStaticImageUrl] = useState(cachedImageUrl || null);
+  const [staticImageUrl, setStaticImageUrl] = useState(null);
+
+  //const [staticImageUrl, setStaticImageUrl] = useState(cachedImageUrl || null);
   //const [iframeLoaded, setIframeLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchUrls = async () => {
-      try {
-        // if (!cachedEmbedUrl) {
-        //   const embed = await getStreetViewUrl(
-        //     location,
-        //     heading,
-        //     pitch,
-        //     fov,
-        //     "embed"
-        //   );
-        //   streetViewCache[embedKey] = embed;
-        //   setEmbedUrl(embed);
-        // }
+    let isMounted = true;
 
-        if (!cachedImageUrl) {
+    const fetchImage = async () => {
+      const cachedImageUrl = streetViewCache[imageKey];
+
+      if (cachedImageUrl) {
+        if (isMounted) setStaticImageUrl(cachedImageUrl);
+      } else {
+        try {
           const image = await getStreetViewUrl(
             location,
             heading,
@@ -46,15 +42,19 @@ const EmbedStreetView = ({
             "image"
           );
           streetViewCache[imageKey] = image;
-          setStaticImageUrl(image);
+          if (isMounted) setStaticImageUrl(image);
+        } catch (err) {
+          console.error("Failed to fetch Street View image", err);
         }
-      } catch (err) {
-        console.error("Failed to fetch Street View URLs", err);
       }
     };
 
-    if (location) fetchUrls();
-  }, [location, heading, pitch, fov]);
+    if (location) fetchImage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location, heading, pitch, fov, imageKey]);
 
   // const onIframeLoad = () => setIframeLoaded(true);
 

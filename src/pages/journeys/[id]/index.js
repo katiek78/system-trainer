@@ -387,13 +387,17 @@ const JourneyPage = ({
         </h2>
 
         <div className="journey-btn-container">
-          {journey.id && (
+          {journey.id && points && (
             <>
               {(!isPublicJourney || !isAdmin) && (
                 <>
                   <Link
-                    href="/journeys/[id]/new"
-                    as={`/journeys/${journey.id}/new`}
+                    href={`/journeys/[id]/new?insertAt=${
+                      (currentPage - 1) * PAGE_LIMIT + points?.length
+                    }`}
+                    as={`/journeys/${journey.id}/new?insertAt=${
+                      (currentPage - 1) * PAGE_LIMIT + points?.length
+                    }`}
                     legacyBehavior
                   >
                     <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -578,8 +582,12 @@ const JourneyPage = ({
                 {journey && journey.id && (!isPublicJourney || isAdmin) && (
                   <div className="plusIcon flex items-center justify-center mb-16">
                     <Link
-                      href="/journeys/[id]/new"
-                      as={`/journeys/${journey.id}/new`}
+                      href={`/journeys/[id]/new?insertAt=${
+                        (currentPage - 1) * PAGE_LIMIT + points?.length
+                      }`}
+                      as={`/journeys/${journey.id}/new?insertAt=${
+                        (currentPage - 1) * PAGE_LIMIT + points?.length
+                      }`}
                       legacyBehavior
                     >
                       <FontAwesomeIcon

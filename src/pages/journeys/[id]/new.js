@@ -15,7 +15,7 @@ const NewPoint = () => {
         <PointForm
           formId="add-point-form"
           pointForm={pointForm}
-          insertAt={insertAt}
+          pointIndex={insertAt}
         />
       </div>
     </>

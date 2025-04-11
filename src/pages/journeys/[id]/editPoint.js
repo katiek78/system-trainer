@@ -20,7 +20,8 @@ const EditPoint = () => {
   if (isLoading) return <p>Loading...</p>;
   if (!journey) return null;
   const thisJourney = Array.isArray(journey) ? journey[0] : journey;
-  const point = thisJourney.points.filter((point) => point._id === id)[0];
+  const pointIndex = thisJourney.points.findIndex((point) => point._id === id);
+  const point = thisJourney.points[pointIndex];
 
   const pointForm = {
     name: point.name,
@@ -31,8 +32,6 @@ const EditPoint = () => {
     memoItem: point.memoItem,
   };
 
-  console.log(pointForm);
-
   return (
     <>
       <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -42,6 +41,7 @@ const EditPoint = () => {
           pointForm={pointForm}
           forNewPoint={false}
           journeyId={thisJourney._id}
+          pointIndex={pointIndex}
         />
       </div>
     </>

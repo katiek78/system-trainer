@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { mutate } from "swr";
 import LocationExplanation from "@/components/LocationExplanation";
 import EmbedStreetView from "./EmbedStreetView";
+import { PAGE_LIMIT } from "@/lib/journeyConstants";
 
 const isLocationStreetView = (location) => {
   return /^[-\d]/.test(location);
@@ -13,7 +14,8 @@ const PointForm = ({
   pointForm,
   forNewPoint = true,
   journeyId,
-  insertAt,
+  pointIndex,
+  journeyLength,
 }) => {
   const router = useRouter();
   const contentType = "application/json";
@@ -51,7 +53,10 @@ const PointForm = ({
       const { data } = await res.json();
       console.log(data);
       // mutate(`/api/journeys/${id}`, data, false) // Update the local data without a revalidation
-      router.push(`/journeys/${journeyId}`);
+      const pageToGoTo = Math.floor(pointIndex / PAGE_LIMIT) + 1;
+
+      router.push(`/journeys/${journeyId}?page=${pageToGoTo}`);
+      //router.push(`/journeys/${journeyId}`);
     } catch (error) {
       setMessage("Failed to update location");
     }
@@ -61,10 +66,8 @@ const PointForm = ({
   const postData = async (form) => {
     const { id } = router.query;
 
-    console.log("Payload being sent:", {
-      ...form,
-      insertAt,
-    });
+    const insertAt = pointIndex;
+    console.log(insertAt); //undefined
 
     try {
       const res = await fetch(`/api/points/${id}`, {
@@ -85,7 +88,12 @@ const PointForm = ({
       }
 
       const { data } = await res.json();
-      router.push(`/journeys/${data._id}`);
+      const pageToGoTo = pointIndex
+        ? Math.floor(pointIndex / PAGE_LIMIT) + 1
+        : Math.floor((points.length - 1) / PAGE_LIMIT) + 1;
+
+      router.push(`/journeys/${data._id}?page=${pageToGoTo}`);
+      //router.push(`/journeys/${data._id}`);
     } catch (error) {
       setMessage("Failed to add point");
     }
@@ -155,7 +163,7 @@ const PointForm = ({
     e.preventDefault();
     const errs = formValidate();
     if (Object.keys(errs).length === 0) {
-      forNewPoint ? postData(form, insertAt) : putData(form);
+      forNewPoint ? postData(form, pointIndex) : putData(form);
     } else {
       setErrors({ errs });
     }
@@ -176,24 +184,6 @@ const PointForm = ({
       });
     }
   };
-  //   /* Makes sure system info is filled */
-  //   const formValidate = () => {
-  //     let err = {}
-  //     if (!form.name) err.name = 'Name is required'
-
-  //     return err
-  //   }
-
-  //   const handleSubmit = (e) => {
-  //     e.preventDefault()
-
-  //     const errs = formValidate()
-  //     if (Object.keys(errs).length === 0) {
-  //       forNewSystem ? postData(form) : putData(form)
-  //     } else {
-  //       setErrors({ errs })
-  //     }
-  //   }
 
   return (
     <>
