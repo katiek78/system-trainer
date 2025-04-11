@@ -1,5 +1,5 @@
-import dbConnect from "../../../lib/dbConnect";
-import Journey from "@/models/Journey";
+import dbConnect from "../../../../lib/dbConnect";
+import JourneyFolder from "@/models/JourneyFolder";
 
 export default async function handler(req, res) {
   const {
