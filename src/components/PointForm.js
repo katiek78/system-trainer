@@ -15,7 +15,6 @@ const PointForm = ({
   forNewPoint = true,
   journeyId,
   pointIndex,
-  journeyLength,
 }) => {
   const router = useRouter();
   const contentType = "application/json";

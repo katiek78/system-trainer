@@ -2,16 +2,32 @@ import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import dbConnect from "@/lib/dbConnect";
 import { useSearchParams } from "next/navigation";
 import Journey from "@/models/Journey";
+import JourneyFolder from "@/models/JourneyFolder";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faCopy, faEdit } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faCopy,
+  faEdit,
+  faFolder,
+  faFolderOpen,
+  faFolderPlus,
+  faArrowAltCircleRight,
+} from "@fortawesome/free-solid-svg-icons";
 import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { TRADITIONAL_DISCIPLINES, ML_DISCIPLINES } from "@/lib/disciplines";
 import JourneyAssignment from "@/models/JourneyAssignment";
 
-const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
+const JourneysPage = ({
+  user,
+  journeys,
+  publicJourneys,
+  assignments,
+  folders,
+}) => {
+  console.log(journeys);
   //let user = useUser(); //should we be using this instead?
   const searchParams = useSearchParams();
   const startWithJourneyView =
@@ -19,10 +35,23 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
     searchParams.get("startWithJourneyView") === "";
   const [message, setMessage] = useState("");
   const [isJourneyView, setIsJourneyView] = useState(startWithJourneyView);
+  const [openFolders, setOpenFolders] = useState({});
+  const [selectedJourneyId, setSelectedJourneyId] = useState(null);
+  const [showFolderModal, setShowFolderModal] = useState(false);
+
   const contentType = "application/json";
   const router = useRouter();
 
-  console.log(assignments);
+  const toggleFolder = (folderId) => {
+    setOpenFolders((prev) => ({
+      ...prev,
+      [folderId]: !prev[folderId],
+    }));
+  };
+
+  const handleCreateNewFolder = () => {
+    //TODO
+  };
 
   const handleClickJourney = (journeyId) => {
     router.push(`/journeys/${journeyId}`);
@@ -97,6 +126,27 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
       setMessage("Failed to copy journey. " + error);
     }
   };
+
+  const handleMoveToFolder = async (journeyId, folderId) => {
+    try {
+      await fetch(`/api/journeys/${journeyId}/editFolder`, {
+        method: "PUT",
+        headers: {
+          Accept: contentType,
+          "Content-Type": contentType,
+        },
+        body: JSON.stringify({
+          folderId,
+        }),
+      });
+      refreshData(router);
+    } catch (error) {
+      setMessage("Failed to move the journey to the folder.");
+    }
+    setShowFolderModal(false);
+  };
+
+  const sortedFolders = folders.sort((a, b) => a.name.localeCompare(b.name));
 
   const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
   const sortedPublicJourneys = publicJourneys.sort((a, b) =>
@@ -200,35 +250,115 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
                 {journeys.length === 0 ? "no " : journeys.length + " "}{" "}
                 {journeys.length === 1 ? "journey" : "journeys"}.
               </p>
-              <br />
-              {journeys.length > 0 &&
-                sortedJourneys.map((journey) => (
-                  <p className="font-semibold text-xl">
-                    {" "}
-                    <Link
-                      href="/journeys/[id]/"
-                      as={`/journeys/${journey._id}/`}
-                      legacyBehavior
-                    >
-                      {journey.name}
-                    </Link>
-                    <span className="font-light">
-                      {" "}
-                      ({journey.pointsCount} points)
-                    </span>
-                    <FontAwesomeIcon
-                      className="ml-5 cursor-pointer"
-                      onClick={() => handleDelete(journey._id)}
-                      icon={faTrash}
-                      size="1x"
-                    />
-                  </p>
-                ))}
+
               <Link href="/newJourney">
                 <button className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
                   Add new journey
                 </button>
               </Link>
+              <Link href="/newFolder">
+                <button className="btn bg-black hover:bg-gray-700 ml-3 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+                  Add new folder
+                </button>
+              </Link>
+              <br />
+              <br />
+              {folders.length > 0 &&
+                sortedFolders.map((folder) => {
+                  const journeysInFolder = journeys.filter(
+                    (j) => j.folderId === folder._id
+                  );
+                  return (
+                    <div
+                      key={folder._id}
+                      onClick={() => toggleFolder(folder._id)}
+                      className="font-semibold text-xl mb-2"
+                    >
+                      <FontAwesomeIcon
+                        icon={openFolders[folder._id] ? faFolderOpen : faFolder}
+                        className="text-yellow-500 w-5 h-5 mr-2"
+                      />{" "}
+                      {folder.name}
+                      {openFolders[folder._id] && (
+                        <ul className="ml-6 mt-2 space-y-1">
+                          {journeysInFolder.length === 0 && (
+                            <li className="text-sm flex items-center">
+                              No journeys in this folder
+                            </li>
+                          )}
+                          {journeysInFolder.length > 0 &&
+                            journeysInFolder.map((journey) => (
+                              <li
+                                key={journey._id}
+                                className="flex items-center"
+                              >
+                                <Link
+                                  href="/journeys/[id]/"
+                                  as={`/journeys/${journey._id}/`}
+                                  legacyBehavior
+                                >
+                                  {journey.name}
+                                </Link>
+                                <span className="font-light">
+                                  {" "}
+                                  ({journey.pointsCount} points)
+                                </span>
+                                <FontAwesomeIcon
+                                  className="ml-5 mr-5 cursor-pointer"
+                                  onClick={() => handleDelete(journey._id)}
+                                  icon={faTrash}
+                                  size="1x"
+                                />
+                                <FontAwesomeIcon
+                                  icon={faArrowAltCircleRight}
+                                  className="cursor-pointer text-gray-600 hover:text-blue-500"
+                                  onClick={() => {
+                                    setSelectedJourneyId(journey._id);
+                                    setShowFolderModal(true);
+                                  }}
+                                />
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+
+              {/* Journeys with no folder */}
+              {journeys.length > 0 &&
+                sortedJourneys
+                  .filter((j) => !j.folderId)
+                  .map((journey) => (
+                    <p className="font-semibold text-xl">
+                      {" "}
+                      <Link
+                        href="/journeys/[id]/"
+                        as={`/journeys/${journey._id}/`}
+                        legacyBehavior
+                      >
+                        {journey.name}
+                      </Link>
+                      <span className="font-light">
+                        {" "}
+                        ({journey.pointsCount} points)
+                      </span>
+                      <FontAwesomeIcon
+                        className="ml-5 mr-5 cursor-pointer"
+                        onClick={() => handleDelete(journey._id)}
+                        icon={faTrash}
+                        size="1x"
+                      />
+                      <FontAwesomeIcon
+                        icon={faArrowAltCircleRight}
+                        className="cursor-pointer text-gray-600 hover:text-blue-500"
+                        onClick={() => {
+                          setSelectedJourneyId(journey._id);
+                          setShowFolderModal(true);
+                        }}
+                      />
+                    </p>
+                  ))}
             </div>
 
             <br />
@@ -355,6 +485,48 @@ const JourneysPage = ({ user, journeys, publicJourneys, assignments }) => {
         )}
       </div>
       <div>{message}</div>
+      {showFolderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-96 p-4">
+            <h2 className="text-lg font-semibold mb-4">Move to Folder</h2>
+
+            <ul className="space-y-2 max-h-60 overflow-y-auto">
+              {sortedFolders.map((folder) => (
+                <li
+                  key={folder._id}
+                  className="cursor-pointer hover:bg-gray-100 px-3 py-2 rounded"
+                  onClick={() =>
+                    handleMoveToFolder(selectedJourneyId, folder._id)
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={faFolder}
+                    className="mr-2 text-yellow-500"
+                  />
+                  {folder.name}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex justify-end mt-4">
+              <button
+                className="text-sm text-gray-500 hover:text-gray-700 mr-2"
+                onClick={() => setShowFolderModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="text-sm text-blue-500 hover:text-blue-700"
+                onClick={() => handleCreateNewFolder()}
+              >
+                <FontAwesomeIcon icon={faFolderPlus} className="mr-2" />
+                Create New Folder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -367,28 +539,28 @@ export const getServerSideProps = withPageAuthRequired({
     const db = await dbConnect();
     const user = auth0User.user;
 
-    //only want to send the name and ID of private journeys
-    {
-      /* const result2 = await Journey.find({ userId: user.sub }, { name: 1 });
-    const journeys = result2.map((doc) => {
-      const journey = JSON.parse(JSON.stringify(doc));
-      journey._id = journey._id.toString();
-      return journey;
-    }); */
-    }
-
+    //get name, length, folderID and ID of private journeys
     const journeys = await Journey.aggregate([
       { $match: { userId: user.sub } },
       {
         $project: {
           name: 1,
+          folderId: 1,
           pointsCount: { $size: { $ifNull: ["$points", []] } },
         },
       },
     ]);
     journeys.forEach((j) => (j._id = j._id.toString()));
 
-    //only want to send the name and ID of public images sets
+    //get journey folders for this user
+    const foldersResult = await JourneyFolder.find({ userId: user.sub });
+    const folders = foldersResult.map((doc) => {
+      const folder = JSON.parse(JSON.stringify(doc));
+      folder._id = folder._id.toString();
+      return folder;
+    });
+
+    //get name and ID of public images sets
     const publicJourneyResult = await Journey.find(
       { $or: [{ userId: null }, { userId: { $exists: false } }] },
       { name: 1 }
@@ -399,6 +571,7 @@ export const getServerSideProps = withPageAuthRequired({
       return journey;
     });
 
+    //get assignments
     const assignmentsResult = await JourneyAssignment.find({
       userId: user.sub,
     });
@@ -420,6 +593,7 @@ export const getServerSideProps = withPageAuthRequired({
         journeys: journeys,
         publicJourneys: publicJourneys,
         assignments,
+        folders,
       },
     };
   },

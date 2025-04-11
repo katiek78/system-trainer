@@ -28,6 +28,9 @@ const JourneySchema = new mongoose.Schema({
   userId: {
     type: String,
   },
+  folderId: {
+    type: String,
+  },
 });
 
 // const PointSchema = new mongoose.Schema({
