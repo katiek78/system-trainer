@@ -34,7 +34,9 @@ const JourneysPage = ({
     searchParams.get("startWithJourneyView") === "true" ||
     searchParams.get("startWithJourneyView") === "";
   const [message, setMessage] = useState("");
-  const [isJourneyView, setIsJourneyView] = useState(startWithJourneyView);
+  const [isJourneyView, setIsJourneyView] = useState(
+    startWithJourneyView || true
+  );
   const [openFolders, setOpenFolders] = useState({});
   const [selectedJourneyId, setSelectedJourneyId] = useState(null);
   const [showFolderModal, setShowFolderModal] = useState(false);

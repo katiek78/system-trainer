@@ -450,130 +450,120 @@ const JourneyPage = ({
                 Locations:
               </h2>
               <div>{renderPageNumbers()}</div>
-              <div className="p-2 lg:p-5 flex flex-wrap justify-center">
+              <div className="cards-container p-2 lg:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {points?.map((point, i) => (
                   <div
-                    className="point-card-container flex justify-center"
+                    className="point-card flex flex-col justify-between items-center relative mb-4 p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-xl transition duration-300"
                     key={i}
                   >
-                    <div
-                      className={`point-card flex justify-center relative mb-4 p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-xl transition duration-300`}
-                      key={i}
-                    >
-                      <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full">
-                        <p
-                          className={`text-2xl point-name max-w-xs text-center h-12 whitespace-normal`}
-                        >
-                          {point.name}
+                    <div className="card-content w-full px-0 md:px-1 lg:px-2 flex flex-col justify-center items-center h-full overflow-hidden">
+                      <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                        {point.name}
+                      </p>
+
+                      <div className="street-view-container relative">
+                        {point.location &&
+                          isLocationStreetView(point.location) && (
+                            <EmbedStreetView
+                              width={300}
+                              height={150}
+                              location={point.location}
+                              heading={point.heading || 90}
+                              pitch={point.pitch || 0}
+                              fov={point.fov || 100}
+                            />
+                          )}
+
+                        {point.location &&
+                          !isLocationStreetView(point.location) && (
+                            <EmbedImage
+                              width={300}
+                              height={200}
+                              location={point.location}
+                            />
+                          )}
+
+                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                          {point.memoItem}
                         </p>
 
-                        <div className="street-view-container relative">
-                          {point.location &&
-                            isLocationStreetView(point.location) && (
-                              <EmbedStreetView
-                                width={300}
-                                height={200}
-                                location={point.location}
-                                heading={point.heading || 90}
-                                pitch={point.pitch || 0}
-                                fov={point.fov || 100}
+                        {(!isPublicJourney || isAdmin) && (
+                          <>
+                            <div className="icon-container flex flex-row space-x-3 mt-2 px-3 pb-5 justify-evenly">
+                              <FontAwesomeIcon
+                                onClick={() => {
+                                  handleInsertPointAt(
+                                    (currentPage - 1) * PAGE_LIMIT + i
+                                  );
+                                }}
+                                icon={faPlusCircle}
+                                size="2x"
+                                title="Insert point before"
                               />
-                            )}
 
-                          {point.location &&
-                            !isLocationStreetView(point.location) && (
-                              <EmbedImage
-                                width={300}
-                                height={200}
-                                location={point.location}
-                              />
-                            )}
-
-                          <p
-                            className={`point-memoItem text-xl mt-5 max-w-xs text-center h-12 whitespace-normal`}
-                            style={{ maxWidth: 300 }}
-                          >
-                            {point.memoItem}
-                          </p>
-
-                          {(!isPublicJourney || isAdmin) && (
-                            <>
-                              <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-center items-center">
+                              {!(i === 0 && currentPage === 1) && (
                                 <FontAwesomeIcon
-                                  onClick={() => {
-                                    handleInsertPointAt(
+                                  onClick={() =>
+                                    movePointBackwards(
                                       (currentPage - 1) * PAGE_LIMIT + i
-                                    );
-                                  }}
-                                  icon={faPlusCircle}
+                                    )
+                                  }
+                                  icon={faArrowLeftLong}
                                   size="2x"
-                                  title="Insert point before"
+                                  title="Move point backwards"
                                 />
+                              )}
 
-                                {!(i === 0 && currentPage === 1) && (
-                                  <FontAwesomeIcon
-                                    onClick={() =>
-                                      movePointBackwards(
-                                        (currentPage - 1) * PAGE_LIMIT + i
-                                      )
-                                    }
-                                    icon={faArrowLeftLong}
-                                    size="2x"
-                                    title="Move point backwards"
-                                  />
-                                )}
-
-                                {!(
-                                  i === points.length - 1 &&
-                                  currentPage === totalPages
-                                ) && (
-                                  <FontAwesomeIcon
-                                    onClick={() =>
-                                      movePointForwards(
-                                        (currentPage - 1) * PAGE_LIMIT + i
-                                      )
-                                    }
-                                    className="ml-5"
-                                    icon={faArrowRightLong}
-                                    size="2x"
-                                    title="Move point forwards"
-                                  />
-                                )}
-
+                              {!(
+                                i === points.length - 1 &&
+                                currentPage === totalPages
+                              ) && (
                                 <FontAwesomeIcon
-                                  onClick={() => {
-                                    handleInsertPointAt(
-                                      (currentPage - 1) * PAGE_LIMIT + i + 1
-                                    );
-                                  }}
-                                  icon={faPlusCircle}
-                                  size="2x"
-                                  title="Insert point after"
-                                />
-                              </div>
-                              <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                                <Link
-                                  href="/journeys/[id]/editPoint"
-                                  as={`/journeys/${point._id}/editPoint`}
-                                  legacyBehavior
-                                >
-                                  <FontAwesomeIcon
-                                    title="Edit this point"
-                                    icon={faEdit}
-                                    size="2x"
-                                  />
-                                </Link>
-                                <FontAwesomeIcon
-                                  title="Delete this point"
+                                  onClick={() =>
+                                    movePointForwards(
+                                      (currentPage - 1) * PAGE_LIMIT + i
+                                    )
+                                  }
                                   className="ml-5"
-                                  icon={faTrash}
+                                  icon={faArrowRightLong}
                                   size="2x"
-                                  onClick={() => handleDeletePoint(point._id)}
+                                  title="Move point forwards"
                                 />
-                              </div>
-                            </>
-                          )}
-                        </div>
+                              )}
+
+                              <FontAwesomeIcon
+                                onClick={() => {
+                                  handleInsertPointAt(
+                                    (currentPage - 1) * PAGE_LIMIT + i + 1
+                                  );
+                                }}
+                                icon={faPlusCircle}
+                                size="2x"
+                                title="Insert point after"
+                              />
+                            </div>
+                            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                              <Link
+                                href="/journeys/[id]/editPoint"
+                                as={`/journeys/${point._id}/editPoint`}
+                                legacyBehavior
+                              >
+                                <FontAwesomeIcon
+                                  title="Edit this point"
+                                  icon={faEdit}
+                                  size="2x"
+                                />
+                              </Link>
+                              <FontAwesomeIcon
+                                title="Delete this point"
+                                className="ml-5"
+                                icon={faTrash}
+                                size="2x"
+                                onClick={() => handleDeletePoint(point._id)}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -610,7 +600,7 @@ const JourneyPage = ({
                     key={allPoints[currentSlideshowPoint]._id}
                   >
                     <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
-                      <p className="point-name text-center h-12 whitespace-normal">
+                      <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
                         {allPoints[currentSlideshowPoint].name}
                       </p>
                       <div className="street-view-container relative">
@@ -645,7 +635,7 @@ const JourneyPage = ({
                               }
                             />
                           )}
-                        <p className="point-memoItem text-center h-12 whitespace-normal">
+                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
                           {allPoints[currentSlideshowPoint].memoItem}
                         </p>
                         <div className="icon-container flex flex-row justify-center items-center">
