@@ -2,6 +2,7 @@ import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import dbConnect from "@/lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -25,6 +26,7 @@ import RedHeartsAndDiamonds from "@/components/RedHD";
 import { determineSetType } from "@/utilities/setType";
 import ImageSearch from "@/components/ImageSearch";
 import { isAdmin } from "@/lib/adminCheck";
+import PasteImagesForm from "@/components/PasteImagesForm";
 
 const ImageSetPage = ({
   user,
@@ -34,6 +36,7 @@ const ImageSetPage = ({
   isAdmin,
 }) => {
   const router = useRouter();
+  const imageSetID = router.query.id;
   const contentType = "application/json";
   const [imageSet, setImageSet] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +53,7 @@ const ImageSetPage = ({
   const [isShowingPhoneticsDiv, setIsShowingPhoneticsDiv] = useState(false);
   const [isShowingImportPhoneticsDiv, setIsShowingImportPhoneticsDiv] =
     useState(false);
+  const [isShowingPasteImagesDiv, setIsShowingPasteImagesDiv] = useState(false);
   const [isJustImported, setIsJustImported] = useState(false);
 
   const [imageForm, setImageForm] = useState({});
@@ -573,6 +577,10 @@ const ImageSetPage = ({
     setIsShowingPhoneticsDiv(false);
   };
 
+  const handleShowPasteImagesDiv = () => {
+    setIsShowingPasteImagesDiv(true);
+  };
+
   const handleShowPhoneticsDiv = () => {
     setIsShowingPhoneticsDiv(true);
   };
@@ -716,8 +724,25 @@ const ImageSetPage = ({
             onClick={handleShowImportPhoneticsDiv}
             className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
           >
-            Import images
+            Import images from set
           </button>
+        )}
+        {!isShowingPasteImagesDiv && (!isPublicImageSet || isAdmin) && (
+          <Link
+            href="/imageSets/[id]/pasteImages"
+            as={`/imageSets/${imageSetID}/pasteImages`}
+            legacyBehavior
+          >
+            <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+              Import images via copy/paste
+            </button>
+            {/* <button
+            onClick={handleShowPasteImagesDiv}
+            className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+          >
+            Paste images for import
+          </button> */}
+          </Link>
         )}
 
         {isShowingPhoneticsDiv && (
@@ -854,6 +879,13 @@ const ImageSetPage = ({
           </div>
         )}
 
+        {isShowingPasteImagesDiv && (
+          <PasteImagesForm
+            formId="paste-images-form"
+            pasteImagesForm={pasteImagesForm}
+          />
+        )}
+
         <div className="flex flex-row">
           <div
             className={
@@ -977,7 +1009,7 @@ const ImageSetPage = ({
                           {!img.URL && (
                             <>
                               <ImageSearch
-                                img={img}
+                                description={imageForm.images[i].imageItem}
                                 index={i}
                                 onImageSelect={handleImageSelect}
                               />

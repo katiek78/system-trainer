@@ -395,6 +395,10 @@ const TrainingCenter = ({ user, imageSet }) => {
     setNeedNewCard(true);
   };
 
+  const handleCloseImageSearch = () => {
+    setShowImageSearch(false);
+  };
+
   return (
     <>
       <div className="z-10 justify-between font-mono text-lg max-w-5xl w-full ">
@@ -644,9 +648,10 @@ const TrainingCenter = ({ user, imageSet }) => {
         )}
         {showImageSearch && (
           <ImageSearch
-            img={randImage}
+            description={randImage.imageItem}
             index={null}
             onImageSelect={handleImageSelect}
+            onClose={handleCloseImageSearch}
           />
         )}
         <div>{message}</div>

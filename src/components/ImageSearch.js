@@ -2,8 +2,13 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
 
-const ImageSearch = ({ img, index, onImageSelect }) => {
-  const [query, setQuery] = useState(img.imageItem); // Local state for the search query for this item
+const ImageSearch = ({
+  description,
+  index,
+  onImageSelect,
+  onClose = () => {},
+}) => {
+  const [query, setQuery] = useState(description); // Local state for the search query for this item
   const [searchResults, setSearchResults] = useState([]); // Local state for search results of this item
   const [isSearchVisible, setSearchVisible] = useState(false); // State to toggle visibility
   const [error, setError] = useState(null);
@@ -34,6 +39,7 @@ const ImageSearch = ({ img, index, onImageSelect }) => {
 
   const handleCloseSearch = () => {
     setSearchVisible(false); // Hide the search when clicking "Close"
+    onClose();
   };
 
   const handleToggleSearch = () => {
