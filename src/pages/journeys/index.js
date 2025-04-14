@@ -170,13 +170,13 @@ const JourneysPage = ({
     return (
       <div>
         {matchingAssignments.map((assignment) => (
-          <div key={assignment._id} className="mb-4 p-2">
+          <div key={assignment._id} className="mb-4 sm:p-2">
             {assignment.journeySets.map((set, i) => (
               <div key={i} className="mb-1">
                 <strong>Option {i + 1}:</strong>{" "}
                 <span className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl text-white font-medium text-lg shadow-sm border border-blue-900 mr-2">
                   {set.journeyIDs.map((id, j) => {
-                    const journeyName = getNameFromJourneyID(id);
+                    //const journeyName = getNameFromJourneyID(id);
                     return (
                       <>
                         <span key={id} onClick={() => handleClickJourney(id)}>
@@ -189,8 +189,8 @@ const JourneysPage = ({
                     );
                   })}
                 </span>
-                <span className="ml-5">
-                  (total points:{" "}
+                <span className="ml-5 text-xs">
+                  (points:{" "}
                   {set.journeyIDs.reduce((acc, id) => {
                     const journey = journeys.find(
                       (journey) => journey._id === id
@@ -213,7 +213,7 @@ const JourneysPage = ({
         <h1 className="py-2 font-mono text-4xl">Journeys</h1>
 
         <br />
-        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
+        <div className="bg-white dark:bg-slate-800 text-sm sm:text-lg py-5 px-5 rounded">
           <h3 className="font-semibold">What is a journey?</h3>
           <p className="font-mono">
             A journey (or memory palace) is a series of locations (or loci) that
@@ -226,16 +226,16 @@ const JourneysPage = ({
         <div className="flex justify-center">
           <p
             onClick={handleJourneyView}
-            className={`cursor-pointer mr-3 mb-3 lg:text-3xl sm:text-2xl ${
+            className={`cursor-pointer mr-3 mb-3 text-sm sm:text-lg md:text-3xl ${
               isJourneyView ? "active-view" : ""
             }`}
           >
             Journeys
           </p>
-          <p className="lg:text-3xl sm:text-2xl mr-3">|</p>
+          <p className="text-sm sm:text-lg md:text-3xl mr-3">|</p>
           <p
             onClick={handleAssignmentView}
-            className={`cursor-pointer mr-3 mb-3 lg:text-3xl sm:text-2xl ${
+            className={`cursor-pointer mr-3 mb-3 text-sm sm:text-lg md:text-3xl ${
               !isJourneyView ? "active-view" : ""
             }`}
           >
@@ -398,90 +398,79 @@ const JourneysPage = ({
           </>
         ) : (
           <>
-            <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
-              <h2 className="text-2xl font-semibold">
-                Competition assignments
-              </h2>
-              <h3 className="font-semibold">
-                Assigning journeys to competition disciplines
-              </h3>
-              <p className="font-mono">
-                Here you can assign your journeys to different competition
-                disciplines, such as 5-minute Numbers or Speed Cards. You can
-                assign as many journeys as you like to each discipline, either
-                to be used consecutively (for long disciplines where one journey
-                may not be long enough) or as a rotation (for shorter
-                disciplines such as Memory League where you wish to have
-                multiple options).
-              </p>
+            <div className="bg-white dark:bg-slate-800 py-5 px-2 sm:px-5 rounded">
+              <details>
+                <summary>
+                  <span className="text-sm sm:text-lg md:text-2xl font-semibold">
+                    Competition assignments
+                  </span>
+                </summary>
+                <h3 className="font-semibold text-sm sm:text-lg">
+                  Assigning journeys to competition disciplines
+                </h3>
+                <p className="font-mono text-sm sm:text-lg">
+                  Here you can assign your journeys to different competition
+                  disciplines, such as 5-minute Numbers or Speed Cards. You can
+                  assign as many journeys as you like to each discipline, either
+                  to be used consecutively (for long disciplines where one
+                  journey may not be long enough) or as a rotation (for shorter
+                  disciplines such as Memory League where you wish to have
+                  multiple options).
+                </p>
+              </details>
               <br />
 
               <h3 className="font-semibold">Disciplines</h3>
-              <table className="border-collapse border w-full responsive-table-plan">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="border border-gray-400 px-4 py-2">
-                      Discipline
-                    </th>
-                    <th className="border border-gray-400 px-4 py-2">
-                      Journeys (or journey groups)
-                    </th>
-                    <th className="border lg:border-gray-400 px-4 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ML_DISCIPLINES.map((discipline) => (
-                    <tr key={discipline}>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {discipline}
-                      </td>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {getAssignmentsForDiscipline(discipline)}
-                      </td>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {" "}
-                        <Link
-                          href="/disciplines/[id]/editAssignment"
-                          as={`/disciplines/${discipline}/editAssignment`}
-                          legacyBehavior
-                        >
-                          <FontAwesomeIcon
-                            className="cursor-pointer"
-                            icon={faEdit}
-                            size="1x"
-                          />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                  {TRADITIONAL_DISCIPLINES.map((discipline) => (
-                    <tr key={discipline}>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {discipline}
-                      </td>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {" "}
-                        {getAssignmentsForDiscipline(discipline)}
-                      </td>
-                      <td className="lg:border border-gray-400 px-4 py-2">
-                        {" "}
-                        <Link
-                          href="/disciplines/[id]/editAssignment"
-                          as={`/disciplines/${discipline}/editAssignment`}
-                          legacyBehavior
-                        >
-                          <FontAwesomeIcon
-                            className="cursor-pointer"
-                            icon={faEdit}
-                            size="1x"
-                          />
-                        </Link>
-                        {/* </Link> */}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto max-w-full">
+                <div className="grid gap-4 sm:table overflow-x-hidden max-w-full">
+                  <div className="hidden sm:table-header-group">
+                    <div className="table-row bg-gray-200 max-w-full">
+                      <div className="table-cell border border-gray-400 px-0 sm:px-4 py-2 font-semibold">
+                        Discipline
+                      </div>
+                      <div className="table-cell border border-gray-400 px-0 sm:px-4 py-2 font-semibold">
+                        Journeys (or journey groups)
+                      </div>
+                      <div className="table-cell border border-gray-400 px-0 sm:px-4 py-2"></div>
+                    </div>
+                  </div>
+
+                  {[...ML_DISCIPLINES, ...TRADITIONAL_DISCIPLINES].map(
+                    (discipline) => (
+                      <div
+                        key={discipline}
+                        className="max-w-full sm:table-row border sm:border-none rounded sm:rounded-none shadow sm:shadow-none p-1 sm:p-4 bg-white"
+                      >
+                        <div className="sm:table-cell border sm:border border-gray-400 px-1 sm:px-4 py-2">
+                          <div className="sm:hidden text-xs font-semibold text-gray-500 mb-1">
+                            Discipline
+                          </div>
+                          {discipline}
+                        </div>
+                        <div className="sm:table-cell border sm:border border-gray-400 px-1 sm:px-4 py-2">
+                          <div className="sm:hidden text-xs font-semibold text-gray-500 mb-1">
+                            Journeys
+                          </div>
+                          {getAssignmentsForDiscipline(discipline)}
+                        </div>
+                        <div className="sm:table-cell border sm:border border-gray-400 px-1 sm:px-4 py-2">
+                          <Link
+                            href="/disciplines/[id]/editAssignment"
+                            as={`/disciplines/${discipline}/editAssignment`}
+                            legacyBehavior
+                          >
+                            <FontAwesomeIcon
+                              className="cursor-pointer"
+                              icon={faEdit}
+                              size="1x"
+                            />
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
             </div>
           </>
         )}
