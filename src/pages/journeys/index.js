@@ -489,14 +489,16 @@ const JourneysPage = ({
       <div>{message}</div>
       {showFolderModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-96 p-4">
-            <h2 className="text-lg font-semibold mb-4">Move to Folder</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-96 p-4">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+              Move to Folder
+            </h2>
 
             <ul className="space-y-2 max-h-60 overflow-y-auto">
               {sortedFolders.map((folder) => (
                 <li
                   key={folder._id}
-                  className="cursor-pointer hover:bg-gray-100 px-3 py-2 rounded"
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded text-gray-800 dark:text-gray-100"
                   onClick={() =>
                     handleMoveToFolder(selectedJourneyId, folder._id)
                   }
@@ -512,14 +514,14 @@ const JourneysPage = ({
 
             <div className="flex justify-end mt-4">
               <button
-                className="text-sm text-gray-500 hover:text-gray-700 mr-2"
+                className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white mr-2"
                 onClick={() => setShowFolderModal(false)}
               >
                 Cancel
               </button>
 
               <button
-                className="text-sm text-blue-500 hover:text-blue-700"
+                className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                 onClick={() => handleCreateNewFolder()}
               >
                 <FontAwesomeIcon icon={faFolderPlus} className="mr-2" />
