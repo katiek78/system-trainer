@@ -57,7 +57,7 @@ const EmbedStreetViewDynamic = ({
           className="mx-auto"
           width={width}
           height={height}
-          style={{ border: 0, padding: "10px" }}
+          style={{ border: 0, padding: "5px" }}
           loading="lazy"
           allowFullScreen
           referrerPolicy="no-referrer-when-downgrade"

@@ -23,6 +23,7 @@ import {
   faBackward,
   faForward,
   faPlusCircle,
+  faRocket,
   faLink,
   faUnlink,
 } from "@fortawesome/free-solid-svg-icons";
@@ -63,6 +64,7 @@ const JourneyPage = ({
   const [showJourneyModal, setShowJourneyModal] = useState(false);
   const [selectedPointIndexForLinking, setSelectedPointIndexForLinking] =
     useState(null);
+  const [newJourneyName, setNewJourneyName] = useState("");
 
   // const fetchJourneys = async () => {
   //   const res = await fetch("/api/journeys/names");
@@ -70,6 +72,7 @@ const JourneyPage = ({
   //   const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
   //   setJourneys(sortedData);
   // };
+  console.log(journey.name);
 
   useEffect(() => {
     const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
@@ -83,7 +86,7 @@ const JourneyPage = ({
       fetchAllPoints();
     }
     setIsLoading(false);
-  }, [router.query.page, isListView]);
+  }, [router.query.page, journey, isListView]);
 
   const preloadStreetViewImages = async () => {
     const preloadPromises = points.map(async (point) => {
@@ -318,8 +321,41 @@ const JourneyPage = ({
     router.push(`/journeys/${router.query.id}`);
   };
 
-  const handleCreateNewJourney = () => {
-    //router.push(`/journeys/new`);
+  const handleCreateNewJourney = async () => {
+    try {
+      const res = await fetch("/api/journeys", {
+        method: "POST",
+        headers: {
+          Accept: contentType,
+          "Content-Type": contentType,
+        },
+        body: JSON.stringify({ name: newJourneyName, userId: user.sub }),
+      });
+
+      // Throw error with status code in case Fetch API req failed
+      if (!res.ok) {
+        throw new Error(res.status);
+      }
+
+      const { data } = await res.json(); // <- this gives you the created journey
+      const newlyCreatedJourneyID = data._id;
+      await linkJourney(selectedPointIndexForLinking, newlyCreatedJourneyID);
+      //router.push(`/journeys/${journey.id}`);
+    } catch (error) {
+      setMessage("Failed to add journey");
+    }
+  };
+
+  const handleNameChange = (e) => {
+    setNewJourneyName(e.target.value); // Update the name when the user types
+  };
+
+  const handleCreateNewJourneyClick = () => {
+    if (newJourneyName.trim()) {
+      console.log("creating new journey");
+      handleCreateNewJourney(newJourneyName); // Pass the name when creating the new journey
+    }
+    setShowJourneyModal(false);
   };
 
   const movePointBackwards = async (pointIndex) => {
@@ -359,31 +395,48 @@ const JourneyPage = ({
     }
   };
   useEffect(() => {
-    const mql = window.matchMedia("(max-width: 600px)");
-    const mobileView = mql.matches;
-    const mql2 = window.matchMedia("(min-width: 600px)");
-    const midView = mql2.matches;
-    const mql3 = window.matchMedia("(min-width: 1000px)");
-    const largeView = mql3.matches;
+    // Function to check window size and set the width and height
+    const updateDimensions = () => {
+      const mql = window.matchMedia("(max-width: 600px)");
+      const mobileView = mql.matches;
+      const mql2 = window.matchMedia("(min-width: 600px)");
+      const midView = mql2.matches;
+      const mql3 = window.matchMedia("(min-width: 1350px)");
+      const largeView = mql3.matches;
 
-    let width = 0,
-      height = 0;
-    if (mobileView) {
-      (width = 300), (height = 200);
-    } else if (largeView) {
-      (width = 900), (height = 500);
-    } else {
-      (width = 400), (height = 300);
-    }
+      let newWidth = 0,
+        newHeight = 0;
+      if (mobileView) {
+        newWidth = 300;
+        newHeight = 200;
+      } else if (largeView) {
+        newWidth = 1200;
+        newHeight = 700;
+      } else {
+        newWidth = 500;
+        newHeight = 400;
+      }
 
-    setWidth(width);
-    setHeight(height);
+      setWidth(newWidth);
+      setHeight(newHeight);
+    };
+
+    // Initial call to set dimensions
+    updateDimensions();
+
+    // Set up the resize event listener
+    window.addEventListener("resize", updateDimensions);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", updateDimensions);
+    };
   }, []);
 
   return (
     <>
       <div className="z-10 justify-between font-mono pl-2 md:pl-2 lg:pl-0">
-        <h3 className="underline py-2 font-mono text-sm md:text-md lg:text-lg">
+        <h3 className="underline py-0 font-mono text-sm md:text-md lg:text-lg">
           <Link
             href={{
               pathname: "/journeys",
@@ -393,10 +446,17 @@ const JourneyPage = ({
             Back to Journeys
           </Link>
         </h3>
-        <h1 className="py-2 font-mono text-sm sm:text-2xl">
-          Journey{isPublicJourney && " (PUBLIC)"}:
-        </h1>
+        {/* <h1 className="py-2 font-mono text-sm sm:text-2xl">
+          <FontAwesomeIcon icon={faMap} />
+          {isPublicJourney && " (PUBLIC)"}:
+        </h1> */}
         <h2 className="py-2 font-mono text-2xl md:text-3xl lg:text-5xl ">
+          <FontAwesomeIcon
+            icon={faMap}
+            color="palegoldenrod"
+            className="mr-5"
+          />
+          {isPublicJourney && " (PUBLIC)"}
           {isEditable ? (
             <input
               onChange={handleChangeTitle}
@@ -492,7 +552,7 @@ const JourneyPage = ({
         </div>
 
         <div
-          className="relative w-full overflow-hidden py-2 md:py-4 lg:py-5 px-2 lg:px-5 rounded bg-white dark:bg-slate-800"
+          className="relative w-full overflow-hidden py-2 md:py-0 lg:py-0 px-2 lg:px-5 rounded bg-white dark:bg-slate-800"
           style={{ minHeight: "400px" }}
         >
           {isListView ? (
@@ -533,129 +593,136 @@ const JourneyPage = ({
                               location={point.location}
                             />
                           )}
+                      </div>
+                      <div className="min-h-[5rem] flex flex-col justify-center items-center">
+                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                          {point.memoItem}
+                        </p>
 
-                        <div className="min-h-[5rem] flex flex-col justify-center items-center">
+                        {point.linkedJourneyID && (
                           <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
-                            {point.memoItem}
-                          </p>
-
-                          {point.linkedJourneyID && (
-                            <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
-                              <Link
-                                href={`/journeys/${point.linkedJourneyID}`}
-                                className="text-blue-600 underline hover:text-blue-800"
-                              >
+                            <Link
+                              href={`/journeys/${point.linkedJourneyID}`}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <>
+                                <FontAwesomeIcon
+                                  icon={faRocket}
+                                  color="red"
+                                  size="1x"
+                                  title="Teleport to linked journey"
+                                />{" "}
                                 {journeys.find(
                                   (j) => j._id === point.linkedJourneyID
                                 )?.name || "Unnamed Journey"}
-                              </Link>
-                            </p>
-                          )}
-                        </div>
-                        {(!isPublicJourney || isAdmin) && (
-                          <>
-                            <div className="icon-container flex flex-row space-x-3 mt-2 px-3 pb-5 justify-evenly">
-                              <FontAwesomeIcon
-                                onClick={() => {
-                                  handleInsertPointAt(
-                                    (currentPage - 1) * PAGE_LIMIT + i
-                                  );
-                                }}
-                                icon={faPlusCircle}
-                                size="2x"
-                                title="Insert point before"
-                              />
-
-                              {!(i === 0 && currentPage === 1) && (
-                                <FontAwesomeIcon
-                                  onClick={() =>
-                                    movePointBackwards(
-                                      (currentPage - 1) * PAGE_LIMIT + i
-                                    )
-                                  }
-                                  icon={faArrowLeftLong}
-                                  size="2x"
-                                  title="Move point backwards"
-                                />
-                              )}
-
-                              {!point.linkedJourneyID && (
-                                <FontAwesomeIcon
-                                  onClick={() =>
-                                    handleLinkJourney(
-                                      (currentPage - 1) * PAGE_LIMIT + i
-                                    )
-                                  }
-                                  icon={faLink}
-                                  size="2x"
-                                  title="Link a journey"
-                                />
-                              )}
-
-                              {point.linkedJourneyID && (
-                                <FontAwesomeIcon
-                                  onClick={() =>
-                                    handleUnlinkJourney(
-                                      (currentPage - 1) * PAGE_LIMIT + i
-                                    )
-                                  }
-                                  icon={faUnlink}
-                                  size="2x"
-                                  title="Unlink journey"
-                                />
-                              )}
-
-                              {!(
-                                i === points.length - 1 &&
-                                currentPage === totalPages
-                              ) && (
-                                <FontAwesomeIcon
-                                  onClick={() =>
-                                    movePointForwards(
-                                      (currentPage - 1) * PAGE_LIMIT + i
-                                    )
-                                  }
-                                  className="ml-5"
-                                  icon={faArrowRightLong}
-                                  size="2x"
-                                  title="Move point forwards"
-                                />
-                              )}
-
-                              <FontAwesomeIcon
-                                onClick={() => {
-                                  handleInsertPointAt(
-                                    (currentPage - 1) * PAGE_LIMIT + i + 1
-                                  );
-                                }}
-                                icon={faPlusCircle}
-                                size="2x"
-                                title="Insert point after"
-                              />
-                            </div>
-                            <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
-                              <Link
-                                href="/journeys/[id]/editPoint"
-                                as={`/journeys/${point._id}/editPoint`}
-                                legacyBehavior
-                              >
-                                <FontAwesomeIcon
-                                  title="Edit this point"
-                                  icon={faEdit}
-                                  size="2x"
-                                />
-                              </Link>
-                              <FontAwesomeIcon
-                                title="Delete this point"
-                                className="ml-5"
-                                icon={faTrash}
-                                size="2x"
-                                onClick={() => handleDeletePoint(point._id)}
-                              />
-                            </div>
-                          </>
+                              </>
+                            </Link>
+                          </p>
                         )}
                       </div>
+                      {(!isPublicJourney || isAdmin) && (
+                        <>
+                          <div className="icon-container flex flex-row space-x-3 mt-2 px-3 pb-5 justify-evenly">
+                            <FontAwesomeIcon
+                              onClick={() => {
+                                handleInsertPointAt(
+                                  (currentPage - 1) * PAGE_LIMIT + i
+                                );
+                              }}
+                              icon={faPlusCircle}
+                              size="2x"
+                              title="Insert point before"
+                            />
+
+                            {!(i === 0 && currentPage === 1) && (
+                              <FontAwesomeIcon
+                                onClick={() =>
+                                  movePointBackwards(
+                                    (currentPage - 1) * PAGE_LIMIT + i
+                                  )
+                                }
+                                icon={faArrowLeftLong}
+                                size="2x"
+                                title="Move point backwards"
+                              />
+                            )}
+
+                            {!point.linkedJourneyID && (
+                              <FontAwesomeIcon
+                                onClick={() =>
+                                  handleLinkJourney(
+                                    (currentPage - 1) * PAGE_LIMIT + i
+                                  )
+                                }
+                                icon={faLink}
+                                size="2x"
+                                title="Link a journey"
+                              />
+                            )}
+
+                            {point.linkedJourneyID && (
+                              <FontAwesomeIcon
+                                onClick={() =>
+                                  handleUnlinkJourney(
+                                    (currentPage - 1) * PAGE_LIMIT + i
+                                  )
+                                }
+                                icon={faUnlink}
+                                size="2x"
+                                title="Unlink journey"
+                              />
+                            )}
+
+                            {!(
+                              i === points.length - 1 &&
+                              currentPage === totalPages
+                            ) && (
+                              <FontAwesomeIcon
+                                onClick={() =>
+                                  movePointForwards(
+                                    (currentPage - 1) * PAGE_LIMIT + i
+                                  )
+                                }
+                                className="ml-5"
+                                icon={faArrowRightLong}
+                                size="2x"
+                                title="Move point forwards"
+                              />
+                            )}
+
+                            <FontAwesomeIcon
+                              onClick={() => {
+                                handleInsertPointAt(
+                                  (currentPage - 1) * PAGE_LIMIT + i + 1
+                                );
+                              }}
+                              icon={faPlusCircle}
+                              size="2x"
+                              title="Insert point after"
+                            />
+                          </div>
+                          <div className="icon-container flex flex-row space-x-3 px-3 pb-5 justify-end items-end">
+                            <Link
+                              href="/journeys/[id]/editPoint"
+                              as={`/journeys/${point._id}/editPoint`}
+                              legacyBehavior
+                            >
+                              <FontAwesomeIcon
+                                title="Edit this point"
+                                icon={faEdit}
+                                size="2x"
+                              />
+                            </Link>
+                            <FontAwesomeIcon
+                              title="Delete this point"
+                              className="ml-5"
+                              icon={faTrash}
+                              size="2x"
+                              onClick={() => handleDeletePoint(point._id)}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -838,6 +905,24 @@ const JourneyPage = ({
                   ))}
               </ul>
 
+              {/* Input field to create a new journey */}
+              <div className="mt-4">
+                <label
+                  htmlFor="new-journey-name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  New Journey Name
+                </label>
+                <input
+                  id="new-journey-name"
+                  type="text"
+                  value={newJourneyName}
+                  onChange={handleNameChange}
+                  className="mt-2 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter journey name"
+                />
+              </div>
+
               <div className="flex justify-end mt-4">
                 <button
                   className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white mr-2"
@@ -848,7 +933,8 @@ const JourneyPage = ({
 
                 <button
                   className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                  onClick={() => handleCreateNewJourney()}
+                  onClick={handleCreateNewJourneyClick}
+                  disabled={!newJourneyName.trim()} // Disable if the name is empty
                 >
                   <FontAwesomeIcon icon={faMap} />
                   <FontAwesomeIcon icon={faPlus} />
@@ -867,6 +953,7 @@ export default JourneyPage;
 
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ params, query, req, res }) => {
+    console.log("getting server side props");
     const auth0User = await getSession(req, res);
     const user = auth0User.user;
     await dbConnect();
@@ -903,7 +990,7 @@ export const getServerSideProps = withPageAuthRequired({
     const offset = (page - 1) * pageLimit;
 
     const points = journey.points.slice(offset, offset + pageLimit);
-
+    console.log("passing in journey name " + journey.name);
     return {
       props: {
         journey: {
