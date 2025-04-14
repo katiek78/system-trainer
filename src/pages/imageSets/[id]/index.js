@@ -53,8 +53,6 @@ const ImageSetPage = ({
   const [isShowingPhoneticsDiv, setIsShowingPhoneticsDiv] = useState(false);
   const [isShowingImportPhoneticsDiv, setIsShowingImportPhoneticsDiv] =
     useState(false);
-  const [isShowingPasteImagesDiv, setIsShowingPasteImagesDiv] = useState(false);
-  const [isJustImported, setIsJustImported] = useState(false);
 
   const [imageForm, setImageForm] = useState({});
   const [importImagesForm, setImportImagesForm] = useState({
@@ -577,10 +575,6 @@ const ImageSetPage = ({
     setIsShowingPhoneticsDiv(false);
   };
 
-  const handleShowPasteImagesDiv = () => {
-    setIsShowingPasteImagesDiv(true);
-  };
-
   const handleShowPhoneticsDiv = () => {
     setIsShowingPhoneticsDiv(true);
   };
@@ -722,12 +716,12 @@ const ImageSetPage = ({
         {!isShowingImportPhoneticsDiv && (!isPublicImageSet || isAdmin) && (
           <button
             onClick={handleShowImportPhoneticsDiv}
-            className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold ml-3 my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
           >
             Import images from set
           </button>
         )}
-        {!isShowingPasteImagesDiv && (!isPublicImageSet || isAdmin) && (
+        {(!isPublicImageSet || isAdmin) && (
           <Link
             href="/imageSets/[id]/pasteImages"
             as={`/imageSets/${imageSetID}/pasteImages`}
@@ -736,12 +730,6 @@ const ImageSetPage = ({
             <button className="btn bg-black hover:bg-gray-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
               Import images via copy/paste
             </button>
-            {/* <button
-            onClick={handleShowPasteImagesDiv}
-            className="btn bg-gray-700 hover:bg-gray-700 text-white font-bold my-2 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-          >
-            Paste images for import
-          </button> */}
           </Link>
         )}
 
@@ -877,13 +865,6 @@ const ImageSetPage = ({
               Submit
             </button>
           </div>
-        )}
-
-        {isShowingPasteImagesDiv && (
-          <PasteImagesForm
-            formId="paste-images-form"
-            pasteImagesForm={pasteImagesForm}
-          />
         )}
 
         <div className="flex flex-row">

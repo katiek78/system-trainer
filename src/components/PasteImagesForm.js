@@ -89,10 +89,7 @@ const PasteImagesForm = ({ formId, pasteImagesForm }) => {
           value={form.overwrite}
           onChange={handleChange}
         ></input>
-        <label htmlFor="name">
-          List of images (tab-separated with the number or playing card(s) in
-          the first column and the description in the second):
-        </label>
+        <br />
         <textarea
           className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           type="text"
