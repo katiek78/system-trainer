@@ -14,6 +14,7 @@ import { PAGE_LIMIT } from "@/lib/journeyConstants";
 import {
   faCheck,
   faEdit,
+  faMap,
   faPlus,
   faTrash,
   faPlay,
@@ -22,6 +23,8 @@ import {
   faBackward,
   faForward,
   faPlusCircle,
+  faLink,
+  faUnlink,
 } from "@fortawesome/free-solid-svg-icons";
 //import { faStar as faStarOutline } from "@fortawesome/free-regular-svg-icons";
 import { refreshData } from "@/lib/refreshData";
@@ -36,6 +39,7 @@ const JourneyPage = ({
   isPublicJourney,
   user,
   isAdmin,
+  journeys,
 }) => {
   const router = useRouter();
   const contentType = "application/json";
@@ -56,6 +60,16 @@ const JourneyPage = ({
   const [height, setHeight] = useState(0);
 
   const [journeyForm, setJourneyForm] = useState({});
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+  const [selectedPointIndexForLinking, setSelectedPointIndexForLinking] =
+    useState(null);
+
+  // const fetchJourneys = async () => {
+  //   const res = await fetch("/api/journeys/names");
+  //   const data = await res.json();
+  //   const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+  //   setJourneys(sortedData);
+  // };
 
   useEffect(() => {
     const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
@@ -271,6 +285,43 @@ const JourneyPage = ({
     setCurrentSlideshowPoint(allPoints.length - 1);
   };
 
+  const handleLinkJourney = (pointIndex) => {
+    setSelectedPointIndexForLinking(pointIndex);
+    setShowJourneyModal(true);
+  };
+
+  const linkJourney = async (pointIndex, linkedJourneyID) => {
+    await fetch(`/api/journeys/${router.query.id}/linkJourney`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pointIndex,
+        linkedJourneyID,
+      }),
+    });
+    setShowJourneyModal(false);
+    router.push(`/journeys/${router.query.id}`);
+  };
+
+  const handleUnlinkJourney = async (pointIndex) => {
+    await fetch(`/api/journeys/${router.query.id}/linkJourney`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pointIndex,
+      }),
+    });
+    router.push(`/journeys/${router.query.id}`);
+  };
+
+  const handleCreateNewJourney = () => {
+    //router.push(`/journeys/new`);
+  };
+
   const movePointBackwards = async (pointIndex) => {
     try {
       await fetch(`/api/journeys/${router.query.id}/reorderPoint`, {
@@ -483,10 +534,24 @@ const JourneyPage = ({
                             />
                           )}
 
-                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
-                          {point.memoItem}
-                        </p>
+                        <div className="min-h-[5rem] flex flex-col justify-center items-center">
+                          <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                            {point.memoItem}
+                          </p>
 
+                          {point.linkedJourneyID && (
+                            <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                              <Link
+                                href={`/journeys/${point.linkedJourneyID}`}
+                                className="text-blue-600 underline hover:text-blue-800"
+                              >
+                                {journeys.find(
+                                  (j) => j._id === point.linkedJourneyID
+                                )?.name || "Unnamed Journey"}
+                              </Link>
+                            </p>
+                          )}
+                        </div>
                         {(!isPublicJourney || isAdmin) && (
                           <>
                             <div className="icon-container flex flex-row space-x-3 mt-2 px-3 pb-5 justify-evenly">
@@ -511,6 +576,32 @@ const JourneyPage = ({
                                   icon={faArrowLeftLong}
                                   size="2x"
                                   title="Move point backwards"
+                                />
+                              )}
+
+                              {!point.linkedJourneyID && (
+                                <FontAwesomeIcon
+                                  onClick={() =>
+                                    handleLinkJourney(
+                                      (currentPage - 1) * PAGE_LIMIT + i
+                                    )
+                                  }
+                                  icon={faLink}
+                                  size="2x"
+                                  title="Link a journey"
+                                />
+                              )}
+
+                              {point.linkedJourneyID && (
+                                <FontAwesomeIcon
+                                  onClick={() =>
+                                    handleUnlinkJourney(
+                                      (currentPage - 1) * PAGE_LIMIT + i
+                                    )
+                                  }
+                                  icon={faUnlink}
+                                  size="2x"
+                                  title="Unlink journey"
                                 />
                               )}
 
@@ -720,6 +811,54 @@ const JourneyPage = ({
 
         {/* Add a button to add an image manually */}
       </div>
+      {showJourneyModal && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-96 p-4">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                Link to journey
+              </h2>
+
+              <ul className="space-y-2 max-h-60 overflow-y-auto">
+                {journeys &&
+                  journeys.map((journey) => (
+                    <li
+                      key={journey._id}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded text-gray-800 dark:text-gray-100"
+                      onClick={() =>
+                        linkJourney(selectedPointIndexForLinking, journey._id)
+                      }
+                    >
+                      <FontAwesomeIcon
+                        icon={faMap}
+                        className="mr-2 text-yellow-500"
+                      />
+                      {journey.name}
+                    </li>
+                  ))}
+              </ul>
+
+              <div className="flex justify-end mt-4">
+                <button
+                  className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white mr-2"
+                  onClick={() => setShowJourneyModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                  onClick={() => handleCreateNewJourney()}
+                >
+                  <FontAwesomeIcon icon={faMap} />
+                  <FontAwesomeIcon icon={faPlus} />
+                  Create new journey
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
@@ -749,6 +888,16 @@ export const getServerSideProps = withPageAuthRequired({
 
     const journey = JSON.parse(JSON.stringify(journeyResult));
 
+    const journeyNamesResult = await Journey.find(
+      { userId: user.sub }, // adjust if needed
+      "_id name" // only these fields
+    ).lean();
+
+    const journeyNames = JSON.parse(JSON.stringify(journeyNamesResult));
+    const sortedJourneyNames = journeyNames.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
     const page = query.page ? parseInt(query.page) : 1;
     const pageLimit = PAGE_LIMIT;
     const offset = (page - 1) * pageLimit;
@@ -767,6 +916,7 @@ export const getServerSideProps = withPageAuthRequired({
         isPublicJourney: !journey.userId,
         user,
         isAdmin: adminStatus,
+        journeys: sortedJourneyNames,
       },
     };
   },
