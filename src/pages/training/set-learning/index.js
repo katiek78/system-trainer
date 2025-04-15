@@ -57,7 +57,8 @@ const TrainingCenter = ({ user, imageSet }) => {
   // let filteredData = [];
 
   const setType = determineSetType(imageSet.images.length);
-  const isCardSet = setType.includes("c");
+  const isCardSet = setType.includes("c") && setType !== "3cs";
+  const isSuitSet = setType === "3cs";
 
   useEffect(() => {
     if (isLoading) return;
@@ -73,35 +74,37 @@ const TrainingCenter = ({ user, imageSet }) => {
       );
 
     //Filter by digits
-    if (imageGroupD1 !== "all" || imageGroupD2 !== "all") {
-      if (isCardSet) {
-        newSet = newSet.filter((image) => {
-          // Extract card values (A, 2-10, J, Q, K)
-          const values = image.name.match(/(A|10|[2-9]|J|Q|K)/g);
+    if (!isSuitSet) {
+      if (imageGroupD1 !== "all" || imageGroupD2 !== "all") {
+        if (isCardSet) {
+          newSet = newSet.filter((image) => {
+            // Extract card values (A, 2-10, J, Q, K)
+            const values = image.name.match(/(A|10|[2-9]|J|Q|K)/g);
 
-          if (!values || values.length < 2) return false; // Ensure at least two values
+            if (!values || values.length < 2) return false; // Ensure at least two values
 
-          const [firstValue, secondValue] = values; // Extract first and second card values
+            const [firstValue, secondValue] = values; // Extract first and second card values
 
-          // console.log(
-          //   image.name,
-          //   firstValue,
-          //   secondValue,
-          //   imageGroupD1,
-          //   imageGroupD2
-          // );
+            // console.log(
+            //   image.name,
+            //   firstValue,
+            //   secondValue,
+            //   imageGroupD1,
+            //   imageGroupD2
+            // );
 
-          return (
-            (firstValue === imageGroupD1 || imageGroupD1 === "all") &&
-            (secondValue === imageGroupD2 || imageGroupD2 === "all")
+            return (
+              (firstValue === imageGroupD1 || imageGroupD1 === "all") &&
+              (secondValue === imageGroupD2 || imageGroupD2 === "all")
+            );
+          });
+        } else {
+          newSet = newSet.filter(
+            (image) =>
+              (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
+              (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
           );
-        });
-      } else {
-        newSet = newSet.filter(
-          (image) =>
-            (image.name[0] === imageGroupD1 || imageGroupD1 === "all") &&
-            (image.name[1] === imageGroupD2 || imageGroupD2 === "all")
-        );
+        }
       }
     }
 
@@ -134,11 +137,12 @@ const TrainingCenter = ({ user, imageSet }) => {
           .replace(/♠️/g, "♠")
           .replace(/♣️/g, "♣")
           .replace(/♦️/g, "♦");
+        console.log(convertedName);
 
         // Now we need to check if the converted name contains both suits
         const suits = convertedName.match(/[♠♣♦♥]/g); // Match all suits after conversion
 
-        if (suits && suits.length === 2) {
+        if (suits) {
           const [firstSuitInName, secondSuitInName] = suits;
 
           const firstSuitMatches = new RegExp(getSuitRegex(firstSuit)).test(
@@ -152,7 +156,7 @@ const TrainingCenter = ({ user, imageSet }) => {
 
           return firstSuitMatches && secondSuitMatches;
         }
-        return false; // If there are not exactly 2 suits, return false
+        return false;
       });
     }
 
@@ -433,43 +437,51 @@ const TrainingCenter = ({ user, imageSet }) => {
                       </option>
                     ))}
                   </select>
-                  <label for="selDigit1">
-                    {isCardSet ? "Value 1" : "Digit 1"}
-                  </label>
-                  <select
-                    id="selDigit1"
-                    className="w-full rounded-md dark:bg-slate-800"
-                    onChange={handleChangeSelectD1}
-                  >
-                    <option value="all">All</option>
-                    {isCardSet &&
-                      ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
-                        (digit) => <option value={digit}>{digit}</option>
-                      )}
-                    {!isCardSet &&
-                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                        <option value={digit}>{digit}</option>
-                      ))}
-                  </select>
-                  <label for="selDigit2">
-                    {isCardSet ? "Value 2" : "Digit 2"}
-                  </label>
-                  <select
-                    id="selDigit2"
-                    className="w-full rounded-md dark:bg-slate-800"
-                    onChange={handleChangeSelectD2}
-                  >
-                    <option value="all">All</option>
-                    {isCardSet &&
-                      ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
-                        (digit) => <option value={digit}>{digit}</option>
-                      )}
-                    {!isCardSet &&
-                      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                        <option value={digit}>{digit}</option>
-                      ))}
-                  </select>
-                  {setType === "2c" && (
+                  {!isSuitSet && (
+                    <>
+                      <label for="selDigit1">
+                        {isCardSet ? "Value 1" : "Digit 1"}
+                      </label>
+                      <select
+                        id="selDigit1"
+                        className="w-full rounded-md dark:bg-slate-800"
+                        onChange={handleChangeSelectD1}
+                      >
+                        <option value="all">All</option>
+                        {isCardSet &&
+                          ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                            (digit) => <option value={digit}>{digit}</option>
+                          )}
+
+                        {!isCardSet &&
+                          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                            <option value={digit}>{digit}</option>
+                          ))}
+                      </select>
+                      <label for="selDigit2">
+                        {isCardSet ? "Value 2" : "Digit 2"}
+                      </label>
+                      <select
+                        id="selDigit2"
+                        className="w-full rounded-md dark:bg-slate-800"
+                        onChange={handleChangeSelectD2}
+                      >
+                        <option value="all">All</option>
+                        {isCardSet &&
+                          ["A", 2, 3, 4, 5, 6, 7, 8, 9, 10, "J", "Q", "K"].map(
+                            (digit) => <option value={digit}>{digit}</option>
+                          )}
+
+                        {!isCardSet &&
+                          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+                            <option value={digit}>{digit}</option>
+                          ))}
+                      </select>
+                    </>
+                  )}
+                  {(setType === "2c" ||
+                    setType === "2cv" ||
+                    setType === "3cs") && (
                     <>
                       <label for="selSuit1">Suit 1</label>
                       <select
