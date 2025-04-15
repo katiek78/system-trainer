@@ -27,7 +27,6 @@ const JourneysPage = ({
   assignments,
   folders,
 }) => {
-  console.log(journeys);
   //let user = useUser(); //should we be using this instead?
   const searchParams = useSearchParams();
   const startWithJourneyView =

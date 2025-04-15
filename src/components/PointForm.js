@@ -49,12 +49,17 @@ const PointForm = ({
         throw new Error(res.status);
       }
 
-      const { data } = await res.json();
-      console.log(data);
+      //const { data } = await res.json();
+      await res.json();
+
       // mutate(`/api/journeys/${id}`, data, false) // Update the local data without a revalidation
       const pageToGoTo = Math.floor(pointIndex / PAGE_LIMIT) + 1;
 
-      router.push(`/journeys/${journeyId}?page=${pageToGoTo}`);
+      //router.push(`/journeys/${journeyId}?page=${pageToGoTo}`);
+      router.push(`/journeys/${journeyId}?page=${pageToGoTo}`, undefined, {
+        shallow: false,
+      });
+
       //router.push(`/journeys/${journeyId}`);
     } catch (error) {
       setMessage("Failed to update location");
