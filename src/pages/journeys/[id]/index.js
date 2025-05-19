@@ -569,7 +569,7 @@ const JourneyPage = ({
                   >
                     <div className="card-content w-full px-0 md:px-1 lg:px-2 flex flex-col justify-center items-center h-full overflow-hidden">
                       <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
-                        {point.name}
+                        {(currentPage - 1) * PAGE_LIMIT + i + 1}. {point.name}
                       </p>
 
                       <div className="street-view-container relative">
@@ -759,6 +759,7 @@ const JourneyPage = ({
                   >
                     <div className="card-content w-full px-0 md:px-1 lg:px-2 h-full flex flex-col justify-center">
                       <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                        {currentSlideshowPoint + 1}.{" "}
                         {allPoints[currentSlideshowPoint].name}
                       </p>
                       <div className="street-view-container relative">
