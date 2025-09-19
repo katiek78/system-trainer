@@ -230,10 +230,10 @@ const getHBHMPhonetics = (text) => {
     suitPair[0] === "d" || suitPair[0] === "h" ? "red" : "black";
 
   if (colourFirst === "red") {
-    if (cardVal2 === "K") {
-      // Special syllable for second card being "K"
-      return kBenCardValues2704["red"][cardVal1] + kBenSuitPairs[suitPair];
-    }
+    // if (cardVal2 === "K") {
+    //   // Special syllable for second card being "K"
+    //   return kBenCardValues2704["red"][cardVal1] + kBenSuitPairs[suitPair];
+    // }
     // Default red case
     return (
       kBenCardValues[cardVal1] +
