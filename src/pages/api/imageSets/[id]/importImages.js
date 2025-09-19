@@ -10,82 +10,104 @@ export default async function handler(req, res) {
   await dbConnect();
 
   switch (method) {
-    case "PUT" /* Update only the images where we have an image with matching ID */:
-      const sourceSetID = req.body.sourceSetID;
-      const overwrite = req.body.overwrite;
-      const sourceImageSet = await ImageSet.findOne({ _id: sourceSetID });
-      const sourceImages = sourceImageSet.images;
+    case "PUT": {
+      try {
+        const sourceSetID = req.body.sourceSetID;
+        const overwrite = req.body.overwrite;
+        const id = req.query.id; // Make sure you're getting the target set ID
 
-      let updateSuccess = false; // Flag to track if any update was successful
+        // Validate required inputs
+        if (!sourceSetID || !id) {
+          return res
+            .status(400)
+            .json({ error: "Missing sourceSetID or target ID." });
+        }
 
-      const updatePromises = sourceImages
-        .filter((sourceImage) => sourceImage.imageItem !== "") // Filter out empty source images
-        .map(async (sourceImage) => {
-          if (sourceSetID === id) {
-            return res
-              .status(400)
-              .json({ error: "Source and target sets are the same." });
-          }
+        // Prevent updating the same set
+        if (sourceSetID === id) {
+          return res
+            .status(400)
+            .json({ error: "Source and target sets are the same." });
+        }
 
-          const sourcePhonetics = sourceImage.phonetics;
+        // Fetch the source image set
+        const sourceSet = await ImageSet.findOne({ _id: sourceSetID }).exec();
+        if (!sourceSet) {
+          return res.status(404).json({ error: "Source image set not found." });
+        }
 
-          const updateConditions = {
-            _id: id, // This ensures we ONLY update the target set
-            "images.phonetics": sourcePhonetics,
-          };
+        const sourceImages = sourceSet.images || [];
+        if (sourceImages.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "Source image set has no images." });
+        }
 
-          const updateFields = {
-            $set: {
-              "images.$[elem].imageItem": sourceImage.imageItem,
-              "images.$[elem].URL": sourceImage.URL,
-              "images.$[elem].recentAttempts": sourceImage.recentAttempts,
-              "images.$[elem].starred": sourceImage.starred,
-            },
-          };
+        let updateSuccess = false;
 
-          console.log(overwrite ? "overwrite is true" : "overwrite is false");
+        // Map all updates safely
+        const updatePromises = sourceImages
+          .filter((img) => img.imageItem !== "")
+          .map(async (sourceImage) => {
+            const sourcePhonetics = sourceImage.phonetics;
+            if (!sourcePhonetics) return; // Skip if phonetics missing
 
-          const arrayFilters = overwrite
-            ? [{ "elem.phonetics": sourcePhonetics }]
-            : [
-                {
-                  "elem.phonetics": sourcePhonetics,
-                  "elem.imageItem": { $in: [null, ""] },
-                  "elem.URL": { $in: [null, ""] },
-                },
-              ];
+            const updateConditions = {
+              _id: id,
+              "images.phonetics": sourcePhonetics,
+            };
 
-          try {
-            // Perform the update
-            const updateResult = await ImageSet.updateMany(
-              updateConditions,
-              updateFields,
-              { arrayFilters }
-            ).exec();
+            const updateFields = {
+              $set: {
+                "images.$[elem].imageItem": sourceImage.imageItem,
+                "images.$[elem].URL": sourceImage.URL,
+                "images.$[elem].recentAttempts": sourceImage.recentAttempts,
+                "images.$[elem].starred": sourceImage.starred,
+              },
+            };
 
-            //        console.log(`Update Result for ${sourcePhonetics}:`, updateResult);
+            const arrayFilters = overwrite
+              ? [{ "elem.phonetics": sourcePhonetics }]
+              : [
+                  {
+                    "elem.phonetics": sourcePhonetics,
+                    "elem.imageItem": { $in: [null, ""] },
+                    "elem.URL": { $in: [null, ""] },
+                  },
+                ];
 
-            if (updateResult.matchedCount > 0 && updateResult.nModified > 0) {
-              updateSuccess = true;
+            try {
+              const result = await ImageSet.updateMany(
+                updateConditions,
+                updateFields,
+                { arrayFilters }
+              ).exec();
+
+              if (result.matchedCount > 0 && result.modifiedCount > 0) {
+                updateSuccess = true;
+              }
+            } catch (err) {
+              console.error(
+                `Error updating phonetics for ${sourcePhonetics}:`,
+                err
+              );
             }
-          } catch (err) {
-            console.error(
-              `Error updating phonetics for ${sourcePhonetics}:`,
-              err
-            );
-          }
-        });
+          });
 
-      // Wait for all update operations to complete
-      await Promise.all(updatePromises);
+        // Wait for all updates, but don’t let a rejection break the handler
+        await Promise.all(updatePromises);
 
-      // After all updates, check if any were successful
-      if (updateSuccess) {
-        console.log("Some images were updated successfully");
-      } else {
-        console.log("No images were updated");
+        console.log(
+          updateSuccess
+            ? "Some images were updated successfully"
+            : "No images were updated"
+        );
+
+        return res.status(200).json({ updateSuccess });
+      } catch (err) {
+        console.error("PUT handler error:", err);
+        return res.status(500).json({ error: "Internal server error" });
       }
-
-      res.status(200).json({ updateSuccess });
+    }
   }
 }
