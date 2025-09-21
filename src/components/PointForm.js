@@ -3,6 +3,9 @@ import { useRouter } from "next/router";
 import { mutate } from "swr";
 import LocationExplanation from "@/components/LocationExplanation";
 import EmbedStreetView from "./EmbedStreetView";
+import ImageSearch from "./ImageSearch";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { PAGE_LIMIT } from "@/lib/journeyConstants";
 
 const isLocationStreetView = (location) => {
@@ -20,6 +23,7 @@ const PointForm = ({
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
+  const [showImageSearch, setShowImageSearch] = useState(false);
 
   const [form, setForm] = useState({
     name: pointForm.name,
@@ -30,6 +34,20 @@ const PointForm = ({
     memoItem: pointForm.memoItem || "",
     memoPic: pointForm.memoPic || "",
   });
+
+  const handleImageSelect = (index, imageUrl) => {
+    const updatedForm = { ...form };
+    updatedForm.memoPic = imageUrl;
+    setForm(updatedForm);
+  };
+
+  const handleShowImageSearch = () => {
+    setShowImageSearch(true);
+  };
+
+  const handleCloseImageSearch = () => {
+    setShowImageSearch(false);
+  };
 
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
@@ -289,6 +307,20 @@ const PointForm = ({
           value={form.memoPic}
           onChange={handleChange}
         />
+        {/* <FontAwesomeIcon
+          className="cursor-pointer text-black h-6 lg:h-8"
+          icon={faSearch}
+          onClick={handleShowImageSearch}
+        /> */}
+        {/* {showImageSearch && ( */}
+        <ImageSearch
+          description={form.memoItem}
+          index={1}
+          onImageSelect={handleImageSelect}
+          onClose={handleCloseImageSearch}
+        />
+        {/* )} */}
+        <br />
         <button
           type="submit"
           className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"

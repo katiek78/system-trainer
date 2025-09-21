@@ -596,7 +596,7 @@ const JourneyPage = ({
                         {point.memoPic && (
                           <img
                             src={point.memoPic}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 w-auto object-contain z-20"
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-20 w-auto object-contain z-20"
                             alt="Memo"
                           />
                         )}
@@ -808,7 +808,7 @@ const JourneyPage = ({
                           {allPoints[currentSlideshowPoint]?.memoPic && (
                             <img
                               src={allPoints[currentSlideshowPoint].memoPic}
-                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain z-20"
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-64 object-contain z-20"
                               alt="Memo"
                             />
                           )}

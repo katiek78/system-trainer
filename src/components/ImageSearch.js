@@ -15,7 +15,6 @@ const ImageSearch = ({
 
   const handleSearch = async () => {
     if (!query) return;
-
     setError(null); // Reset error before a new request
     setSearchResults([]); // Clear previous results
 
@@ -46,13 +45,22 @@ const ImageSearch = ({
     setSearchVisible(!isSearchVisible); // Toggle the search visibility
   };
 
+  const handleImageSelect = (imageUrl, index, link) => {
+    handleToggleSearch();
+    onImageSelect(imageUrl, index, link);
+  };
+
   useEffect(() => {
     if (!index) setSearchVisible(true);
   }, []);
 
   return (
     <div>
-      <button onClick={handleToggleSearch} className="toggle-search-button">
+      <button
+        type="button"
+        onClick={handleToggleSearch}
+        className="toggle-search-button"
+      >
         <FontAwesomeIcon icon={isSearchVisible ? faTimes : faSearch} />
       </button>
       {isSearchVisible && (
@@ -65,6 +73,7 @@ const ImageSearch = ({
             className="border border-gray-400 p-2 rounded-md w-full focus:border-blue-500 focus:ring focus:ring-blue-300"
           />
           <button
+            type="button"
             onClick={handleSearch}
             className="mt-2 p-2 bg-blue-500 text-white rounded-md"
           >
@@ -91,7 +100,7 @@ const ImageSearch = ({
                     src={image.link}
                     alt={image.title}
                     className="w-24 h-24 m-2 cursor-pointer"
-                    onClick={() => onImageSelect(index, image.link)}
+                    onClick={() => handleImageSelect(index, image.link)}
                   />
                 );
               } else {
