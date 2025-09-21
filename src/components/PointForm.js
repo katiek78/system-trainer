@@ -307,13 +307,9 @@ const PointForm = ({
           value={form.memoPic}
           onChange={handleChange}
         />
-        {/* <FontAwesomeIcon
-          className="cursor-pointer text-black h-6 lg:h-8"
-          icon={faSearch}
-          onClick={handleShowImageSearch}
-        /> */}
-        {/* {showImageSearch && ( */}
+
         <ImageSearch
+          key={form.memoItem}
           description={form.memoItem}
           index={1}
           onImageSelect={handleImageSelect}

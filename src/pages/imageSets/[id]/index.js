@@ -990,6 +990,7 @@ const ImageSetPage = ({
                           {!img.URL && (
                             <>
                               <ImageSearch
+                                key={imageForm.images[i].imageItem}
                                 description={imageForm.images[i].imageItem}
                                 index={i}
                                 onImageSelect={handleImageSelect}

@@ -660,6 +660,7 @@ const TrainingCenter = ({ user, imageSet }) => {
         )}
         {showImageSearch && (
           <ImageSearch
+            key={randImage.imageItem}
             description={randImage.imageItem}
             index={null}
             onImageSelect={handleImageSelect}
