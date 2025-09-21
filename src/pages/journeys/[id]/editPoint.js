@@ -30,6 +30,7 @@ const EditPoint = () => {
     pitch: point.pitch,
     fov: point.fov,
     memoItem: point.memoItem,
+    memoPic: point.memoPic,
   };
 
   return (

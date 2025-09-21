@@ -18,6 +18,7 @@ const JourneySchema = new mongoose.Schema({
       pitch: { type: Number },
       fov: { type: Number },
       memoItem: { type: String },
+      memoPic: { type: String },
       linkedJourneyID: { type: String },
     }),
   ],

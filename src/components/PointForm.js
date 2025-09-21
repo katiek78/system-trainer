@@ -28,6 +28,7 @@ const PointForm = ({
     pitch: pointForm.pitch || 0,
     fov: pointForm.fov || 100,
     memoItem: pointForm.memoItem || "",
+    memoPic: pointForm.memoPic || "",
   });
 
   /* The PUT method edits an existing entry in the mongodb database. */
@@ -278,6 +279,14 @@ const PointForm = ({
           type="text"
           name="memoItem"
           value={form.memoItem}
+          onChange={handleChange}
+        />
+        <label htmlFor="memoPic">Image URL</label>
+        <input
+          className="shadow appearance-none border rounded w-full mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          type="text"
+          name="memoPic"
+          value={form.memoPic}
           onChange={handleChange}
         />
         <button

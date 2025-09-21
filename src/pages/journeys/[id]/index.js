@@ -593,9 +593,16 @@ const JourneyPage = ({
                               location={point.location}
                             />
                           )}
+                        {point.memoPic && (
+                          <img
+                            src={point.memoPic}
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 w-auto object-contain z-20"
+                            alt="Memo"
+                          />
+                        )}
                       </div>
-                      <div className="min-h-[5rem] flex flex-col justify-center items-center">
-                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                      <div className=" w-full flex flex-col justify-center items-center">
+                        <p className="text-2xl point-name max-w-full text-center whitespace-normal break-words">
                           {point.memoItem}
                         </p>
 
@@ -796,6 +803,15 @@ const JourneyPage = ({
                           )}
                         <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
                           {allPoints[currentSlideshowPoint].memoItem}
+                        </p>
+                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
+                          {allPoints[currentSlideshowPoint]?.memoPic && (
+                            <img
+                              src={allPoints[currentSlideshowPoint].memoPic}
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain z-20"
+                              alt="Memo"
+                            />
+                          )}
                         </p>
                         <div className="icon-container flex flex-row justify-center items-center">
                           {/* Show the backward button if we're not on the first point */}
