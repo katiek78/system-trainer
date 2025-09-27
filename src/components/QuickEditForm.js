@@ -39,7 +39,7 @@ const QuickEditForm = ({ field, item, name, handleSubmitEdit }) => {
           name="imageItem"
           onChange={(e) => handleEditChange(e)}
           onClick={(e) => handleClickForm(e)}
-          className="card-suit text-black w-40 lg:w-60 text-lg rounded-xl absolute top-3/4 left-1 lg:left-5"
+          className="card-suit text-black dark:text-white w-40 lg:w-60 text-lg rounded-xl absolute top-3/4 left-1 lg:left-5 dark:bg-slate-800 bg-white"
           value={formItem}
         ></input>
         <RedHeartsAndDiamonds text={name} />
