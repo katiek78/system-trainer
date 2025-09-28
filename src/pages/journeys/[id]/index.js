@@ -41,6 +41,7 @@ const JourneyPage = ({
   user,
   isAdmin,
   journeys,
+  linkedFromJourneys,
 }) => {
   const router = useRouter();
   const contentType = "application/json";
@@ -65,14 +66,6 @@ const JourneyPage = ({
   const [selectedPointIndexForLinking, setSelectedPointIndexForLinking] =
     useState(null);
   const [newJourneyName, setNewJourneyName] = useState("");
-
-  // const fetchJourneys = async () => {
-  //   const res = await fetch("/api/journeys/names");
-  //   const data = await res.json();
-  //   const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
-  //   setJourneys(sortedData);
-  // };
-  console.log(journey.name);
 
   useEffect(() => {
     const pageFromUrl = router.query.page ? parseInt(router.query.page) : 1;
@@ -496,6 +489,23 @@ const JourneyPage = ({
             </>
           )}
         </h2>
+        {/* --- Linked from journeys section --- */}
+        {typeof linkedFromJourneys !== "undefined" &&
+          linkedFromJourneys.length > 0 && (
+            <div className="mb-2 text-md md:text-lg lg:text-xl font-mono">
+              <span className="font-semibold">Linked from:</span>
+              {linkedFromJourneys.map((j) => (
+                <span key={j._id} className="ml-2">
+                  <Link
+                    href={`/journeys/${j._id}`}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {j.name}
+                  </Link>
+                </span>
+              ))}
+            </div>
+          )}
 
         <div className="journey-btn-container">
           {journey.id && points && (
@@ -992,12 +1002,19 @@ export const getServerSideProps = withPageAuthRequired({
 
     const journey = JSON.parse(JSON.stringify(journeyResult));
 
-    const journeyNamesResult = await Journey.find(
-      { userId: user.sub }, // adjust if needed
-      "_id name" // only these fields
-    ).lean();
+    // Get all journeys for the user (with points)
+    const allJourneysResult = await Journey.find({ userId: user.sub }).lean();
+    const allJourneys = JSON.parse(JSON.stringify(allJourneysResult));
 
-    const journeyNames = JSON.parse(JSON.stringify(journeyNamesResult));
+    // Find journeys that link to this journey
+    const linkedFromJourneys = allJourneys
+      .filter((j) =>
+        j.points.some((p) => p.linkedJourneyID === journey._id.toString())
+      )
+      .map((j) => ({ _id: j._id, name: j.name }));
+
+    // For dropdowns etc, just names
+    const journeyNames = allJourneys.map((j) => ({ _id: j._id, name: j.name }));
     const sortedJourneyNames = journeyNames.sort((a, b) =>
       a.name.localeCompare(b.name)
     );
@@ -1021,6 +1038,7 @@ export const getServerSideProps = withPageAuthRequired({
         user,
         isAdmin: adminStatus,
         journeys: sortedJourneyNames,
+        linkedFromJourneys,
       },
     };
   },
