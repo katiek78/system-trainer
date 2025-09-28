@@ -81,6 +81,12 @@ const JourneyPage = ({
     setIsLoading(false);
   }, [router.query.page, journey, isListView]);
 
+  // Reset allPoints when journey changes
+  useEffect(() => {
+    setAllPoints(null);
+    setIsListView(true);
+  }, [journey.id]);
+
   const preloadStreetViewImages = async () => {
     const preloadPromises = points.map(async (point) => {
       if (!isLocationStreetView(point.location)) return Promise.resolve();
