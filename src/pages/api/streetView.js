@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     const API_KEY = process.env.STREET_VIEW_API_KEY;
-    const IMAGE_API_KEY = process.env.GOOGLE_IMAGE_SEARCH_API_KEY;
+    //const IMAGE_API_KEY = process.env.GOOGLE_IMAGE_SEARCH_API_KEY;
     if (!API_KEY) {
       console.error("API Key is missing.");
       return res.status(500).json({ message: "API Key is missing." });
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     try {
       if (type === "image") {
         // Fetch static image URL
-        const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}&key=${IMAGE_API_KEY}`;
+        const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${location}&heading=${heading}&pitch=${pitch}&fov=${fov}&key=${API_KEY}`;
 
         return res.status(200).json({ streetViewUrl });
       } else {
