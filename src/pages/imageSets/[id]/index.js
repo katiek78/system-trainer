@@ -835,11 +835,14 @@ const ImageSetPage = ({
               className="ml-3"
               required
             >
+              <option value="">-- Select an image set --</option>
               {/* show all image sets except this one */}
               {imageSets
                 .filter((el) => el._id !== imageSet._id)
                 .map((el) => (
-                  <option value={el._id}>{el.name}</option>
+                  <option key={el._id} value={el._id}>
+                    {el.name}
+                  </option>
                 ))}
             </select>
 
