@@ -43,12 +43,55 @@ const JourneysPage = ({
   const contentType = "application/json";
   const router = useRouter();
 
-  // Handle creating a new journey from selected journeys (placeholder)
-  const handleCreateFromSelected = () => {
-    // TODO: Implement API call to create a new journey from selectedJourneyIds
-    setMessage(
-      "Feature not yet implemented. This will create a new journey from the selected journeys in order."
-    );
+  // Delete a journey by ID
+  const handleDelete = async (journeyId) => {
+    if (!window.confirm("Are you sure you want to delete this journey?"))
+      return;
+    setMessage("Deleting journey...");
+    try {
+      const res = await fetch(`/api/journeys/${journeyId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": contentType },
+      });
+      if (res.ok) {
+        setMessage("Journey deleted.");
+        refreshData(router);
+      } else {
+        const data = await res.json();
+        setMessage(data.message || "Failed to delete journey.");
+      }
+    } catch (err) {
+      setMessage("Error deleting journey.");
+    }
+  };
+
+  // Handle creating a new journey from selected journeys
+  const handleCreateFromSelected = async () => {
+    if (selectedJourneyIds.length < 2) return;
+    setMessage("Creating new journey...");
+    try {
+      const res = await fetch("/api/journeys/merge", {
+        method: "POST",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: JSON.stringify({
+          journeyIds: selectedJourneyIds,
+          // Optionally prompt for a name, or use a default
+          name: `Merged journey (${selectedJourneyIds.length})`,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.journey && data.journey._id) {
+        setMessage("Journey created successfully!");
+        // Redirect to the new journey page
+        router.push(`/journeys/${data.journey._id}`);
+      } else {
+        setMessage(data.message || "Failed to create journey.");
+      }
+    } catch (err) {
+      setMessage("Error creating journey.");
+    }
   };
 
   // Toggle selection of a journey for multi-select
