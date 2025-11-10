@@ -116,13 +116,26 @@ export default async function handler(req, res) {
         });
 
         // Update in one DB call
-        await ImageSet.updateOne({ _id: id }, { $set: { images: newImages } });
+        const updateResult = await ImageSet.updateOne(
+          { _id: id },
+          { $set: { images: newImages } }
+        );
+        console.log("Update result:", updateResult);
+
+        // Fetch the updated document to verify
+        const verifySet = await ImageSet.findOne({ _id: id }).lean();
+        console.log(
+          "First 3 images after update:",
+          verifySet.images.slice(0, 3)
+        );
 
         const moreBatches = batchEnd < targetSet.images.length;
         return res.status(200).json({
           updatedCount,
           moreBatches,
           nextBatchIndex: moreBatches ? batchIndex + 1 : null,
+          updateResult,
+          verifyImages: verifySet.images.slice(0, 3),
         });
       } catch (err) {
         console.error("PUT handler error:", err);
