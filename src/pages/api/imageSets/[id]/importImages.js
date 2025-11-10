@@ -15,6 +15,8 @@ export default async function handler(req, res) {
         const sourceSetID = req.body.sourceSetID;
         const overwrite = req.body.overwrite;
         const id = req.query.id;
+        const batchSize = req.body.batchSize || 200; // default batch size
+        const batchIndex = req.body.batchIndex || 0; // default to first batch
 
         // Validate required inputs
         if (!sourceSetID || !id) {
@@ -56,8 +58,15 @@ export default async function handler(req, res) {
           }
         }
 
-        // Merge images
-        const newImages = targetSet.images.map((targetImg) => {
+        // Batching: determine which images to process in this batch
+        const allTargetIndexes = targetSet.images.map((img, idx) => idx);
+        const batchStart = batchIndex * batchSize;
+        const batchEnd = batchStart + batchSize;
+        const batchIndexes = allTargetIndexes.slice(batchStart, batchEnd);
+
+        // Merge images for this batch only
+        const newImages = targetSet.images.map((targetImg, idx) => {
+          if (!batchIndexes.includes(idx)) return targetImg;
           const src = sourceMap[targetImg.phonetics];
           if (!src) return targetImg;
           if (overwrite || (!targetImg.imageItem && !targetImg.URL)) {
@@ -76,7 +85,12 @@ export default async function handler(req, res) {
         // Update in one DB call
         await ImageSet.updateOne({ _id: id }, { $set: { images: newImages } });
 
-        return res.status(200).json({ updatedCount });
+        const moreBatches = batchEnd < targetSet.images.length;
+        return res.status(200).json({
+          updatedCount,
+          moreBatches,
+          nextBatchIndex: moreBatches ? batchIndex + 1 : null,
+        });
       } catch (err) {
         console.error("PUT handler error:", err);
         return res.status(500).json({ error: "Internal server error" });

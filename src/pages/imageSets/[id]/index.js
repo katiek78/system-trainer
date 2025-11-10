@@ -637,43 +637,40 @@ const ImageSetPage = ({
   const handleSubmitImportPhonetics = async (e) => {
     e.preventDefault();
 
-    //   //first, get imageSet being imported from
     const fromID = importImagesForm.imageSetFrom;
+    const batchSize = 200;
+    let batchIndex = 0;
+    let moreBatches = true;
+    let totalUpdated = 0;
 
     try {
-      console.log(
-        "fromID:",
-        fromID,
-        "imageSet._id:",
-        imageSet._id,
-        "overwrite:",
-        importImagesForm.overwrite
-      );
-
-      const res = await fetch(`/api/imageSets/${imageSet._id}/importImages`, {
-        method: "PUT",
-        headers: {
-          Accept: contentType,
-          "Content-Type": contentType,
-        },
-        body: JSON.stringify({
-          sourceSetID: fromID,
-          overwrite: importImagesForm.overwrite,
-        }),
-      });
-
-      // Throw error with status code in case Fetch API req failed
-      if (!res.ok) {
-        throw new Error(res.status);
+      while (moreBatches) {
+        const res = await fetch(`/api/imageSets/${imageSet._id}/importImages`, {
+          method: "PUT",
+          headers: {
+            Accept: contentType,
+            "Content-Type": contentType,
+          },
+          body: JSON.stringify({
+            sourceSetID: fromID,
+            overwrite: importImagesForm.overwrite,
+            batchSize,
+            batchIndex,
+          }),
+        });
+        if (!res.ok) {
+          throw new Error(res.status);
+        }
+        const result = await res.json();
+        totalUpdated += result.updatedCount || 0;
+        moreBatches = result.moreBatches;
+        batchIndex = result.nextBatchIndex || 0;
       }
-
-      const { data } = await res.json();
-
       getImageSet(imageSet._id);
-
       setIsShowingImportPhoneticsDiv(false);
+      setMessage(`Import complete. Images updated: ${totalUpdated}`);
     } catch (error) {
-      setMessage("Failed to update images." + error);
+      setMessage("Failed to update images. " + error);
     }
   };
 
