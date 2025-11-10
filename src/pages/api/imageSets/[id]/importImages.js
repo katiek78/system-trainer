@@ -78,15 +78,25 @@ export default async function handler(req, res) {
             newImage.starred = src.starred;
             updated = true;
           } else {
-            if (!targetImg.imageItem && src.imageItem) {
+            // Treat empty string as missing
+            if (
+              (targetImg.imageItem === undefined ||
+                targetImg.imageItem === null ||
+                targetImg.imageItem === "") &&
+              src.imageItem
+            ) {
               newImage.imageItem = src.imageItem;
               updated = true;
             }
-            if (!targetImg.URL && src.URL) {
+            if (
+              (targetImg.URL === undefined ||
+                targetImg.URL === null ||
+                targetImg.URL === "") &&
+              src.URL
+            ) {
               newImage.URL = src.URL;
               updated = true;
             }
-            // Optionally, only update recentAttempts/starred if a new image or URL is set
             if (updated) {
               newImage.recentAttempts = src.recentAttempts;
               newImage.starred = src.starred;
