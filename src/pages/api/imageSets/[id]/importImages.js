@@ -32,8 +32,14 @@ export default async function handler(req, res) {
 
         // Fetch both sets
         const [sourceSet, targetSet] = await Promise.all([
-          ImageSet.findOne({ _id: sourceSetID }).exec(),
-          ImageSet.findOne({ _id: id }).exec(),
+          ImageSet.findOne({ _id: sourceSetID })
+            .select({ "images.phonetics": 1, "images.imageItem": 1 })
+            .lean()
+            .exec(),
+          ImageSet.findOne({ _id: id })
+            .select({ "images.phonetics": 1, "images.imageItem": 1 })
+            .lean()
+            .exec(),
         ]);
         if (!sourceSet) {
           return res.status(404).json({ error: "Source image set not found." });
@@ -54,65 +60,59 @@ export default async function handler(req, res) {
         const sourceMap = {};
         for (const img of sourceImages) {
           if (img.phonetics && img.imageItem !== "") {
-            sourceMap[img.phonetics] = img;
+            sourceMap[img.phonetics] = img.imageItem;
           }
         }
 
         // Batching: determine which images to process in this batch
-        const allTargetIndexes = targetSet.images.map((img, idx) => idx);
-        const batchStart = batchIndex * batchSize;
-        const batchEnd = batchStart + batchSize;
-        const batchIndexes = allTargetIndexes.slice(batchStart, batchEnd);
+        const totalImages = targetSet.images.length;
+        const batchStart = Math.max(
+          0,
+          Math.min(batchIndex * batchSize, totalImages)
+        );
+        const batchEnd = Math.max(
+          batchStart,
+          Math.min(batchStart + batchSize, totalImages)
+        );
+        const batchIndexes = [];
+        console.log("Batch info:", {
+          batchIndex,
+          batchSize,
+          batchStart,
+          batchEnd,
+          totalImages,
+        });
+        for (let i = batchStart; i < batchEnd; i++) {
+          batchIndexes.push(i);
+        }
 
         // Merge images for this batch only
         const newImages = targetSet.images.map((targetImg, idx) => {
-          if (!batchIndexes.includes(idx)) return targetImg;
-          const src = sourceMap[targetImg.phonetics];
-          if (!src) return targetImg;
-          let updated = false;
-          let itemUpdated = false;
-          let urlUpdated = false;
-          let newImage = { ...targetImg };
-          if (overwrite) {
-            newImage.imageItem = src.imageItem;
-            newImage.URL = src.URL;
-            newImage.recentAttempts = src.recentAttempts;
-            newImage.starred = src.starred;
-            updated = true;
-          } else {
-            // Treat empty string as missing, update fields independently
-            if (
-              (targetImg.imageItem === undefined ||
-                targetImg.imageItem === null ||
-                targetImg.imageItem === "") &&
-              src.imageItem !== undefined
-            ) {
-              newImage.imageItem = src.imageItem;
-              itemUpdated = true;
-            }
-            if (
-              (targetImg.URL === undefined ||
-                targetImg.URL === null ||
-                targetImg.URL === "") &&
-              src.URL !== undefined
-            ) {
-              newImage.URL = src.URL;
-              urlUpdated = true;
-            }
-            if (itemUpdated || urlUpdated) {
-              newImage.recentAttempts = src.recentAttempts;
-              newImage.starred = src.starred;
+          try {
+            if (!batchIndexes.includes(idx)) return targetImg;
+            const srcImageItem = sourceMap[targetImg.phonetics];
+            if (srcImageItem === undefined) return targetImg;
+            let updated = false;
+            let newImage = { ...targetImg };
+            if (overwrite) {
+              newImage.imageItem = srcImageItem;
               updated = true;
-              // Debug log
-              console.log(`Updated image at idx ${idx}:`, {
-                itemUpdated,
-                urlUpdated,
-                newImage,
-              });
+            } else {
+              if (
+                targetImg.imageItem === undefined ||
+                targetImg.imageItem === null ||
+                targetImg.imageItem === ""
+              ) {
+                newImage.imageItem = srcImageItem;
+                updated = true;
+              }
             }
+            if (updated) updatedCount++;
+            return newImage;
+          } catch (err) {
+            console.error("Error processing image at idx", idx, err);
+            return targetImg;
           }
-          if (updated) updatedCount++;
-          return newImage;
         });
 
         // Update in one DB call
@@ -124,20 +124,12 @@ export default async function handler(req, res) {
         );
         console.log("Native update result:", updateResult);
 
-        // Fetch the updated document to verify
-        const verifySet = await ImageSet.findOne({ _id: id }).lean();
-        console.log(
-          "First 3 images after update:",
-          verifySet.images.slice(0, 3)
-        );
-
         const moreBatches = batchEnd < targetSet.images.length;
         return res.status(200).json({
           updatedCount,
           moreBatches,
           nextBatchIndex: moreBatches ? batchIndex + 1 : null,
           updateResult,
-          verifyImages: verifySet.images.slice(0, 3),
         });
       } catch (err) {
         console.error("PUT handler error:", err);
