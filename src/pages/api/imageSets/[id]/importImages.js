@@ -36,10 +36,7 @@ export default async function handler(req, res) {
             .select({ "images.phonetics": 1, "images.imageItem": 1 })
             .lean()
             .exec(),
-          ImageSet.findOne({ _id: id })
-            .select({ "images.phonetics": 1, "images.imageItem": 1 })
-            .lean()
-            .exec(),
+          ImageSet.findOne({ _id: id }).lean().exec(),
         ]);
         if (!sourceSet) {
           return res.status(404).json({ error: "Source image set not found." });
