@@ -116,11 +116,13 @@ export default async function handler(req, res) {
         });
 
         // Update in one DB call
-        const updateResult = await ImageSet.updateOne(
-          { _id: id },
+
+        // Use native MongoDB driver to force update
+        const updateResult = await ImageSet.collection.updateOne(
+          { _id: targetSet._id },
           { $set: { images: newImages } }
         );
-        console.log("Update result:", updateResult);
+        console.log("Native update result:", updateResult);
 
         // Fetch the updated document to verify
         const verifySet = await ImageSet.findOne({ _id: id }).lean();
