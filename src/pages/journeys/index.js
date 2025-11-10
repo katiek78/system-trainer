@@ -18,6 +18,7 @@ import { refreshData } from "@/lib/refreshData";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { TRADITIONAL_DISCIPLINES, ML_DISCIPLINES } from "@/lib/disciplines";
+
 import JourneyAssignment from "@/models/JourneyAssignment";
 
 const JourneysPage = ({
@@ -27,7 +28,6 @@ const JourneysPage = ({
   assignments,
   folders,
 }) => {
-  //let user = useUser(); //should we be using this instead?
   const searchParams = useSearchParams();
   const startWithJourneyView =
     searchParams.get("startWithJourneyView") === "true" ||
@@ -38,11 +38,29 @@ const JourneysPage = ({
   );
   const [openFolders, setOpenFolders] = useState({});
   const [selectedJourneyId, setSelectedJourneyId] = useState(null);
+  const [selectedJourneyIds, setSelectedJourneyIds] = useState([]);
   const [showFolderModal, setShowFolderModal] = useState(false);
-
   const contentType = "application/json";
   const router = useRouter();
 
+  // Handle creating a new journey from selected journeys (placeholder)
+  const handleCreateFromSelected = () => {
+    // TODO: Implement API call to create a new journey from selectedJourneyIds
+    setMessage(
+      "Feature not yet implemented. This will create a new journey from the selected journeys in order."
+    );
+  };
+
+  // Toggle selection of a journey for multi-select
+  const handleSelectJourney = (journeyId) => {
+    setSelectedJourneyIds((prev) =>
+      prev.includes(journeyId)
+        ? prev.filter((id) => id !== journeyId)
+        : [...prev, journeyId]
+    );
+  };
+
+  // Toggle open/close state for a folder
   const toggleFolder = (folderId) => {
     setOpenFolders((prev) => ({
       ...prev,
@@ -50,82 +68,19 @@ const JourneysPage = ({
     }));
   };
 
-  const handleCreateNewFolder = () => {
-    //TODO
-  };
-
-  const handleClickJourney = (journeyId) => {
-    router.push(`/journeys/${journeyId}`);
-  };
-
+  // Switch to journey view
   const handleJourneyView = () => {
     setIsJourneyView(true);
   };
 
+  // Switch to assignment view
   const handleAssignmentView = () => {
     setIsJourneyView(false);
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this journey?"
-    );
-    if (confirmed) {
-      //remove it from the database
-      try {
-        await fetch(`/api/journeys/${id}`, {
-          method: "Delete",
-        });
-        refreshData(router);
-      } catch (error) {
-        setMessage("Failed to delete the journey.");
-      }
-    }
-  };
-
-  const handleCopyPublic = async (id) => {
-    try {
-      // Fetch the details of the public image set based on the ID
-      const publicJourneyResponse = await fetch(`/api/journeys/${id}`, {
-        method: "GET",
-        headers: {
-          Accept: contentType,
-          "Content-Type": contentType,
-        },
-      });
-
-      if (!publicJourneyResponse.ok) {
-        throw new Error(
-          publicJourneyResponse.status + " when fetching journey"
-        );
-      }
-
-      // Extract the public journey data
-      const { data } = await publicJourneyResponse.json();
-
-      // Modify the retrieved data to include the user's ID
-      const { _id, ...modifiedJourneyData } = data;
-      modifiedJourneyData.userId = user.sub; // Assuming user.sub contains the user's ID
-
-      // POST the modified data to create a copy in the user's private sets
-      const res = await fetch("/api/journeys", {
-        method: "POST",
-        headers: {
-          Accept: contentType,
-          "Content-Type": contentType,
-        },
-        body: JSON.stringify(modifiedJourneyData),
-      });
-
-      // Throw error with status code in case Fetch API req failed
-      if (!res.ok) {
-        throw new Error(res.status + " when copying journey");
-      }
-
-      router.push({ pathname: `/journeys` });
-    } catch (error) {
-      setMessage("Failed to copy journey. " + error);
-    }
+  // Navigate to a specific journey
+  const handleClickJourney = (journeyId) => {
+    router.push(`/journeys/${journeyId}`);
   };
 
   const handleMoveToFolder = async (journeyId, folderId) => {
@@ -148,7 +103,6 @@ const JourneysPage = ({
   };
 
   const sortedFolders = folders.sort((a, b) => a.name.localeCompare(b.name));
-
   const sortedJourneys = journeys.sort((a, b) => a.name.localeCompare(b.name));
   const sortedPublicJourneys = publicJourneys.sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -161,11 +115,9 @@ const JourneysPage = ({
 
   const getAssignmentsForDiscipline = (d) => {
     const matchingAssignments = assignments.filter((a) => a.discipline === d);
-
     if (matchingAssignments.length === 0) {
       return <p></p>;
     }
-
     return (
       <div>
         {matchingAssignments.map((assignment) => (
@@ -175,7 +127,6 @@ const JourneysPage = ({
                 <strong>Option {i + 1}:</strong>{" "}
                 <span className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl text-white font-medium text-lg shadow-sm border border-blue-900 mr-2">
                   {set.journeyIDs.map((id, j) => {
-                    //const journeyName = getNameFromJourneyID(id);
                     return (
                       <>
                         <span key={id} onClick={() => handleClickJourney(id)}>
@@ -293,6 +244,17 @@ const JourneysPage = ({
                                 key={journey._id}
                                 className="flex items-center"
                               >
+                                <input
+                                  type="checkbox"
+                                  className="mr-2"
+                                  checked={selectedJourneyIds.includes(
+                                    journey._id
+                                  )}
+                                  onChange={() =>
+                                    handleSelectJourney(journey._id)
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                />
                                 <Link
                                   href="/journeys/[id]/"
                                   as={`/journeys/${journey._id}/`}
@@ -331,8 +293,13 @@ const JourneysPage = ({
                 sortedJourneys
                   .filter((j) => !j.folderId)
                   .map((journey) => (
-                    <p className="font-semibold text-xl">
-                      {" "}
+                    <p className="font-semibold text-xl" key={journey._id}>
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={selectedJourneyIds.includes(journey._id)}
+                        onChange={() => handleSelectJourney(journey._id)}
+                      />
                       <Link
                         href="/journeys/[id]/"
                         as={`/journeys/${journey._id}/`}
@@ -360,6 +327,46 @@ const JourneysPage = ({
                       />
                     </p>
                   ))}
+              {/* Selected journeys reordering UI */}
+              {selectedJourneyIds.length > 1 && (
+                <div className="my-6 p-4 bg-gray-100 rounded">
+                  <h3 className="font-semibold mb-2">
+                    Selected journeys order
+                  </h3>
+                  <ul>
+                    {selectedJourneyIds.map((id, idx) => {
+                      const journey = journeys.find((j) => j._id === id);
+                      if (!journey) return null;
+                      return (
+                        <li key={id} className="flex items-center mb-2">
+                          <span className="flex-1">{journey.name}</span>
+                          <button
+                            className="px-2 py-1 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            onClick={() => moveSelectedJourney(idx, "up")}
+                            disabled={idx === 0}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className="px-2 py-1 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            onClick={() => moveSelectedJourney(idx, "down")}
+                            disabled={idx === selectedJourneyIds.length - 1}
+                          >
+                            ↓
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <button
+                    className="mt-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
+                    onClick={handleCreateFromSelected}
+                    disabled={selectedJourneyIds.length < 2}
+                  >
+                    Create new journey from selected
+                  </button>
+                </div>
+              )}
             </div>
 
             <br />
