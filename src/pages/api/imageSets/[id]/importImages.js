@@ -69,17 +69,31 @@ export default async function handler(req, res) {
           if (!batchIndexes.includes(idx)) return targetImg;
           const src = sourceMap[targetImg.phonetics];
           if (!src) return targetImg;
-          if (overwrite || (!targetImg.imageItem && !targetImg.URL)) {
-            updatedCount++;
-            return {
-              ...targetImg,
-              imageItem: src.imageItem,
-              URL: src.URL,
-              recentAttempts: src.recentAttempts,
-              starred: src.starred,
-            };
+          let updated = false;
+          let newImage = { ...targetImg };
+          if (overwrite) {
+            newImage.imageItem = src.imageItem;
+            newImage.URL = src.URL;
+            newImage.recentAttempts = src.recentAttempts;
+            newImage.starred = src.starred;
+            updated = true;
+          } else {
+            if (!targetImg.imageItem && src.imageItem) {
+              newImage.imageItem = src.imageItem;
+              updated = true;
+            }
+            if (!targetImg.URL && src.URL) {
+              newImage.URL = src.URL;
+              updated = true;
+            }
+            // Optionally, only update recentAttempts/starred if a new image or URL is set
+            if (updated) {
+              newImage.recentAttempts = src.recentAttempts;
+              newImage.starred = src.starred;
+            }
           }
-          return targetImg;
+          if (updated) updatedCount++;
+          return newImage;
         });
 
         // Update in one DB call
