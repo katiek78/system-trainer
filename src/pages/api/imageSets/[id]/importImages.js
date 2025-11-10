@@ -70,6 +70,8 @@ export default async function handler(req, res) {
           const src = sourceMap[targetImg.phonetics];
           if (!src) return targetImg;
           let updated = false;
+          let itemUpdated = false;
+          let urlUpdated = false;
           let newImage = { ...targetImg };
           if (overwrite) {
             newImage.imageItem = src.imageItem;
@@ -78,28 +80,35 @@ export default async function handler(req, res) {
             newImage.starred = src.starred;
             updated = true;
           } else {
-            // Treat empty string as missing
+            // Treat empty string as missing, update fields independently
             if (
               (targetImg.imageItem === undefined ||
                 targetImg.imageItem === null ||
                 targetImg.imageItem === "") &&
-              src.imageItem
+              src.imageItem !== undefined
             ) {
               newImage.imageItem = src.imageItem;
-              updated = true;
+              itemUpdated = true;
             }
             if (
               (targetImg.URL === undefined ||
                 targetImg.URL === null ||
                 targetImg.URL === "") &&
-              src.URL
+              src.URL !== undefined
             ) {
               newImage.URL = src.URL;
-              updated = true;
+              urlUpdated = true;
             }
-            if (updated) {
+            if (itemUpdated || urlUpdated) {
               newImage.recentAttempts = src.recentAttempts;
               newImage.starred = src.starred;
+              updated = true;
+              // Debug log
+              console.log(`Updated image at idx ${idx}:`, {
+                itemUpdated,
+                urlUpdated,
+                newImage,
+              });
             }
           }
           if (updated) updatedCount++;
