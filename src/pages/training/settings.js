@@ -399,7 +399,10 @@ export default function NumberTrainingSettings() {
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => alert("Start training not yet implemented")}
+            onClick={() => router.push({
+              pathname: '/training/numbersMemorisation',
+              query: { amount: settings.digits }
+            })}
           >
             Start Training
           </button>
