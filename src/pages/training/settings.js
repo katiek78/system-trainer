@@ -18,13 +18,30 @@ export default function NumberTrainingSettings() {
   useEffect(() => {
     const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
     const storedMode = localStorage.getItem("mode");
-    setSettings((prev) => ({
-      ...prev,
-      ...(storedHighlightGrouping
-        ? { highlightGrouping: storedHighlightGrouping }
-        : {}),
-      ...(storedMode ? { mode: storedMode } : {}),
-    }));
+    if (storedMode) {
+      const preset = modeOptions.find((opt) => opt.value === storedMode);
+      setSettings((prev) => ({
+        ...prev,
+        ...(storedHighlightGrouping
+          ? { highlightGrouping: storedHighlightGrouping }
+          : {}),
+        mode: storedMode,
+        ...(storedMode !== "XN" && preset
+          ? {
+              digits: preset.digits,
+              memorisationTime: preset.memorisationTime,
+              recallTime: preset.recallTime,
+            }
+          : {}),
+      }));
+    } else {
+      setSettings((prev) => ({
+        ...prev,
+        ...(storedHighlightGrouping
+          ? { highlightGrouping: storedHighlightGrouping }
+          : {}),
+      }));
+    }
   }, []);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]); // all journeySets for this discipline
