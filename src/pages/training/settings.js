@@ -19,6 +19,15 @@ export default function NumberTrainingSettings() {
   const [userJourneys, setUserJourneys] = useState([]);
   const router = useRouter();
 
+  useEffect(() => {
+    if (options.length > 0 && Array.isArray(options[selectedOption])) {
+      setSettings((prev) => ({
+        ...prev,
+        journeys: options[selectedOption].map((j) => j.id),
+      }));
+    }
+  }, [options, selectedOption]);
+
   // Helper: parse highlight grouping string to array
   function parseHighlightGrouping(str) {
     if (!str) return [];
@@ -501,6 +510,7 @@ export default function NumberTrainingSettings() {
                   amount: settings.digits,
                   highlightGrouping: settings.highlightGrouping,
                   imageSets: (settings.imageSets || []).join(","),
+                  journeyIds: (settings.journeys || []).join(","),
                 },
               })
             }

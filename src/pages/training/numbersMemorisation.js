@@ -2,17 +2,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-const DIGITS_PER_ROW = 40;
-const ROWS_PER_PAGE = 12;
-
-function generateRandomDigits(amount) {
-  let digits = "";
-  for (let i = 0; i < amount; i++) {
-    digits += Math.floor(Math.random() * 10);
-  }
-  return digits;
-}
-
 export default function NumbersMemorisation() {
   const router = useRouter();
   const {
@@ -20,6 +9,7 @@ export default function NumbersMemorisation() {
     mode = "5N",
     highlightGrouping = "",
     imageSets = "",
+    journeyIds = "",
   } = router.query;
   // Parse imageSets param to array of IDs
   const imageSetIds = imageSets ? imageSets.split(",").filter(Boolean) : [];
@@ -47,20 +37,55 @@ export default function NumbersMemorisation() {
     }
     fetchImageSets();
   }, [imageSets]);
+
+  // Fetch selected journey(s) and use their points for hints
+  const journeyIdArr = journeyIds ? journeyIds.split(",").filter(Boolean) : [];
+  const [journeyData, setJourneyData] = useState([]);
+  useEffect(() => {
+    async function fetchJourneys() {
+      console.log("Fetching journeys for IDs:", journeyIdArr);
+      if (journeyIdArr.length === 0) {
+        setJourneyData([]);
+        return;
+      }
+      const results = await Promise.all(
+        journeyIdArr.map(async (id) => {
+          const res = await fetch(`/api/journeys/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            return data.data || null;
+          }
+          return null;
+        })
+      );
+      setJourneyData(results.filter(Boolean));
+      console.log("Fetched journey data:", results.filter(Boolean));
+    }
+    fetchJourneys();
+  }, [journeyIds]);
+
+  // --- Begin moved logic inside component ---
+  // State for digits, highlight, and page
   const [digits, setDigits] = useState("");
-  const [page, setPage] = useState(0);
-  // Highlight state
   const [highlightGroupIdx, setHighlightGroupIdx] = useState(0);
-  // Parse highlight grouping string to array
-  function parseHighlightGrouping(str) {
-    if (!str) return [];
-    return str
-      .split("-")
-      .map((s) => parseInt(s, 10))
-      .filter((n) => !isNaN(n) && n > 0);
+  const [page, setPage] = useState(0);
+  const DIGITS_PER_ROW = 40;
+  const ROWS_PER_PAGE = 10;
+
+  // Parse highlight grouping
+  const highlightGroups = highlightGrouping
+    ? highlightGrouping.split("-").map(Number).filter(Boolean)
+    : [];
+
+  // Utility: generate a string of random digits of given length
+  function generateRandomDigits(length) {
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += Math.floor(Math.random() * 10).toString();
+    }
+    return result;
   }
-  const highlightGroups = parseHighlightGrouping(highlightGrouping);
-  // Compute highlight ranges (start, end) for all groups
+
   function getHighlightRanges(groups) {
     const ranges = [];
     let idx = 0;
@@ -159,9 +184,63 @@ export default function NumbersMemorisation() {
   const digitFontSize = Math.max(Math.floor(digitWidth * 0.9), 16); // min 16px
   const digitGap = Math.max(Math.floor(digitWidth * 0.15), 2); // min 2px
 
-  // Example: show which image sets are loaded (for debugging/demo)
-  // Remove or replace this with your actual logic as needed
-  // You can use imageSetData for lookups during memorisation
+  // For complex groupings, all subgroups in a cycle use the same location
+  function getLocationIdxForGroupIdx(groupIdx) {
+    if (highlightGroups.length === 0) return 0;
+    let total = 0;
+    let locIdx = 0;
+    while (total <= groupIdx) {
+      total += highlightGroups.length;
+      if (total > groupIdx) break;
+      locIdx++;
+    }
+    return locIdx;
+  }
+  function getDigitsForGroup() {
+    if (highlightRanges.length === 0) return "";
+    const [start, end] = highlightRanges[highlightGroupIdx] || [];
+    return digits.slice(start, end);
+  }
+  function getImageTextForGroup() {
+    if (imageSetData.length === 0 || highlightGroups.length === 0) return "";
+    const groupInCycle = highlightGroupIdx % highlightGroups.length;
+    const set = imageSetData[groupInCycle];
+    if (!set || !Array.isArray(set.images)) return "";
+    const digitsStr = getDigitsForGroup();
+    let found = set.images.find((img) => img.name === digitsStr);
+    if (!found) {
+      return digitsStr;
+    }
+    let text = found.imageItem || found.name || digitsStr;
+    if (found.phonetics) {
+      text += ` (${found.phonetics})`;
+    }
+    return text;
+  }
+  function getLocationAndObject() {
+    // Use journeyData and their points
+    // For now, use the first journey (or cycle if multiple)
+    if (!journeyData || journeyData.length === 0)
+      return { location: "", object: "" };
+    const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
+    // Which journey to use (cycle if more than one)
+    const journeyIdx = locIdx % journeyData.length;
+    const journey = journeyData[journeyIdx];
+    if (
+      !journey ||
+      !Array.isArray(journey.points) ||
+      journey.points.length === 0
+    )
+      return { location: "", object: "" };
+    // Which point to use (cycle if more than points available)
+    const pointIdx = locIdx % journey.points.length;
+    const point = journey.points[pointIdx];
+    return {
+      location: point?.name || "",
+      object: point?.memoItem || "",
+    };
+  }
+  // --- End moved logic inside component ---
 
   return (
     <>
@@ -173,18 +252,67 @@ export default function NumbersMemorisation() {
       </Head>
       <div style={{ padding: 24 }}>
         <h1 style={{ marginBottom: 24, fontSize: 30 }}>{disciplineLabel}</h1>
-        {imageSetData.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <b>Loaded image sets:</b>
-            <ul>
-              {imageSetData.map((set, idx) => (
-                <li key={set._id || idx}>
-                  {set.name} ({set.images?.length || 0} items)
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+
+        {/* HINT BAR */}
+        <div
+          style={{
+            marginBottom: 16,
+            padding: "8px 16px",
+            background: "#f8f9fa",
+            borderRadius: 6,
+            fontSize: 18,
+            color: "#333",
+            minHeight: 32,
+          }}
+        >
+          {(() => {
+            const { location, object } = getLocationAndObject();
+            const imageText = getImageTextForGroup();
+            if (!location && !object && !imageText) return null;
+            return (
+              <span>
+                <b>{location}</b>
+                {object ? ` - ${object}` : ""}
+                {imageText ? `: ${imageText}` : ""}
+              </span>
+            );
+          })()}
+        </div>
+
+        {/* DEBUG: Show journey data and indices */}
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+          <details>
+            <summary>Debug: Journey/Point Mapping</summary>
+            <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+              {(() => {
+                if (!journeyData || journeyData.length === 0)
+                  return "No journey data.";
+                const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
+                const journeyIdx = locIdx % journeyData.length;
+                const journey = journeyData[journeyIdx];
+                if (
+                  !journey ||
+                  !Array.isArray(journey.points) ||
+                  journey.points.length === 0
+                )
+                  return "No points in journey.";
+                const pointIdx = locIdx % journey.points.length;
+                const point = journey.points[pointIdx];
+                return [
+                  `journeyIds: ${journeyIds}`,
+                  `locIdx: ${locIdx}`,
+                  `journeyIdx: ${journeyIdx}`,
+                  `pointIdx: ${pointIdx}`,
+                  `journey.name: ${journey.name}`,
+                  `point.location: ${point?.location}`,
+                  `point.name: ${point?.name}`,
+                  `point.memoItem: ${point?.memoItem}`,
+                  `point: ${JSON.stringify(point, null, 2)}`,
+                ].join("\n");
+              })()}
+            </pre>
+          </details>
+        </div>
         <div
           style={{
             background: "#fff",
