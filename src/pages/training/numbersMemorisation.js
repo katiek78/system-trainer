@@ -250,49 +250,122 @@ export default function NumbersMemorisation() {
           rel="stylesheet"
         />
       </Head>
-      <div style={{ padding: 24 }}>
-        <h1 style={{ marginBottom: 24, fontSize: 30 }}>{disciplineLabel}</h1>
+      <div className="p-6">
+        <h1 className="mb-6 text-2xl sm:text-3xl">{disciplineLabel}</h1>
 
-        {/* HINT BAR */}
-        <div
-          style={{
-            marginBottom: 16,
-            padding: "8px 16px",
-            background: "#f8f9fa",
-            borderRadius: 6,
-            fontSize: 18,
-            color: "#333",
-            minHeight: 32,
-          }}
-        >
-          {(() => {
-            const { location, object } = getLocationAndObject();
-            const imageText = getImageTextForGroup();
-            if (!location && !object && !imageText) return null;
-            return (
-              <span>
-                <b>{location}</b>
-                {object ? ` - ${object}` : ""}
-                {imageText ? `: ${imageText}` : ""}
-              </span>
-            );
-          })()}
+        {/* HINT BAR (fixed height, no wrap on mobile) */}
+        <div className="mb-4 px-4 py-2 bg-gray-100 rounded text-[18px] text-gray-800 h-32 w-full">
+          {/* Mobile: fixed width, no wrap, ellipsis */}
+          <span
+            className="block sm:hidden mx-auto overflow-hidden whitespace-nowrap text-ellipsis"
+            style={{
+              width: "320px",
+              maxWidth: "90vw",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+              overflow: "hidden",
+              display: "block",
+            }}
+          >
+            {(() => {
+              const { location, object } = getLocationAndObject();
+              const imageText = getImageTextForGroup();
+              if (!location && !object && !imageText) return null;
+              return (
+                <span>
+                  <b>{location}</b>
+                  {object ? ` - ${object}` : ""}
+                  {imageText ? `: ${imageText}` : ""}
+                </span>
+              );
+            })()}
+          </span>
+          {/* Desktop: responsive */}
+          <span className="hidden sm:block">
+            {(() => {
+              const { location, object } = getLocationAndObject();
+              const imageText = getImageTextForGroup();
+              if (!location && !object && !imageText) return null;
+              return (
+                <span>
+                  <b>{location}</b>
+                  {object ? ` - ${object}` : ""}
+                  {imageText ? `: ${imageText}` : ""}
+                </span>
+              );
+            })()}
+          </span>
         </div>
 
+        {/* MOBILE: Only show focused digits, with navigation, fixed height */}
+        <div className="block sm:hidden">
+          <div
+            className="flex flex-col items-center justify-center bg-white rounded-lg shadow-md px-4 mb-6"
+            style={{
+              minHeight: "220px",
+              height: "220px",
+              maxHeight: "260px",
+              width: "320px",
+              maxWidth: "90vw",
+              marginLeft: "auto",
+              marginRight: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <span
+              className="text-4xl font-mono tracking-widest text-gray-900 select-all mb-6"
+              style={{
+                minHeight: "2.5em",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {getDigitsForGroup()}
+            </span>
+            <div className="flex items-center justify-center mt-4">
+              <button
+                onClick={() =>
+                  setHighlightGroupIdx((idx) => Math.max(0, idx - 1))
+                }
+                disabled={highlightGroupIdx === 0}
+                className="mr-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                aria-label="Previous group"
+              >
+                Previous
+              </button>
+              <span className="mx-3 text-sm text-gray-600">
+                {highlightGroupIdx + 1} / {highlightRanges.length || 1}
+              </span>
+              <button
+                onClick={() =>
+                  setHighlightGroupIdx((idx) =>
+                    Math.min((highlightRanges.length || 1) - 1, idx + 1)
+                  )
+                }
+                disabled={
+                  highlightGroupIdx === (highlightRanges.length || 1) - 1
+                }
+                className="ml-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                aria-label="Next group"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP: Full grid */}
         <div
+          className="hidden sm:flex flex-col justify-start bg-white rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
           style={{
-            background: "#fff",
-            borderRadius: 8,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-            padding: "12px 32px 32px 32px",
             width: "98vw",
             maxWidth: "none",
             margin: "0 -24px 24px -24px",
-            fontFamily: "Roboto Mono",
-            minHeight: 400,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-start",
           }}
         >
           {rows.map((row, idx) => {
@@ -300,34 +373,13 @@ export default function NumbersMemorisation() {
             return (
               <div
                 key={idx}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: digitFontSize,
-                  fontFamily: "Roboto Mono",
-                  marginBottom: 12,
-                  flexWrap: "nowrap",
-                }}
+                className="flex items-center mb-3 flex-nowrap"
+                style={{ fontSize: digitFontSize }}
               >
-                <span
-                  style={{
-                    minWidth: 48,
-                    color: "#c00",
-                    fontStyle: "italic",
-                    fontSize: 16,
-                    marginRight: 18,
-                    textAlign: "right",
-                  }}
-                >
+                <span className="min-w-[48px] text-red-700 italic text-[16px] mr-4 text-right">
                   {globalRowIdx + 1}
                 </span>
-                <span
-                  style={{
-                    display: "flex",
-                    gap: digitGap,
-                    position: "relative",
-                  }}
-                >
+                <span className="flex gap-1 relative">
                   {/* Highlight rectangle for group if any part of group is in this row */}
                   {(() => {
                     if (highlightRanges.length === 0) return null;
@@ -390,22 +442,23 @@ export default function NumbersMemorisation() {
             );
           })}
         </div>
+
         {totalPages > 1 && (
-          <div style={{ marginTop: 16, textAlign: "center" }}>
+          <div className="mt-4 text-center">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              style={{ marginRight: 12 }}
+              className="mr-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
             >
               Previous
             </button>
-            <span style={{ margin: "0 12px" }}>
+            <span className="mx-3">
               Page {page + 1} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              style={{ marginLeft: 12 }}
+              className="ml-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
             >
               Next
             </button>
