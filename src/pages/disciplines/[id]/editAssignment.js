@@ -1,3 +1,20 @@
+// Map discipline code to display label (if needed)
+function getDisciplineLabel(code) {
+  switch (code) {
+    case "MN":
+      return "ML Numbers";
+    case "5N":
+      return "5-minute Numbers";
+    case "15N":
+      return "15-minute Numbers";
+    case "30N":
+      return "30-minute Numbers";
+    case "60N":
+      return "Hour Numbers";
+    default:
+      return code;
+  }
+}
 import { useState, useEffect } from "react";
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import { useRouter } from "next/router";
@@ -29,19 +46,21 @@ const EditAssignment = ({ user, journeys }) => {
     const fetchAssignment = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/disciplines?discipline=${discipline}`, {
-          method: "GET",
-          credentials: "include",
-        });
-
+        const res = await fetch(
+          `/api/journeyAssignments?discipline=${discipline}`
+        );
         if (!res.ok) throw new Error("Failed to fetch assignment");
         const data = await res.json();
-        if (data?.data) {
-          setAssignment(data.data);
-          console.log(data.data);
+        // data.options is an array of journey sets (arrays of {id, name})
+        if (data?.options) {
+          setAssignment({
+            discipline,
+            journeySets: data.options.map((opt) => ({
+              journeyIDs: opt.map((j) => j.id),
+            })),
+          });
         } else {
           setAssignment(null);
-          console.log("No assignments found");
         }
       } catch (err) {
         setError(err.message);
@@ -49,7 +68,6 @@ const EditAssignment = ({ user, journeys }) => {
         setLoading(false);
       }
     };
-
     fetchAssignment();
   }, [discipline, user]);
 
@@ -87,32 +105,36 @@ const EditAssignment = ({ user, journeys }) => {
 
     try {
       // Determine whether assignment exists to decide whether to POST or PUT
-      if (!assignment) {
+      if (
+        !assignment ||
+        !assignment.journeySets ||
+        assignment.journeySets.length === 0
+      ) {
         // POST: No existing assignment, create new one
         method = "POST";
-        res = await fetch(`/api/disciplines?discipline=${discipline}`, {
+        res = await fetch(`/api/journeyAssignments`, {
           method,
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            journeyId: selectedJourney, // Create a new assignment with a single journeyID
+            discipline,
+            options: [[selectedJourney]],
           }),
         });
       } else {
-        // PUT: Existing assignment, add new journeyID to the journeySets array
-        method = "PUT";
-        res = await fetch(`/api/disciplines?discipline=${discipline}`, {
+        // POST: Overwrite all options (for simplicity, always use POST)
+        method = "POST";
+        res = await fetch(`/api/journeyAssignments`, {
           method,
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            journeySets: [
-              ...assignment.journeySets,
-              { journeyIDs: [selectedJourney] }, // Append a new journey set with the selected journey
+            discipline,
+            options: [
+              ...assignment.journeySets.map((set) => [...set.journeyIDs]),
+              [selectedJourney],
             ],
           }),
         });
@@ -157,16 +179,17 @@ const EditAssignment = ({ user, journeys }) => {
     setAssignment(updatedAssignment);
 
     try {
-      // PUT: Existing assignment, remove journeyID at index journeyIndex from the journeySet at index journeySetIndex
-      const method = "PUT";
-      const res = await fetch(`/api/disciplines?discipline=${discipline}`, {
-        method,
-        credentials: "include",
+      // POST: Overwrite all options (removal)
+      const res = await fetch(`/api/journeyAssignments`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          journeySets: updatedAssignment.journeySets,
+          discipline,
+          options: updatedAssignment.journeySets.map((set) => [
+            ...set.journeyIDs,
+          ]),
         }),
       });
 
@@ -210,34 +233,28 @@ const EditAssignment = ({ user, journeys }) => {
 
     try {
       const updatedJourneySets = [...assignment.journeySets];
-
       // Only update if the setIndex is valid
       if (
         setIndex >= 0 &&
         setIndex < updatedJourneySets.length &&
-        !updatedJourneySets[setIndex].journeyIDs.includes(selectedJourney) // assuming we cannot use a journey twice in the same set
+        !updatedJourneySets[setIndex].journeyIDs.includes(selectedJourney)
       ) {
-        // Clone the journey set to avoid direct mutation
-        const updatedSet = {
+        updatedJourneySets[setIndex] = {
           ...updatedJourneySets[setIndex],
           journeyIDs: [
             ...updatedJourneySets[setIndex].journeyIDs,
             selectedJourney,
           ],
         };
-
-        // Replace the set at the given index
-        updatedJourneySets[setIndex] = updatedSet;
       }
-
-      const res = await fetch(`/api/disciplines?discipline=${discipline}`, {
-        method: "PUT",
-        credentials: "include",
+      const res = await fetch(`/api/journeyAssignments`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          journeySets: updatedJourneySets,
+          discipline,
+          options: updatedJourneySets.map((set) => [...set.journeyIDs]),
         }),
       });
 

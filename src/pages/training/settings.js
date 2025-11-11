@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 
 const defaultSettings = {
-  mode: "5min",
+  mode: "MN",
   digits: 80,
-  memorisationTime: 300,
-  recallTime: 600,
+  memorisationTime: 60,
+  recallTime: 240,
   journeys: [],
 };
 
@@ -55,6 +55,24 @@ export default function NumberTrainingSettings() {
   const [selectedOption, setSelectedOption] = useState(0);
   const [userJourneys, setUserJourneys] = useState([]);
   const router = useRouter();
+
+  // Save journey options to backend
+  const handleSaveOptions = async () => {
+    const discipline = getDisciplineLabel(settings.mode);
+    const res = await fetch("/api/journeyAssignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        discipline,
+        options: options.map((opt) => opt.map((j) => j.id)),
+      }),
+    });
+    if (res.ok) {
+      alert("Options saved!");
+    } else {
+      alert("Failed to save options.");
+    }
+  };
 
   // Map mode to discipline label for API
   function getDisciplineLabel(mode) {
@@ -377,13 +395,22 @@ export default function NumberTrainingSettings() {
           disabled={!isCustom}
         />
 
-        <button
-          type="button"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => alert("Start training not yet implemented")}
-        >
-          Start Training
-        </button>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={() => alert("Start training not yet implemented")}
+          >
+            Start Training
+          </button>
+          <button
+            type="button"
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleSaveOptions}
+          >
+            Save
+          </button>
+        </div>
       </form>
     </div>
   );
