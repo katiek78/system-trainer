@@ -250,12 +250,14 @@ export default function NumbersMemorisation() {
           rel="stylesheet"
         />
       </Head>
-      <div className="p-6">
-        <h1 className="mb-6 text-2xl sm:text-3xl">{disciplineLabel}</h1>
+      <div className="p-6 text-gray-900 dark:text-gray-100">
+        <h1 className="mb-6 text-2xl sm:text-3xl text-gray-900 dark:text-gray-100">
+          {disciplineLabel}
+        </h1>
 
         {/* HINT BAR: Responsive, single rendering. Mobile: tall, left-aligned, wraps from top. Desktop: short, left-aligned, no wrap. */}
         <div
-          className="mb-4 px-4 bg-gray-100 rounded text-[18px] text-gray-800 w-full"
+          className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full"
           style={{
             minHeight: "2.5rem",
             height: "auto",
@@ -332,7 +334,7 @@ export default function NumbersMemorisation() {
         {/* MOBILE: Only show focused digits, with navigation, fixed height */}
         <div className="block sm:hidden">
           <div
-            className="flex flex-col items-center justify-center bg-white rounded-lg shadow-md px-4 mb-6"
+            className="flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-4 mb-6"
             style={{
               minHeight: "220px",
               height: "220px",
@@ -345,7 +347,7 @@ export default function NumbersMemorisation() {
             }}
           >
             <span
-              className="text-4xl font-mono tracking-widest text-gray-900 select-all mb-6"
+              className="text-4xl font-mono tracking-widest text-gray-900 dark:text-gray-100 select-all mb-6"
               style={{
                 minHeight: "2.5em",
                 display: "flex",
@@ -365,12 +367,12 @@ export default function NumbersMemorisation() {
                   setHighlightGroupIdx((idx) => Math.max(0, idx - 1))
                 }
                 disabled={highlightGroupIdx === 0}
-                className="mr-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
                 aria-label="Previous group"
               >
                 Previous
               </button>
-              <span className="mx-3 text-sm text-gray-600">
+              <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
                 {highlightGroupIdx + 1} / {highlightRanges.length || 1}
               </span>
               <button
@@ -382,7 +384,7 @@ export default function NumbersMemorisation() {
                 disabled={
                   highlightGroupIdx === (highlightRanges.length || 1) - 1
                 }
-                className="ml-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
                 aria-label="Next group"
               >
                 Next
@@ -393,7 +395,7 @@ export default function NumbersMemorisation() {
 
         {/* DESKTOP: Full grid */}
         <div
-          className="hidden sm:flex flex-col justify-start bg-white rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
+          className="hidden sm:flex flex-col justify-start bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
           style={{
             width: "98vw",
             maxWidth: "none",
@@ -408,7 +410,7 @@ export default function NumbersMemorisation() {
                 className="flex items-center mb-3 flex-nowrap"
                 style={{ fontSize: digitFontSize }}
               >
-                <span className="min-w-[48px] text-red-700 italic text-[16px] mr-4 text-right">
+                <span className="min-w-[48px] text-red-700 dark:text-red-400 italic text-[16px] mr-4 text-right">
                   {globalRowIdx + 1}
                 </span>
                 <span className="flex gap-1 relative">
@@ -480,17 +482,17 @@ export default function NumbersMemorisation() {
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="mr-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="mx-3">
+            <span className="mx-3 text-gray-900 dark:text-gray-100">
               Page {page + 1} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className="ml-3 px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
               Next
             </button>
