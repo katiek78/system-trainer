@@ -577,7 +577,7 @@ const JourneyPage = ({
                 Locations:
               </h2>
               <div>{renderPageNumbers()}</div>
-              <div className="cards-container p-2 lg:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="cards-container p-2 lg:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {points?.map((point, i) => (
                   <div
                     className="point-card flex flex-col justify-between items-center relative mb-4 p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-xl transition duration-300"
