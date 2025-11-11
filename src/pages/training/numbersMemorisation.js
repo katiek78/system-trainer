@@ -15,7 +15,38 @@ function generateRandomDigits(amount) {
 
 export default function NumbersMemorisation() {
   const router = useRouter();
-  const { amount = 0, mode = "5N", highlightGrouping = "" } = router.query;
+  const {
+    amount = 0,
+    mode = "5N",
+    highlightGrouping = "",
+    imageSets = "",
+  } = router.query;
+  // Parse imageSets param to array of IDs
+  const imageSetIds = imageSets ? imageSets.split(",").filter(Boolean) : [];
+
+  // Fetch image set data for selected IDs
+  const [imageSetData, setImageSetData] = useState([]);
+  useEffect(() => {
+    async function fetchImageSets() {
+      if (imageSetIds.length === 0) {
+        setImageSetData([]);
+        return;
+      }
+      // Fetch all sets in parallel
+      const results = await Promise.all(
+        imageSetIds.map(async (id) => {
+          const res = await fetch(`/api/imageSets/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            return data.data || null;
+          }
+          return null;
+        })
+      );
+      setImageSetData(results.filter(Boolean));
+    }
+    fetchImageSets();
+  }, [imageSets]);
   const [digits, setDigits] = useState("");
   const [page, setPage] = useState(0);
   // Highlight state
@@ -128,6 +159,10 @@ export default function NumbersMemorisation() {
   const digitFontSize = Math.max(Math.floor(digitWidth * 0.9), 16); // min 16px
   const digitGap = Math.max(Math.floor(digitWidth * 0.15), 2); // min 2px
 
+  // Example: show which image sets are loaded (for debugging/demo)
+  // Remove or replace this with your actual logic as needed
+  // You can use imageSetData for lookups during memorisation
+
   return (
     <>
       <Head>
@@ -138,6 +173,18 @@ export default function NumbersMemorisation() {
       </Head>
       <div style={{ padding: 24 }}>
         <h1 style={{ marginBottom: 24, fontSize: 30 }}>{disciplineLabel}</h1>
+        {imageSetData.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <b>Loaded image sets:</b>
+            <ul>
+              {imageSetData.map((set, idx) => (
+                <li key={set._id || idx}>
+                  {set.name} ({set.images?.length || 0} items)
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div
           style={{
             background: "#fff",

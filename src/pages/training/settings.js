@@ -8,46 +8,8 @@ const defaultSettings = {
   recallTime: 240,
   journeys: [],
   highlightGrouping: "", // NEW
+  imageSets: [], // NEW: array of selected image set ids
 };
-
-const modeOptions = [
-  {
-    value: "MN",
-    label: "ML Numbers",
-    digits: 80,
-    memorisationTime: 60,
-    recallTime: 240,
-  },
-  {
-    value: "5N",
-    label: "5-minute Numbers",
-    digits: 760,
-    memorisationTime: 300,
-    recallTime: 900,
-  },
-  {
-    value: "15N",
-    label: "15-minute Numbers",
-    digits: 1560,
-    memorisationTime: 900,
-    recallTime: 1800,
-  },
-  {
-    value: "30N",
-    label: "30-minute Numbers",
-    digits: 2360,
-    memorisationTime: 1800,
-    recallTime: 3600,
-  },
-  {
-    value: "60N",
-    label: "Hour Numbers",
-    digits: 4120,
-    memorisationTime: 3600,
-    recallTime: 7200,
-  },
-  { value: "XN", label: "Customised" },
-];
 
 export default function NumberTrainingSettings() {
   const [settings, setSettings] = useState(defaultSettings);
@@ -56,6 +18,88 @@ export default function NumberTrainingSettings() {
   const [selectedOption, setSelectedOption] = useState(0);
   const [userJourneys, setUserJourneys] = useState([]);
   const router = useRouter();
+
+  // Helper: parse highlight grouping string to array
+  function parseHighlightGrouping(str) {
+    if (!str) return [];
+    return str
+      .split("-")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }
+  const highlightGroups = parseHighlightGrouping(settings.highlightGrouping);
+
+  // Fetch all image sets (private and public)
+  const [allImageSets, setAllImageSets] = useState([]);
+  useEffect(() => {
+    async function fetchImageSets() {
+      const res = await fetch("/api/imageSets");
+      if (res.ok) {
+        const data = await res.json();
+        setAllImageSets(data.data || []);
+      }
+    }
+    fetchImageSets();
+  }, []);
+
+  // For each group, filter image sets by image count (e.g. 100 for 2-digit, 1000 for 3-digit, etc.)
+  function setsForGroupLength(len) {
+    // 2-digit: 100, 3-digit: 1000, 4-digit: 10000, etc.
+    const expected = Math.pow(10, len);
+    return allImageSets.filter(
+      (set) => Array.isArray(set.images) && set.images.length === expected
+    );
+  }
+
+  // Handle image set selection for each group
+  function handleImageSetChange(idx, val) {
+    setSettings((prev) => {
+      const arr = Array.isArray(prev.imageSets) ? [...prev.imageSets] : [];
+      arr[idx] = val;
+      return { ...prev, imageSets: arr };
+    });
+  }
+
+  const modeOptions = [
+    {
+      value: "MN",
+      label: "ML Numbers",
+      digits: 80,
+      memorisationTime: 60,
+      recallTime: 240,
+    },
+    {
+      value: "5N",
+      label: "5-minute Numbers",
+      digits: 760,
+      memorisationTime: 300,
+      recallTime: 900,
+    },
+    {
+      value: "15N",
+      label: "15-minute Numbers",
+      digits: 1560,
+      memorisationTime: 900,
+      recallTime: 1800,
+    },
+    {
+      value: "30N",
+      label: "30-minute Numbers",
+      digits: 2360,
+      memorisationTime: 1800,
+      recallTime: 3600,
+    },
+    {
+      value: "60N",
+      label: "Hour Numbers",
+      digits: 4120,
+      memorisationTime: 3600,
+      recallTime: 7200,
+    },
+    { value: "XN", label: "Customised" },
+  ];
+
+  // ...existing code...
 
   // Save journey options to backend
   const handleSaveOptions = async () => {
@@ -408,6 +452,44 @@ export default function NumberTrainingSettings() {
           placeholder="e.g. 4 or 3-2-3"
         />
 
+        {/* Image set(s) selection UI */}
+        <label className="block mb-2 font-semibold mt-4">Image set(s)</label>
+        {highlightGroups.length === 0 ? (
+          <div className="mb-4 text-gray-500">
+            Enter a highlight grouping to select image sets.
+          </div>
+        ) : (
+          <div className="mb-4">
+            {highlightGroups.map((len, idx) => {
+              const sets = setsForGroupLength(len);
+              return (
+                <div key={idx} className="mb-2">
+                  <label className="block text-sm font-semibold mb-1">
+                    Group {idx + 1} ({len} digit{len > 1 ? "s" : ""})
+                  </label>
+                  <select
+                    className="p-2 border rounded w-full"
+                    value={settings.imageSets[idx] || ""}
+                    onChange={(e) => handleImageSetChange(idx, e.target.value)}
+                  >
+                    <option value="">Select image set...</option>
+                    {sets.map((set) => (
+                      <option key={set._id} value={set._id}>
+                        {set.name}
+                      </option>
+                    ))}
+                  </select>
+                  {sets.length === 0 && (
+                    <div className="text-xs text-gray-500">
+                      No image sets found for {len} digits.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex gap-4">
           <button
             type="button"
@@ -418,6 +500,7 @@ export default function NumberTrainingSettings() {
                 query: {
                   amount: settings.digits,
                   highlightGrouping: settings.highlightGrouping,
+                  imageSets: (settings.imageSets || []).join(","),
                 },
               })
             }
