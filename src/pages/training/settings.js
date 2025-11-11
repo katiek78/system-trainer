@@ -7,6 +7,7 @@ const defaultSettings = {
   memorisationTime: 60,
   recallTime: 240,
   journeys: [],
+  highlightGrouping: "", // NEW
 };
 
 const modeOptions = [
@@ -395,14 +396,31 @@ export default function NumberTrainingSettings() {
           disabled={!isCustom}
         />
 
+        <label className="block mb-2 font-semibold">
+          Highlight grouping (e.g. 4 or 3-2-3)
+        </label>
+        <input
+          type="text"
+          name="highlightGrouping"
+          value={settings.highlightGrouping}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full"
+          placeholder="e.g. 4 or 3-2-3"
+        />
+
         <div className="flex gap-4">
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => router.push({
-              pathname: '/training/numbersMemorisation',
-              query: { amount: settings.digits }
-            })}
+            onClick={() =>
+              router.push({
+                pathname: "/training/numbersMemorisation",
+                query: {
+                  amount: settings.digits,
+                  highlightGrouping: settings.highlightGrouping,
+                },
+              })
+            }
           >
             Start Training
           </button>

@@ -15,9 +15,59 @@ function generateRandomDigits(amount) {
 
 export default function NumbersMemorisation() {
   const router = useRouter();
-  const { amount = 0, mode = "5N" } = router.query;
+  const { amount = 0, mode = "5N", highlightGrouping = "" } = router.query;
   const [digits, setDigits] = useState("");
   const [page, setPage] = useState(0);
+  // Highlight state
+  const [highlightGroupIdx, setHighlightGroupIdx] = useState(0);
+  // Parse highlight grouping string to array
+  function parseHighlightGrouping(str) {
+    if (!str) return [];
+    return str
+      .split("-")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }
+  const highlightGroups = parseHighlightGrouping(highlightGrouping);
+  // Compute highlight ranges (start, end) for all groups
+  function getHighlightRanges(groups) {
+    const ranges = [];
+    let idx = 0;
+    while (idx < digits.length) {
+      for (let g = 0; g < groups.length && idx < digits.length; g++) {
+        const len = groups[g];
+        const start = idx;
+        const end = Math.min(idx + len, digits.length);
+        ranges.push([start, end]);
+        idx = end;
+      }
+    }
+    return ranges;
+  }
+  const highlightRanges =
+    highlightGroups.length > 0 ? getHighlightRanges(highlightGroups) : [];
+
+  // Keyboard navigation for highlight group
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (highlightRanges.length === 0) return;
+      if (e.key === "ArrowRight") {
+        setHighlightGroupIdx((idx) =>
+          Math.min(idx + 1, highlightRanges.length - 1)
+        );
+      } else if (e.key === "ArrowLeft") {
+        setHighlightGroupIdx((idx) => Math.max(idx - 1, 0));
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightRanges.length]);
+
+  // Reset highlight index if digits or grouping changes
+  useEffect(() => {
+    setHighlightGroupIdx(0);
+  }, [digits, highlightGrouping]);
 
   // Discipline label lookup
   const modeOptions = [
@@ -59,6 +109,13 @@ export default function NumbersMemorisation() {
     rows.push(rowDigits);
   }
 
+  // Helper: is digit at global index highlighted?
+  function isDigitHighlighted(globalIdx) {
+    if (highlightRanges.length === 0) return false;
+    const [start, end] = highlightRanges[highlightGroupIdx] || [];
+    return globalIdx >= start && globalIdx < end;
+  }
+
   // Calculate digit font size and spacing based on container width and number of digits per row
   // Target: 40 digits per row, fit within ~90vw (max 1200px)
   const containerMaxWidth = 1200;
@@ -97,46 +154,100 @@ export default function NumbersMemorisation() {
             justifyContent: "flex-start",
           }}
         >
-          {rows.map((row, idx) => (
-            <div
-              key={idx}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                fontSize: digitFontSize,
-                fontFamily: "Roboto Mono",
-                marginBottom: 12,
-                flexWrap: "nowrap",
-              }}
-            >
-              <span
+          {rows.map((row, idx) => {
+            const globalRowIdx = startRow + idx;
+            return (
+              <div
+                key={idx}
                 style={{
-                  minWidth: 48,
-                  color: "#c00",
-                  fontStyle: "italic",
-                  fontSize: 16,
-                  marginRight: 18,
-                  textAlign: "right",
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: digitFontSize,
+                  fontFamily: "Roboto Mono",
+                  marginBottom: 12,
+                  flexWrap: "nowrap",
                 }}
               >
-                {startRow + idx + 1}
-              </span>
-              <span style={{ display: "flex", gap: digitGap }}>
-                {row.map((digit, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      display: "inline-block",
-                      minWidth: digitWidth,
-                      textAlign: "center",
-                    }}
-                  >
-                    {digit}
-                  </span>
-                ))}
-              </span>
-            </div>
-          ))}
+                <span
+                  style={{
+                    minWidth: 48,
+                    color: "#c00",
+                    fontStyle: "italic",
+                    fontSize: 16,
+                    marginRight: 18,
+                    textAlign: "right",
+                  }}
+                >
+                  {globalRowIdx + 1}
+                </span>
+                <span
+                  style={{
+                    display: "flex",
+                    gap: digitGap,
+                    position: "relative",
+                  }}
+                >
+                  {/* Highlight rectangle for group if any part of group is in this row */}
+                  {(() => {
+                    if (highlightRanges.length === 0) return null;
+                    const [groupStart, groupEnd] =
+                      highlightRanges[highlightGroupIdx] || [];
+                    // Compute the range of global indices for this row
+                    const rowStartIdx = globalRowIdx * DIGITS_PER_ROW;
+                    const rowEndIdx = rowStartIdx + row.length;
+                    // If the highlight group overlaps this row, render a highlight rectangle
+                    const highlightStart = Math.max(groupStart, rowStartIdx);
+                    const highlightEnd = Math.min(groupEnd, rowEndIdx);
+                    if (highlightStart < highlightEnd) {
+                      // Compute left offset and width in px
+                      const left =
+                        (highlightStart - rowStartIdx) *
+                        (digitWidth + digitGap);
+                      const width =
+                        (highlightEnd - highlightStart) *
+                          (digitWidth + digitGap) -
+                        digitGap;
+                      return (
+                        <div
+                          style={{
+                            position: "absolute",
+                            left,
+                            top: 0,
+                            height: "100%",
+                            width,
+                            background: "#ffe066",
+                            borderRadius: 6,
+                            boxShadow: "0 0 0 2px #ffd700 inset",
+                            zIndex: 0,
+                          }}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                  {row.map((digit, i) => {
+                    const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
+                    const highlighted = isDigitHighlighted(globalIdx);
+                    return (
+                      <span
+                        key={i}
+                        style={{
+                          display: "inline-block",
+                          minWidth: digitWidth,
+                          textAlign: "center",
+                          color: highlighted ? "#222" : undefined,
+                          position: "relative",
+                          zIndex: 1,
+                        }}
+                      >
+                        {digit}
+                      </span>
+                    );
+                  })}
+                </span>
+              </div>
+            );
+          })}
         </div>
         {totalPages > 1 && (
           <div style={{ marginTop: 16, textAlign: "center" }}>
