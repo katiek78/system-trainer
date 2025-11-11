@@ -70,7 +70,7 @@ export default function NumbersMemorisation() {
   const [highlightGroupIdx, setHighlightGroupIdx] = useState(0);
   const [page, setPage] = useState(0);
   const DIGITS_PER_ROW = 40;
-  const ROWS_PER_PAGE = 10;
+  const ROWS_PER_PAGE = 12;
 
   // Parse highlight grouping
   const highlightGroups = highlightGrouping
@@ -279,40 +279,6 @@ export default function NumbersMemorisation() {
           })()}
         </div>
 
-        {/* DEBUG: Show journey data and indices */}
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
-          <details>
-            <summary>Debug: Journey/Point Mapping</summary>
-            <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-              {(() => {
-                if (!journeyData || journeyData.length === 0)
-                  return "No journey data.";
-                const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
-                const journeyIdx = locIdx % journeyData.length;
-                const journey = journeyData[journeyIdx];
-                if (
-                  !journey ||
-                  !Array.isArray(journey.points) ||
-                  journey.points.length === 0
-                )
-                  return "No points in journey.";
-                const pointIdx = locIdx % journey.points.length;
-                const point = journey.points[pointIdx];
-                return [
-                  `journeyIds: ${journeyIds}`,
-                  `locIdx: ${locIdx}`,
-                  `journeyIdx: ${journeyIdx}`,
-                  `pointIdx: ${pointIdx}`,
-                  `journey.name: ${journey.name}`,
-                  `point.location: ${point?.location}`,
-                  `point.name: ${point?.name}`,
-                  `point.memoItem: ${point?.memoItem}`,
-                  `point: ${JSON.stringify(point, null, 2)}`,
-                ].join("\n");
-              })()}
-            </pre>
-          </details>
-        </div>
         <div
           style={{
             background: "#fff",
