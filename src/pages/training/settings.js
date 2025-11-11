@@ -269,56 +269,6 @@ export default function NumberTrainingSettings() {
 
         <label className="block mb-2 font-semibold">Journey Option</label>
 
-        {/* {loadingJourneys ? (
-          <div className="mb-4">Loading journey options...</div>
-        ) : (
-          <div className="mb-4">
-            <div className="flex mb-2 items-center">
-              <select
-                className="mr-2 px-2 py-1 border rounded text-blue-800"
-                value={selectedOption}
-                onChange={e => handleSelectOption(Number(e.target.value))}
-                style={{ minWidth: 120 }}
-              >
-                {options.map((_, idx) => (
-                  <option key={idx} value={idx}>{`Option ${idx + 1}`}</option>
-                ))}
-              </select>
-              <button type="button" className="px-2 py-1 bg-green-200 text-green-800 rounded" onClick={handleAddOption}>+ Add Option</button>
-              {options.length > 1 && (
-                <button type="button" className="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded" onClick={() => handleRemoveOption(selectedOption)}>Remove Option</button>
-              )}
-            </div>
-            {options.length === 0 ? (
-              <div className="mb-2 text-gray-500">No options for this discipline</div>
-            ) : (
-              <ul>
-                {options[selectedOption].length === 0 && <div className="mb-2 text-gray-500">No journeys selected</div>}
-                {options[selectedOption].map((j, idx) => (
-                  <li key={j.id} className="flex items-center mb-1">
-                    <span className="flex-1">{j.name}</span>
-                    <button type="button" className="ml-2 text-red-600" onClick={() => handleRemoveJourney(idx)} title="Remove">✕</button>
-                    <button type="button" className="ml-1 text-gray-600" onClick={() => handleReorderJourney(idx, idx-1)} disabled={idx===0} title="Move up">▲</button>
-                    <button type="button" className="ml-1 text-gray-600" onClick={() => handleReorderJourney(idx, idx+1)} disabled={idx===options[selectedOption].length-1} title="Move down">▼</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <select
-              className="mt-2 px-2 py-1 border rounded text-blue-800"
-              onChange={handleAddJourney}
-              value=""
-            >
-              <option value="">Add journey...</option>
-              {userJourneys
-                .filter(j => !options[selectedOption]?.some(sel => sel.id === j.id))
-                .map(j => (
-                  <option key={j.id} value={j.id}>{j.name}</option>
-                ))}
-            </select>
-          </div>
-        )} */}
-
         {loadingJourneys ? (
           <div className="mb-4">Loading journey options...</div>
         ) : (

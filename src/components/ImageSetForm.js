@@ -20,8 +20,7 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
     const { id } = router.query;
-    const { setType, ...formDataToStore } = form;
-
+    // Include setType in the update
     try {
       const res = await fetch(`/api/imageSets/${id}`, {
         method: "PUT",
@@ -29,7 +28,7 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
           Accept: contentType,
           "Content-Type": contentType,
         },
-        body: JSON.stringify(formDataToStore),
+        body: JSON.stringify({ ...form, userId }),
       });
 
       // Throw error with status code in case Fetch API req failed
@@ -60,8 +59,7 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
       phonetics: phoneticsArray[i],
     }));
 
-    const { setType, phoneticsType, ...formDataToStore } = form;
-
+    // Include setType and phoneticsType in the data sent
     try {
       const res = await fetch("/api/imageSets", {
         method: "POST",
@@ -69,7 +67,7 @@ const ImageSetForm = ({ userId, formId, imageSetForm, forNewSet = true }) => {
           Accept: contentType,
           "Content-Type": contentType,
         },
-        body: JSON.stringify({ ...formDataToStore, userId: userId }),
+        body: JSON.stringify({ ...form, userId }),
       });
 
       // Throw error with status code in case Fetch API req failed
