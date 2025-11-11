@@ -253,35 +253,67 @@ export default function NumbersMemorisation() {
       <div className="p-6">
         <h1 className="mb-6 text-2xl sm:text-3xl">{disciplineLabel}</h1>
 
-        {/* HINT BAR (fixed height, no wrap on mobile) */}
-        <div className="mb-4 px-4 py-2 bg-gray-100 rounded text-[18px] text-gray-800 h-32 w-full">
-          {/* Mobile: fixed width, no wrap, ellipsis */}
+        {/* HINT BAR: Responsive, single rendering. Mobile: tall, left-aligned, wraps from top. Desktop: short, left-aligned, no wrap. */}
+        <div
+          className="mb-4 px-4 bg-gray-100 rounded text-[18px] text-gray-800 w-full"
+          style={{
+            minHeight: "2.5rem",
+            height: "auto",
+            paddingTop: 0,
+            paddingBottom: 0,
+          }}
+        >
           <span
-            className="block sm:hidden mx-auto overflow-hidden whitespace-nowrap text-ellipsis"
+            className="block"
             style={{
-              width: "320px",
-              maxWidth: "90vw",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-              overflow: "hidden",
+              textAlign: "left",
               display: "block",
+              overflowWrap: "break-word",
+              wordBreak: "break-word",
+              whiteSpace: "normal",
+              paddingTop: "0.5rem",
+              height:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              minHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              maxHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              lineHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "1.3"
+                  : "2.5rem",
+              overflow:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "auto"
+                  : "hidden",
+              textOverflow:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "clip"
+                  : "ellipsis",
+              width:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "320px"
+                  : "100%",
+              minWidth:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "320px"
+                  : "100%",
+              maxWidth:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "320px"
+                  : "100%",
+              margin:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "0 auto"
+                  : undefined,
             }}
           >
-            {(() => {
-              const { location, object } = getLocationAndObject();
-              const imageText = getImageTextForGroup();
-              if (!location && !object && !imageText) return null;
-              return (
-                <span>
-                  <b>{location}</b>
-                  {object ? ` - ${object}` : ""}
-                  {imageText ? `: ${imageText}` : ""}
-                </span>
-              );
-            })()}
-          </span>
-          {/* Desktop: responsive */}
-          <span className="hidden sm:block">
             {(() => {
               const { location, object } = getLocationAndObject();
               const imageText = getImageTextForGroup();

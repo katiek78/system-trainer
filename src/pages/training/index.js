@@ -18,69 +18,72 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
   };
 
   return (
-    <>
-      <div className="z-10 justify-between font-mono text-lg">
-        <h1 className="py-2 font-mono text-4xl">Training Centre</h1>
-
-        <br />
-        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
+    <div className="w-full min-h-screen flex justify-center bg-transparent">
+      <div className="z-10 font-mono text-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-2 sm:px-4 md:px-8">
+        <h1 className="py-2 font-mono text-3xl sm:text-4xl text-center">
+          Training Centre
+        </h1>
+        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mb-4">
           <h3 className="font-semibold">Do some training or drills</h3>
           <p className="font-mono">
             Select your discipline and see all the training options.
           </p>
         </div>
-        <br />
-        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
+        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mb-4">
           <h3 className="font-semibold">Image learning</h3>
           <p className="font-mono">Flashcards</p>
-          <select
-            className="shadow appearance-none border rounded w-100 mt-1 mx-3 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            name="imageSet"
-            id="imageSet"
-          >
-            {imageSets.map((imageSet) => (
-              <option key={imageSet._id} value={imageSet._id}>
-                {imageSet.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleSelectFlashcards}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Go
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select
+              className="shadow appearance-none border rounded w-full sm:w-auto mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              name="imageSet"
+              id="imageSet"
+            >
+              {imageSets.map((imageSet) => (
+                <option key={imageSet._id} value={imageSet._id}>
+                  {imageSet.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleSelectFlashcards}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
+            >
+              Go
+            </button>
+          </div>
         </div>
-
-        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
+        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mb-4">
           <h3 className="font-semibold">Journey learning</h3>
-          <select
-            className="shadow appearance-none border rounded w-100 mt-1 mx-3 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            name="journey"
-            id="journey"
-          >
-            {journeys.map((journey) => (
-              <option key={journey._id} value={journey._id}>
-                {journey.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => alert("Not yet implemented")}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
-          >
-            Go
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select
+              className="shadow appearance-none border rounded w-full sm:w-auto mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              name="journey"
+              id="journey"
+            >
+              {journeys.map((journey) => (
+                <option key={journey._id} value={journey._id}>
+                  {journey.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => alert("Not yet implemented")}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
+            >
+              Go
+            </button>
+          </div>
         </div>
-
-        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded mt-5">
+        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mt-5 mb-4">
           <h3 className="font-semibold">Competition training</h3>
           <ul className="list-disc list-inside font-mono">
             <li>
               <button
                 className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
-                style={{ cursor: 'pointer' }}
-                onClick={() => alert('Cards training settings not yet implemented')}
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  alert("Cards training settings not yet implemented")
+                }
               >
                 Cards
               </button>
@@ -88,8 +91,8 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
             <li>
               <button
                 className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
-                style={{ cursor: 'pointer' }}
-                onClick={() => window.location.href = '/training/settings'}
+                style={{ cursor: "pointer" }}
+                onClick={() => (window.location.href = "/training/settings")}
               >
                 Numbers
               </button>
@@ -97,8 +100,10 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
             <li>
               <button
                 className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
-                style={{ cursor: 'pointer' }}
-                onClick={() => alert('Words training settings not yet implemented')}
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  alert("Words training settings not yet implemented")
+                }
               >
                 Words
               </button>
@@ -106,7 +111,7 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
           </ul>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
