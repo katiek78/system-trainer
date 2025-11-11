@@ -268,15 +268,19 @@ export default function NumberTrainingSettings() {
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Numbers Training Settings</h2>
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+        Numbers Training Settings
+      </h2>
       <form>
-        <label className="block mb-2 font-semibold">Mode</label>
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Mode
+        </label>
         <select
           name="mode"
           value={settings.mode}
           onChange={handleModeChange}
-          className="mb-4 p-2 border rounded w-full"
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         >
           {modeOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -285,15 +289,19 @@ export default function NumberTrainingSettings() {
           ))}
         </select>
 
-        <label className="block mb-2 font-semibold">Journey Option</label>
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Journey Option
+        </label>
 
         {loadingJourneys ? (
-          <div className="mb-4">Loading journey options...</div>
+          <div className="mb-4 text-gray-700 dark:text-gray-300">
+            Loading journey options...
+          </div>
         ) : (
           <div className="mb-4">
             <div className="flex items-center mb-2">
               <select
-                className="px-3 py-1 mr-2 rounded border"
+                className="px-3 py-1 mr-2 rounded border bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 value={selectedOption}
                 onChange={(e) => handleSelectOption(Number(e.target.value))}
                 disabled={options.length === 0}
@@ -306,7 +314,7 @@ export default function NumberTrainingSettings() {
               </select>
               <button
                 type="button"
-                className="px-2 py-1 bg-green-200 text-green-800 rounded"
+                className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200 rounded"
                 onClick={handleAddOption}
               >
                 + Add Option
@@ -314,7 +322,7 @@ export default function NumberTrainingSettings() {
               {options.length > 1 && (
                 <button
                   type="button"
-                  className="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded"
+                  className="ml-2 px-2 py-1 bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 rounded"
                   onClick={() => handleRemoveOption(selectedOption)}
                 >
                   Remove Option
@@ -322,20 +330,24 @@ export default function NumberTrainingSettings() {
               )}
             </div>
             {options.length === 0 ? (
-              <div className="mb-2 text-gray-500">
+              <div className="mb-2 text-gray-500 dark:text-gray-400">
                 No options for this discipline
               </div>
             ) : (
               <ul>
                 {options[selectedOption].length === 0 && (
-                  <div className="mb-2 text-gray-500">No journeys selected</div>
+                  <div className="mb-2 text-gray-500 dark:text-gray-400">
+                    No journeys selected
+                  </div>
                 )}
                 {options[selectedOption].map((j, idx) => (
                   <li key={j.id} className="flex items-center mb-1">
-                    <span className="flex-1">{j.name}</span>
+                    <span className="flex-1 text-gray-900 dark:text-gray-100">
+                      {j.name}
+                    </span>
                     <button
                       type="button"
-                      className="ml-2 text-red-600"
+                      className="ml-2 text-red-600 dark:text-red-400"
                       onClick={() => handleRemoveJourney(idx)}
                       title="Remove"
                     >
@@ -343,7 +355,7 @@ export default function NumberTrainingSettings() {
                     </button>
                     <button
                       type="button"
-                      className="ml-1 text-gray-600"
+                      className="ml-1 text-gray-600 dark:text-gray-300"
                       onClick={() => handleReorderJourney(idx, idx - 1)}
                       disabled={idx === 0}
                       title="Move up"
@@ -352,7 +364,7 @@ export default function NumberTrainingSettings() {
                     </button>
                     <button
                       type="button"
-                      className="ml-1 text-gray-600"
+                      className="ml-1 text-gray-600 dark:text-gray-300"
                       onClick={() => handleReorderJourney(idx, idx + 1)}
                       disabled={idx === options[selectedOption].length - 1}
                       title="Move down"
@@ -364,7 +376,7 @@ export default function NumberTrainingSettings() {
               </ul>
             )}
             <select
-              className="mt-2 px-2 py-1 border rounded text-blue-800"
+              className="mt-2 px-2 py-1 border rounded text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
               onChange={handleAddJourney}
               value=""
             >
@@ -383,17 +395,19 @@ export default function NumberTrainingSettings() {
           </div>
         )}
 
-        <label className="block mb-2 font-semibold">Number of digits</label>
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Number of digits
+        </label>
         <input
           type="number"
           name="digits"
           value={settings.digits}
           onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full"
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
           disabled={!isCustom}
         />
 
-        <label className="block mb-2 font-semibold">
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Memorisation time (seconds)
         </label>
         <input
@@ -401,11 +415,11 @@ export default function NumberTrainingSettings() {
           name="memorisationTime"
           value={settings.memorisationTime}
           onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full"
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
           disabled={!isCustom}
         />
 
-        <label className="block mb-2 font-semibold">
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Recall time (seconds)
         </label>
         <input
@@ -413,11 +427,11 @@ export default function NumberTrainingSettings() {
           name="recallTime"
           value={settings.recallTime}
           onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full"
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
           disabled={!isCustom}
         />
 
-        <label className="block mb-2 font-semibold">
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Highlight grouping (e.g. 4 or 3-2-3)
         </label>
         <input
@@ -425,14 +439,16 @@ export default function NumberTrainingSettings() {
           name="highlightGrouping"
           value={settings.highlightGrouping}
           onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full"
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
           placeholder="e.g. 4 or 3-2-3"
         />
 
         {/* Image set(s) selection UI */}
-        <label className="block mb-2 font-semibold mt-4">Image set(s)</label>
+        <label className="block mb-2 font-semibold mt-4 text-gray-900 dark:text-gray-100">
+          Image set(s)
+        </label>
         {highlightGroups.length === 0 ? (
-          <div className="mb-4 text-gray-500">
+          <div className="mb-4 text-gray-500 dark:text-gray-400">
             Enter a highlight grouping to select image sets.
           </div>
         ) : (
@@ -441,11 +457,11 @@ export default function NumberTrainingSettings() {
               const sets = setsForGroupLength(len);
               return (
                 <div key={idx} className="mb-2">
-                  <label className="block text-sm font-semibold mb-1">
+                  <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
                     Group {idx + 1} ({len} digit{len > 1 ? "s" : ""})
                   </label>
                   <select
-                    className="p-2 border rounded w-full"
+                    className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                     value={settings.imageSets[idx] || ""}
                     onChange={(e) => handleImageSetChange(idx, e.target.value)}
                   >
@@ -457,7 +473,7 @@ export default function NumberTrainingSettings() {
                     ))}
                   </select>
                   {sets.length === 0 && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       No image sets found for {len} digits.
                     </div>
                   )}
@@ -470,7 +486,7 @@ export default function NumberTrainingSettings() {
         <div className="flex gap-4">
           <button
             type="button"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-500 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
             onClick={() => {
               // Save highlightGrouping to localStorage
               if (settings.highlightGrouping) {
@@ -495,7 +511,7 @@ export default function NumberTrainingSettings() {
           </button>
           <button
             type="button"
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-green-500 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-900 text-white font-bold py-2 px-4 rounded"
             onClick={handleSaveOptions}
           >
             Save
