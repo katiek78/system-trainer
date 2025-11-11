@@ -5,9 +5,11 @@ import dbConnect from "@/lib/dbConnect";
 import { ML_DISCIPLINES } from "@/lib/disciplines";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 //import { faPlay } from "@fortawesome/free-solid-svg-icons";
-import ImageSet from "@/models/ImageSet";
 
-const TrainingPage = ({ user, imageSets }) => {
+import ImageSet from "@/models/ImageSet";
+import Journey from "@/models/Journey";
+
+const TrainingPage = ({ user, imageSets, journeys }) => {
   const [errors, setErrors] = useState({});
 
   const handleSelectFlashcards = () => {
@@ -37,7 +39,9 @@ const TrainingPage = ({ user, imageSets }) => {
             id="imageSet"
           >
             {imageSets.map((imageSet) => (
-              <option value={imageSet._id}>{imageSet.name}</option>
+              <option key={imageSet._id} value={imageSet._id}>
+                {imageSet.name}
+              </option>
             ))}
           </select>
           <button
@@ -50,6 +54,23 @@ const TrainingPage = ({ user, imageSets }) => {
 
         <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded">
           <h3 className="font-semibold">Journey learning</h3>
+          <select
+            className="shadow appearance-none border rounded w-100 mt-1 mx-3 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            name="journey"
+            id="journey"
+          >
+            {journeys.map((journey) => (
+              <option key={journey._id} value={journey._id}>
+                {journey.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => alert("Not yet implemented")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
+          >
+            Go
+          </button>
         </div>
       </div>
     </>
@@ -64,21 +85,29 @@ export const getServerSideProps = withPageAuthRequired({
     const db = await dbConnect();
 
     if (!auth0User || !auth0User.user) {
-      return { props: { user: null, imageSets: [] } }; // Handle unauthenticated users
+      return { props: { user: null, imageSets: [], journeys: [] } };
     }
 
-    const userId = auth0User.user.sub; // Auth0 user ID
-    const dbResult = await ImageSet.find({ userId }, { name: 1 }); // Filter by userId
+    const userId = auth0User.user.sub;
+    const imageSetResult = await ImageSet.find({ userId }, { name: 1 });
+    const journeyResult = await Journey.find({ userId }, { name: 1 });
 
-    const imageSets = dbResult.map((doc) => ({
+    const imageSets = imageSetResult.map((doc) => ({
       ...doc.toObject(),
       _id: doc._id.toString(),
     }));
+    const journeys = journeyResult
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((doc) => ({
+        ...doc.toObject(),
+        _id: doc._id.toString(),
+      }));
 
     return {
       props: {
         user: auth0User.user,
         imageSets,
+        journeys,
       },
     };
   },
