@@ -13,6 +13,19 @@ const defaultSettings = {
 
 export default function NumberTrainingSettings() {
   const [settings, setSettings] = useState(defaultSettings);
+
+  // Auto-load highlightGrouping and mode from localStorage on mount
+  useEffect(() => {
+    const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
+    const storedMode = localStorage.getItem("mode");
+    setSettings((prev) => ({
+      ...prev,
+      ...(storedHighlightGrouping
+        ? { highlightGrouping: storedHighlightGrouping }
+        : {}),
+      ...(storedMode ? { mode: storedMode } : {}),
+    }));
+  }, []);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]); // all journeySets for this discipline
   const [selectedOption, setSelectedOption] = useState(0);
@@ -112,6 +125,10 @@ export default function NumberTrainingSettings() {
 
   // Save journey options to backend
   const handleSaveOptions = async () => {
+    // Save highlightGrouping to localStorage
+    if (settings.highlightGrouping) {
+      localStorage.setItem("highlightGrouping", settings.highlightGrouping);
+    }
     const discipline = getDisciplineLabel(settings.mode);
     const res = await fetch("/api/journeyAssignments", {
       method: "POST",
@@ -183,6 +200,7 @@ export default function NumberTrainingSettings() {
 
   const handleModeChange = (e) => {
     const mode = e.target.value;
+    localStorage.setItem("mode", mode);
     const preset = modeOptions.find((opt) => opt.value === mode);
     setSettings((prev) => ({
       ...prev,
@@ -453,17 +471,25 @@ export default function NumberTrainingSettings() {
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() =>
+            onClick={() => {
+              // Save highlightGrouping to localStorage
+              if (settings.highlightGrouping) {
+                localStorage.setItem(
+                  "highlightGrouping",
+                  settings.highlightGrouping
+                );
+              }
               router.push({
                 pathname: "/training/numbersMemorisation",
                 query: {
                   amount: settings.digits,
-                  highlightGrouping: settings.highlightGrouping,
+                  mode: settings.mode,
+                  highlightGrouping: settings.highlightGrouping || "3",
                   imageSets: (settings.imageSets || []).join(","),
                   journeyIds: (settings.journeys || []).join(","),
                 },
-              })
-            }
+              });
+            }}
           >
             Start Training
           </button>
