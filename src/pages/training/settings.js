@@ -1,0 +1,390 @@
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+
+const defaultSettings = {
+  mode: "5min",
+  digits: 80,
+  memorisationTime: 300,
+  recallTime: 600,
+  journeys: [],
+};
+
+const modeOptions = [
+  {
+    value: "MN",
+    label: "ML Numbers",
+    digits: 80,
+    memorisationTime: 60,
+    recallTime: 240,
+  },
+  {
+    value: "5N",
+    label: "5-minute Numbers",
+    digits: 760,
+    memorisationTime: 300,
+    recallTime: 900,
+  },
+  {
+    value: "15N",
+    label: "15-minute Numbers",
+    digits: 1560,
+    memorisationTime: 900,
+    recallTime: 1800,
+  },
+  {
+    value: "30N",
+    label: "30-minute Numbers",
+    digits: 2360,
+    memorisationTime: 1800,
+    recallTime: 3600,
+  },
+  {
+    value: "60N",
+    label: "Hour Numbers",
+    digits: 4120,
+    memorisationTime: 3600,
+    recallTime: 7200,
+  },
+  { value: "XN", label: "Customised" },
+];
+
+export default function NumberTrainingSettings() {
+  const [settings, setSettings] = useState(defaultSettings);
+  const [loadingJourneys, setLoadingJourneys] = useState(true);
+  const [options, setOptions] = useState([]); // all journeySets for this discipline
+  const [selectedOption, setSelectedOption] = useState(0);
+  const [userJourneys, setUserJourneys] = useState([]);
+  const router = useRouter();
+
+  // Map mode to discipline label for API
+  function getDisciplineLabel(mode) {
+    switch (mode) {
+      case "MN":
+        return "ML Numbers";
+      case "5N":
+        return "5-minute Numbers";
+      case "15N":
+        return "15-minute Numbers";
+      case "30N":
+        return "30-minute Numbers";
+      case "60N":
+        return "Hour Numbers";
+      default:
+        return "5-minute Numbers";
+    }
+  }
+
+  // Fetch all journey options (sets) for the selected discipline
+  useEffect(() => {
+    async function fetchOptions() {
+      setLoadingJourneys(true);
+      const discipline = getDisciplineLabel(settings.mode);
+      const res = await fetch(
+        `/api/journeyAssignments?discipline=${encodeURIComponent(discipline)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setOptions(data.options || []);
+        setSelectedOption(0);
+      } else {
+        setOptions([]);
+        setSelectedOption(0);
+      }
+      setLoadingJourneys(false);
+    }
+    fetchOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.mode]);
+
+  // Fetch all user journeys for add-journey dropdown
+  useEffect(() => {
+    async function fetchUserJourneys() {
+      const res = await fetch("/api/journeys");
+      if (res.ok) {
+        const data = await res.json();
+        // data.data is the array of journeys
+        setUserJourneys(data.data.map((j) => ({ id: j._id, name: j.name })));
+      }
+    }
+    fetchUserJourneys();
+  }, []);
+
+  const handleModeChange = (e) => {
+    const mode = e.target.value;
+    const preset = modeOptions.find((opt) => opt.value === mode);
+    setSettings((prev) => ({
+      ...prev,
+      mode,
+      digits: preset?.digits || 80,
+      memorisationTime: preset?.memorisationTime || 300,
+      recallTime: preset?.recallTime || 600,
+    }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSettings((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const isCustom = settings.mode === "XN";
+
+  // Option and journey manipulation handlers
+  const handleSelectOption = (idx) => setSelectedOption(idx);
+
+  const handleAddOption = () => {
+    setOptions((prev) => [...prev, []]);
+    setSelectedOption(options.length);
+  };
+
+  const handleRemoveOption = (idx) => {
+    if (options.length <= 1) return;
+    setOptions((prev) => prev.filter((_, i) => i !== idx));
+    setSelectedOption((prev) => (prev > 0 ? prev - 1 : 0));
+  };
+
+  const handleRemoveJourney = (idx) => {
+    setOptions((prev) =>
+      prev.map((opt, i) =>
+        i === selectedOption ? opt.filter((_, j) => j !== idx) : opt
+      )
+    );
+  };
+
+  const handleAddJourney = (e) => {
+    const journeyId = e.target.value;
+    if (!journeyId) return;
+    const journey = userJourneys.find((j) => j.id === journeyId);
+    if (
+      journey &&
+      !options[selectedOption].some((sel) => sel.id === journey.id)
+    ) {
+      setOptions((prev) =>
+        prev.map((opt, i) => (i === selectedOption ? [...opt, journey] : opt))
+      );
+    }
+  };
+
+  const handleReorderJourney = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= options[selectedOption].length) return;
+    setOptions((prev) =>
+      prev.map((opt, i) => {
+        if (i !== selectedOption) return opt;
+        const newJourneys = [...opt];
+        const [moved] = newJourneys.splice(fromIdx, 1);
+        newJourneys.splice(toIdx, 0, moved);
+        return newJourneys;
+      })
+    );
+  };
+
+  return (
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow">
+      <h2 className="text-2xl font-bold mb-4">Numbers Training Settings</h2>
+      <form>
+        <label className="block mb-2 font-semibold">Mode</label>
+        <select
+          name="mode"
+          value={settings.mode}
+          onChange={handleModeChange}
+          className="mb-4 p-2 border rounded w-full"
+        >
+          {modeOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        <label className="block mb-2 font-semibold">Journey Option</label>
+
+        {/* {loadingJourneys ? (
+          <div className="mb-4">Loading journey options...</div>
+        ) : (
+          <div className="mb-4">
+            <div className="flex mb-2 items-center">
+              <select
+                className="mr-2 px-2 py-1 border rounded text-blue-800"
+                value={selectedOption}
+                onChange={e => handleSelectOption(Number(e.target.value))}
+                style={{ minWidth: 120 }}
+              >
+                {options.map((_, idx) => (
+                  <option key={idx} value={idx}>{`Option ${idx + 1}`}</option>
+                ))}
+              </select>
+              <button type="button" className="px-2 py-1 bg-green-200 text-green-800 rounded" onClick={handleAddOption}>+ Add Option</button>
+              {options.length > 1 && (
+                <button type="button" className="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded" onClick={() => handleRemoveOption(selectedOption)}>Remove Option</button>
+              )}
+            </div>
+            {options.length === 0 ? (
+              <div className="mb-2 text-gray-500">No options for this discipline</div>
+            ) : (
+              <ul>
+                {options[selectedOption].length === 0 && <div className="mb-2 text-gray-500">No journeys selected</div>}
+                {options[selectedOption].map((j, idx) => (
+                  <li key={j.id} className="flex items-center mb-1">
+                    <span className="flex-1">{j.name}</span>
+                    <button type="button" className="ml-2 text-red-600" onClick={() => handleRemoveJourney(idx)} title="Remove">✕</button>
+                    <button type="button" className="ml-1 text-gray-600" onClick={() => handleReorderJourney(idx, idx-1)} disabled={idx===0} title="Move up">▲</button>
+                    <button type="button" className="ml-1 text-gray-600" onClick={() => handleReorderJourney(idx, idx+1)} disabled={idx===options[selectedOption].length-1} title="Move down">▼</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <select
+              className="mt-2 px-2 py-1 border rounded text-blue-800"
+              onChange={handleAddJourney}
+              value=""
+            >
+              <option value="">Add journey...</option>
+              {userJourneys
+                .filter(j => !options[selectedOption]?.some(sel => sel.id === j.id))
+                .map(j => (
+                  <option key={j.id} value={j.id}>{j.name}</option>
+                ))}
+            </select>
+          </div>
+        )} */}
+
+        {loadingJourneys ? (
+          <div className="mb-4">Loading journey options...</div>
+        ) : (
+          <div className="mb-4">
+            <div className="flex items-center mb-2">
+              <select
+                className="px-3 py-1 mr-2 rounded border"
+                value={selectedOption}
+                onChange={(e) => handleSelectOption(Number(e.target.value))}
+                disabled={options.length === 0}
+              >
+                {options.map((_, idx) => (
+                  <option key={idx} value={idx}>
+                    Option {idx + 1}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="px-2 py-1 bg-green-200 text-green-800 rounded"
+                onClick={handleAddOption}
+              >
+                + Add Option
+              </button>
+              {options.length > 1 && (
+                <button
+                  type="button"
+                  className="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded"
+                  onClick={() => handleRemoveOption(selectedOption)}
+                >
+                  Remove Option
+                </button>
+              )}
+            </div>
+            {options.length === 0 ? (
+              <div className="mb-2 text-gray-500">
+                No options for this discipline
+              </div>
+            ) : (
+              <ul>
+                {options[selectedOption].length === 0 && (
+                  <div className="mb-2 text-gray-500">No journeys selected</div>
+                )}
+                {options[selectedOption].map((j, idx) => (
+                  <li key={j.id} className="flex items-center mb-1">
+                    <span className="flex-1">{j.name}</span>
+                    <button
+                      type="button"
+                      className="ml-2 text-red-600"
+                      onClick={() => handleRemoveJourney(idx)}
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                    <button
+                      type="button"
+                      className="ml-1 text-gray-600"
+                      onClick={() => handleReorderJourney(idx, idx - 1)}
+                      disabled={idx === 0}
+                      title="Move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className="ml-1 text-gray-600"
+                      onClick={() => handleReorderJourney(idx, idx + 1)}
+                      disabled={idx === options[selectedOption].length - 1}
+                      title="Move down"
+                    >
+                      ▼
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <select
+              className="mt-2 px-2 py-1 border rounded text-blue-800"
+              onChange={handleAddJourney}
+              value=""
+            >
+              <option value="">Add journey...</option>
+              {userJourneys
+                .filter(
+                  (j) =>
+                    !options[selectedOption]?.some((sel) => sel.id === j.id)
+                )
+                .map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+        )}
+
+        <label className="block mb-2 font-semibold">Number of digits</label>
+        <input
+          type="number"
+          name="digits"
+          value={settings.digits}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full"
+          disabled={!isCustom}
+        />
+
+        <label className="block mb-2 font-semibold">
+          Memorisation time (seconds)
+        </label>
+        <input
+          type="number"
+          name="memorisationTime"
+          value={settings.memorisationTime}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full"
+          disabled={!isCustom}
+        />
+
+        <label className="block mb-2 font-semibold">
+          Recall time (seconds)
+        </label>
+        <input
+          type="number"
+          name="recallTime"
+          value={settings.recallTime}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full"
+          disabled={!isCustom}
+        />
+
+        <button
+          type="button"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => alert("Start training not yet implemented")}
+        >
+          Start Training
+        </button>
+      </form>
+    </div>
+  );
+}

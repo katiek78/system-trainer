@@ -72,6 +72,39 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
             Go
           </button>
         </div>
+
+        <div className="bg-white dark:bg-slate-800 py-5 px-5 rounded mt-5">
+          <h3 className="font-semibold">Competition training</h3>
+          <ul className="list-disc list-inside font-mono">
+            <li>
+              <button
+                className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
+                style={{ cursor: 'pointer' }}
+                onClick={() => alert('Cards training settings not yet implemented')}
+              >
+                Cards
+              </button>
+            </li>
+            <li>
+              <button
+                className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
+                style={{ cursor: 'pointer' }}
+                onClick={() => window.location.href = '/training/settings'}
+              >
+                Numbers
+              </button>
+            </li>
+            <li>
+              <button
+                className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
+                style={{ cursor: 'pointer' }}
+                onClick={() => alert('Words training settings not yet implemented')}
+              >
+                Words
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
     </>
   );
