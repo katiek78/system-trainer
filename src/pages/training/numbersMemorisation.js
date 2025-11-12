@@ -180,16 +180,17 @@ export default function NumbersMemorisation() {
         const allowed =
           allowedPrefixesArr[groupIdx % allowedPrefixesArr.length] || [];
         let group = "";
-        let tries = 0;
-        while (tries < 100) {
-          group = generateRandomDigits(groupLen);
-          if (
-            allowed.length === 0 ||
-            allowed.some((prefix) => group.startsWith(prefix))
-          ) {
-            break;
+        if (allowed.length > 0) {
+          // Pick a random prefix from allowed
+          const prefix = allowed[Math.floor(Math.random() * allowed.length)];
+          const remainingLen = groupLen - prefix.length;
+          let rest = "";
+          if (remainingLen > 0) {
+            rest = generateRandomDigits(remainingLen);
           }
-          tries++;
+          group = prefix + rest;
+        } else {
+          group = generateRandomDigits(groupLen);
         }
         result += group;
         groupIdx++;
