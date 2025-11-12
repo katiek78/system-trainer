@@ -18,6 +18,7 @@ export default function NumberTrainingSettings() {
   useEffect(() => {
     const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
     const storedMode = localStorage.getItem("mode");
+    const storedSelectedOption = localStorage.getItem("selectedOption");
     if (storedMode) {
       const preset = modeOptions.find((opt) => opt.value === storedMode);
       setSettings((prev) => ({
@@ -34,6 +35,12 @@ export default function NumberTrainingSettings() {
             }
           : {}),
       }));
+      if (
+        storedSelectedOption !== null &&
+        !isNaN(Number(storedSelectedOption))
+      ) {
+        setSelectedOption(Number(storedSelectedOption));
+      }
     } else {
       setSettings((prev) => ({
         ...prev,
@@ -191,7 +198,18 @@ export default function NumberTrainingSettings() {
       if (res.ok) {
         const data = await res.json();
         setOptions(data.options || []);
-        setSelectedOption(0);
+        // Try to restore selectedOption from localStorage if available and valid
+        const storedSelectedOption = localStorage.getItem("selectedOption");
+        let idx = 0;
+        if (
+          storedSelectedOption !== null &&
+          !isNaN(Number(storedSelectedOption)) &&
+          data.options &&
+          Number(storedSelectedOption) < data.options.length
+        ) {
+          idx = Number(storedSelectedOption);
+        }
+        setSelectedOption(idx);
       } else {
         setOptions([]);
         setSelectedOption(0);
@@ -236,7 +254,10 @@ export default function NumberTrainingSettings() {
   const isCustom = settings.mode === "XN";
 
   // Option and journey manipulation handlers
-  const handleSelectOption = (idx) => setSelectedOption(idx);
+  const handleSelectOption = (idx) => {
+    setSelectedOption(idx);
+    localStorage.setItem("selectedOption", idx);
+  };
 
   const handleAddOption = () => {
     setOptions((prev) => [...prev, []]);
@@ -286,6 +307,13 @@ export default function NumberTrainingSettings() {
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+      <a
+        href="/training"
+        className="inline-block mb-4 text-blue-600 dark:text-blue-300 hover:underline"
+        style={{ fontWeight: 500 }}
+      >
+        ← Back to Memory Training
+      </a>
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         Numbers Training Settings
       </h2>
