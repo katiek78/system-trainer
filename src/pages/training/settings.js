@@ -13,43 +13,41 @@ const defaultSettings = {
 
 export default function NumberTrainingSettings() {
   const [settings, setSettings] = useState(defaultSettings);
+  // New: allowed prefixes per group
+  const [allowedPrefixes, setAllowedPrefixes] = useState([]);
 
-  // Auto-load highlightGrouping and mode from localStorage on mount
+  // Auto-load highlightGrouping and mode from localStorage on mount (set settings only)
+  // Track when settings.mode is loaded from localStorage
+  const [modeLoaded, setModeLoaded] = useState(false);
   useEffect(() => {
     const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
     const storedMode = localStorage.getItem("mode");
-    const storedSelectedOption = localStorage.getItem("selectedOption");
-    if (storedMode) {
-      const preset = modeOptions.find((opt) => opt.value === storedMode);
-      setSettings((prev) => ({
-        ...prev,
-        ...(storedHighlightGrouping
-          ? { highlightGrouping: storedHighlightGrouping }
-          : {}),
-        mode: storedMode,
-        ...(storedMode !== "XN" && preset
-          ? {
-              digits: preset.digits,
-              memorisationTime: preset.memorisationTime,
-              recallTime: preset.recallTime,
-            }
-          : {}),
-      }));
-      if (
-        storedSelectedOption !== null &&
-        !isNaN(Number(storedSelectedOption))
-      ) {
-        setSelectedOption(Number(storedSelectedOption));
-      }
-    } else {
-      setSettings((prev) => ({
-        ...prev,
-        ...(storedHighlightGrouping
-          ? { highlightGrouping: storedHighlightGrouping }
-          : {}),
-      }));
-    }
+    const preset = modeOptions.find((opt) => opt.value === storedMode);
+    setSettings((prev) => ({
+      ...prev,
+      ...(storedHighlightGrouping
+        ? { highlightGrouping: storedHighlightGrouping }
+        : {}),
+      ...(storedMode ? { mode: storedMode } : {}),
+      ...(storedMode && storedMode !== "XN" && preset
+        ? {
+            digits: preset.digits,
+            memorisationTime: preset.memorisationTime,
+            recallTime: preset.recallTime,
+          }
+        : {}),
+    }));
+    setModeLoaded(true);
   }, []);
+
+  // Restore selectedOption from localStorage after settings.mode is set
+  useEffect(() => {
+    if (!modeLoaded) return;
+    const storedSelectedOption = localStorage.getItem("selectedOption");
+    if (storedSelectedOption !== null && !isNaN(Number(storedSelectedOption))) {
+      setSelectedOption(Number(storedSelectedOption));
+    }
+  }, [settings.mode, modeLoaded]);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]); // all journeySets for this discipline
   const [selectedOption, setSelectedOption] = useState(0);
@@ -74,6 +72,20 @@ export default function NumberTrainingSettings() {
       .filter((n) => !isNaN(n) && n > 0);
   }
   const highlightGroups = parseHighlightGrouping(settings.highlightGrouping);
+
+  // When highlight grouping changes, reset allowedPrefixes to match group count
+  useEffect(() => {
+    setAllowedPrefixes(Array(highlightGroups.length).fill(""));
+  }, [settings.highlightGrouping]);
+
+  // Handler for prefix input
+  function handlePrefixChange(idx, val) {
+    setAllowedPrefixes((prev) => {
+      const arr = [...prev];
+      arr[idx] = val;
+      return arr;
+    });
+  }
 
   // Fetch all image sets (private and public)
   const [allImageSets, setAllImageSets] = useState([]);
@@ -182,6 +194,8 @@ export default function NumberTrainingSettings() {
         return "30-minute Numbers";
       case "60N":
         return "Hour Numbers";
+      case "XN":
+        return "Customised Numbers";
       default:
         return "5-minute Numbers";
     }
@@ -189,6 +203,7 @@ export default function NumberTrainingSettings() {
 
   // Fetch all journey options (sets) for the selected discipline
   useEffect(() => {
+    if (!modeLoaded) return;
     async function fetchOptions() {
       setLoadingJourneys(true);
       const discipline = getDisciplineLabel(settings.mode);
@@ -218,7 +233,7 @@ export default function NumberTrainingSettings() {
     }
     fetchOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.mode]);
+  }, [settings.mode, modeLoaded]);
 
   // Fetch all user journeys for add-journey dropdown
   useEffect(() => {
@@ -501,7 +516,7 @@ export default function NumberTrainingSettings() {
             {highlightGroups.map((len, idx) => {
               const sets = setsForGroupLength(len);
               return (
-                <div key={idx} className="mb-2">
+                <div key={idx} className="mb-4">
                   <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
                     Group {idx + 1} ({len} digit{len > 1 ? "s" : ""})
                   </label>
@@ -522,6 +537,23 @@ export default function NumberTrainingSettings() {
                       No image sets found for {len} digits.
                     </div>
                   )}
+
+                  {/* Allowed prefixes input for this group */}
+                  <div className="mt-2">
+                    <label className="block text-xs font-semibold mb-1 text-gray-900 dark:text-gray-100">
+                      Allowed prefixes (optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                      placeholder="e.g. 1,2,3 or 12,13"
+                      value={allowedPrefixes[idx] || ""}
+                      onChange={(e) => handlePrefixChange(idx, e.target.value)}
+                    />
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Comma-separated. Leave blank for no restriction.
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -548,6 +580,9 @@ export default function NumberTrainingSettings() {
                   highlightGrouping: settings.highlightGrouping || "3",
                   imageSets: (settings.imageSets || []).join(","),
                   journeyIds: (settings.journeys || []).join(","),
+                  allowedPrefixes: allowedPrefixes
+                    .map((p) => encodeURIComponent(p))
+                    .join("|"),
                 },
               });
             }}

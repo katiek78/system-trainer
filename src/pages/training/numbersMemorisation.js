@@ -10,9 +10,23 @@ export default function NumbersMemorisation() {
     highlightGrouping = "",
     imageSets = "",
     journeyIds = "",
+    allowedPrefixes = "",
   } = router.query;
   // Parse imageSets param to array of IDs
   const imageSetIds = imageSets ? imageSets.split(",").filter(Boolean) : [];
+  // Parse allowedPrefixes param to array (one per group)
+  // Each group: comma-separated prefixes, groups separated by |
+  const allowedPrefixesArr = allowedPrefixes
+    ? decodeURIComponent(allowedPrefixes)
+        .split("|")
+        .map((s) =>
+          s
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
+        )
+    : [];
+  // Now allowedPrefixesArr[i] is an array of allowed prefixes for group i, or [] for no restriction
 
   // Fetch image set data for selected IDs
   const [imageSetData, setImageSetData] = useState([]);
@@ -137,11 +151,37 @@ export default function NumbersMemorisation() {
   const disciplineLabel =
     modeOptions.find((m) => m.value === mode)?.label || "Numbers";
 
+  // Generate digits with allowed prefixes enforced per group, but only once unless user regenerates
   useEffect(() => {
-    if (amount > 0) {
+    if (digits) return; // Only generate if not already set
+    if (amount > 0 && highlightGroups.length > 0) {
+      let result = "";
+      let totalDigits = Number(amount);
+      let groupIdx = 0;
+      while (result.length < totalDigits) {
+        const groupLen = highlightGroups[groupIdx % highlightGroups.length];
+        const allowed =
+          allowedPrefixesArr[groupIdx % allowedPrefixesArr.length] || [];
+        let group = "";
+        let tries = 0;
+        while (tries < 100) {
+          group = generateRandomDigits(groupLen);
+          if (
+            allowed.length === 0 ||
+            allowed.some((prefix) => group.startsWith(prefix))
+          ) {
+            break;
+          }
+          tries++;
+        }
+        result += group;
+        groupIdx++;
+      }
+      setDigits(result.slice(0, totalDigits));
+    } else if (amount > 0) {
       setDigits(generateRandomDigits(Number(amount)));
     }
-  }, [amount]);
+  }, [amount, highlightGrouping, allowedPrefixesArr, digits]);
 
   if (!amount || amount <= 0) {
     return <div>No amount specified.</div>;
