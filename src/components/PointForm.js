@@ -7,10 +7,7 @@ import ImageSearch from "./ImageSearch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { PAGE_LIMIT } from "@/lib/journeyConstants";
-
-const isLocationStreetView = (location) => {
-  return /^[-\d]/.test(location);
-};
+import { isLocationStreetView } from "@/utilities/isLocationStreetView";
 
 const PointForm = ({
   formId,

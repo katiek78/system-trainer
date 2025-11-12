@@ -1,8 +1,14 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import SimpleModal from "@/components/SimpleModal";
+
+import EmbedStreetView from "@/components/EmbedStreetView";
+import EmbedImage from "@/components/EmbedImage";
+import { isLocationStreetView } from "@/utilities/isLocationStreetView";
 
 export default function NumbersMemorisation() {
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const router = useRouter();
   const {
     amount = 0,
@@ -27,6 +33,17 @@ export default function NumbersMemorisation() {
         )
     : [];
   // Now allowedPrefixesArr[i] is an array of allowed prefixes for group i, or [] for no restriction
+
+  // Keyboard shortcut for 'd' to show details alert
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === "d" && !e.repeat) {
+        setShowDetailsModal(true);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Fetch image set data for selected IDs
   const [imageSetData, setImageSetData] = useState([]);
@@ -282,6 +299,48 @@ export default function NumbersMemorisation() {
   }
   // --- End moved logic inside component ---
 
+  function getLocationAndObjectURLs() {
+    // Find the current journey and point for the highlighted group
+    if (!journeyData || journeyData.length === 0)
+      return { locationUrl: null, compImageUrl: null, memoPicUrl: null };
+    const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
+    const journeyIdx = locIdx % journeyData.length;
+    const journey = journeyData[journeyIdx];
+    if (
+      !journey ||
+      !Array.isArray(journey.points) ||
+      journey.points.length === 0
+    )
+      return { locationUrl: null, compImageUrl: null, memoPicUrl: null };
+    const pointIdx = locIdx % journey.points.length;
+    const point = journey.points[pointIdx];
+
+    // Find comp image URL for the current group of digits (from image set)
+    let compImageUrl = null;
+    let debugDigitsStr = null;
+    let debugFound = null;
+    if (imageSetData.length > 0 && highlightGroups.length > 0) {
+      const groupInCycle = highlightGroupIdx % highlightGroups.length;
+      const set = imageSetData[groupInCycle];
+      if (set && Array.isArray(set.images)) {
+        const digitsStr = getDigitsForGroup();
+        debugDigitsStr = digitsStr;
+        const found = set.images.find((img) => img.name === digitsStr);
+        debugFound = found;
+        if (found) {
+          // Try both 'url' and 'URL' (case-insensitive)
+          compImageUrl = found.url || found.URL || null;
+        }
+      }
+    }
+
+    return {
+      locationUrl: point?.location || null, // e.g., Google Maps/Street View URL
+      compImageUrl, // from image set, matching digits
+      memoPicUrl: point?.memoPic || null, // from journey point
+    };
+  }
+
   return (
     <>
       <Head>
@@ -297,7 +356,7 @@ export default function NumbersMemorisation() {
 
         {/* HINT BAR: Responsive, single rendering. Mobile: tall, left-aligned, wraps from top. Desktop: short, left-aligned, no wrap. */}
         <div
-          className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full"
+          className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
           style={{
             minHeight: "2.5rem",
             height: "auto",
@@ -305,70 +364,172 @@ export default function NumbersMemorisation() {
             paddingBottom: 0,
           }}
         >
-          <span
-            className="block"
-            style={{
-              textAlign: "left",
-              display: "block",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-              whiteSpace: "normal",
-              paddingTop: "0.5rem",
-              height:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "6rem"
-                  : "2.5rem",
-              minHeight:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "6rem"
-                  : "2.5rem",
-              maxHeight:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "6rem"
-                  : "2.5rem",
-              lineHeight:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "1.3"
-                  : "2.5rem",
-              overflow:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "auto"
-                  : "hidden",
-              textOverflow:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "clip"
-                  : "ellipsis",
-              width:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "320px"
-                  : "100%",
-              minWidth:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "320px"
-                  : "100%",
-              maxWidth:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "320px"
-                  : "100%",
-              margin:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "0 auto"
-                  : undefined,
-            }}
+          <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
+            <span
+              className="block truncate"
+              style={{
+                textAlign: "left",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                whiteSpace: "normal",
+                paddingTop: "0.5rem",
+                height:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "6rem"
+                    : "2.5rem",
+                minHeight:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "6rem"
+                    : "2.5rem",
+                maxHeight:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "6rem"
+                    : "2.5rem",
+                lineHeight:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "1.3"
+                    : "2.5rem",
+                overflow:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "auto"
+                    : "hidden",
+                textOverflow:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "clip"
+                    : "ellipsis",
+                width: "100%",
+                margin:
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? "0 auto"
+                    : undefined,
+              }}
+            >
+              {(() => {
+                const { location, object } = getLocationAndObject();
+                const imageText = getImageTextForGroup();
+                if (!location && !object && !imageText) return null;
+                return (
+                  <span>
+                    <b>{location}</b>
+                    {object ? ` - ${object}` : ""}
+                    {imageText ? `: ${imageText}` : ""}
+                  </span>
+                );
+              })()}
+            </span>
+          </div>
+          <button
+            className="px-2 py-1 text-xs bg-blue-200 dark:bg-blue-700 text-blue-900 dark:text-blue-100 rounded hover:bg-blue-300 dark:hover:bg-blue-600 flex-shrink-0"
+            style={{ minWidth: 32 }}
+            aria-label="Show details"
+            onClick={() => setShowDetailsModal(true)}
           >
-            {(() => {
-              const { location, object } = getLocationAndObject();
-              const imageText = getImageTextForGroup();
-              if (!location && !object && !imageText) return null;
+            Details
+          </button>
+          {showDetailsModal &&
+            (() => {
+              const { locationUrl, compImageUrl, memoPicUrl } =
+                getLocationAndObjectURLs();
+              // Debug: log the overlay image URLs
+              console.log("Details Modal Overlay URLs:", {
+                compImageUrl,
+                memoPicUrl,
+              });
               return (
-                <span>
-                  <b>{location}</b>
-                  {object ? ` - ${object}` : ""}
-                  {imageText ? `: ${imageText}` : ""}
-                </span>
+                <SimpleModal
+                  open={showDetailsModal}
+                  onClose={() => setShowDetailsModal(false)}
+                >
+                  <div style={{ textAlign: "center", minWidth: 200 }}>
+                    <h2 className="mb-2 text-lg font-bold">Details</h2>
+                    <div
+                      style={{
+                        margin: "16px 0",
+                        position: "relative",
+                        display: "inline-block",
+                        width: 320,
+                        height: 200,
+                      }}
+                    >
+                      {locationUrl ? (
+                        isLocationStreetView(locationUrl) ? (
+                          <EmbedStreetView
+                            location={locationUrl}
+                            width={320}
+                            height={200}
+                          />
+                        ) : (
+                          <EmbedImage
+                            location={locationUrl}
+                            width={320}
+                            height={200}
+                          />
+                        )
+                      ) : (
+                        <div
+                          style={{
+                            color: "#888",
+                            width: 320,
+                            height: 200,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          No location available
+                        </div>
+                      )}
+                      {/* Overlay compImageUrl */}
+                      {compImageUrl && (
+                        <img
+                          src={compImageUrl}
+                          alt="Comp"
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            width: 120,
+                            height: 90,
+                            objectFit: "contain",
+                            zIndex: 2,
+                            border: "2px solid #fff",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                            background: "rgba(255,255,255,0.7)",
+                            borderRadius: 8,
+                          }}
+                        />
+                      )}
+                      {/* Overlay memoPicUrl */}
+                      {memoPicUrl && (
+                        <img
+                          src={memoPicUrl}
+                          alt="Memo"
+                          style={{
+                            position: "absolute",
+                            bottom: 10,
+                            right: 10,
+                            width: 80,
+                            height: 60,
+                            objectFit: "contain",
+                            zIndex: 3,
+                            border: "2px solid #fff",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                            background: "rgba(255,255,255,0.7)",
+                            borderRadius: 8,
+                          }}
+                        />
+                      )}
+                    </div>
+                    <button
+                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+                      onClick={() => setShowDetailsModal(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </SimpleModal>
               );
             })()}
-          </span>
         </div>
 
         {/* MOBILE: Only show focused digits, with navigation, fixed height */}
