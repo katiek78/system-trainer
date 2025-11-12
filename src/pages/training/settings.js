@@ -23,6 +23,16 @@ export default function NumberTrainingSettings() {
     const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
     const storedMode = localStorage.getItem("mode");
     const preset = modeOptions.find((opt) => opt.value === storedMode);
+    // Restore custom values if mode is XN
+    let customValues = {};
+    if (storedMode === "XN") {
+      const customDigits = localStorage.getItem("customDigits");
+      const customMemTime = localStorage.getItem("customMemorisationTime");
+      const customRecallTime = localStorage.getItem("customRecallTime");
+      if (customDigits) customValues.digits = Number(customDigits);
+      if (customMemTime) customValues.memorisationTime = Number(customMemTime);
+      if (customRecallTime) customValues.recallTime = Number(customRecallTime);
+    }
     setSettings((prev) => ({
       ...prev,
       ...(storedHighlightGrouping
@@ -36,6 +46,7 @@ export default function NumberTrainingSettings() {
             recallTime: preset.recallTime,
           }
         : {}),
+      ...(storedMode === "XN" ? customValues : {}),
     }));
     setModeLoaded(true);
   }, []);
@@ -264,6 +275,14 @@ export default function NumberTrainingSettings() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name]: value }));
+    // Persist custom values if in Customised mode
+    if (settings.mode === "XN") {
+      if (name === "digits") localStorage.setItem("customDigits", value);
+      if (name === "memorisationTime")
+        localStorage.setItem("customMemorisationTime", value);
+      if (name === "recallTime")
+        localStorage.setItem("customRecallTime", value);
+    }
   };
 
   const isCustom = settings.mode === "XN";
