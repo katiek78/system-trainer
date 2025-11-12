@@ -479,19 +479,19 @@ export default function NumbersMemorisation() {
                           No location available
                         </div>
                       )}
-                      {/* Overlay compImageUrl */}
-                      {compImageUrl && (
+                      {/* Overlay memoPicUrl (now on left) */}
+                      {memoPicUrl && (
                         <img
-                          src={compImageUrl}
-                          alt="Comp"
+                          src={memoPicUrl}
+                          alt="Memo"
                           style={{
                             position: "absolute",
                             top: 10,
                             left: 10,
-                            width: 120,
-                            height: 90,
+                            width: 80,
+                            height: 60,
                             objectFit: "contain",
-                            zIndex: 2,
+                            zIndex: 3,
                             border: "2px solid #fff",
                             boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                             background: "rgba(255,255,255,0.7)",
@@ -499,19 +499,19 @@ export default function NumbersMemorisation() {
                           }}
                         />
                       )}
-                      {/* Overlay memoPicUrl */}
-                      {memoPicUrl && (
+                      {/* Overlay compImageUrl (now on right) */}
+                      {compImageUrl && (
                         <img
-                          src={memoPicUrl}
-                          alt="Memo"
+                          src={compImageUrl}
+                          alt="Comp"
                           style={{
                             position: "absolute",
                             bottom: 10,
                             right: 10,
-                            width: 80,
-                            height: 60,
+                            width: 120,
+                            height: 90,
                             objectFit: "contain",
-                            zIndex: 3,
+                            zIndex: 2,
                             border: "2px solid #fff",
                             boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                             background: "rgba(255,255,255,0.7)",
