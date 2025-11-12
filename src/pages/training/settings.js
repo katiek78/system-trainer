@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 
 const defaultSettings = {
@@ -13,6 +13,7 @@ const defaultSettings = {
 
 export default function NumberTrainingSettings() {
   const [settings, setSettings] = useState(defaultSettings);
+  const [allImageSets, setAllImageSets] = useState([]);
   // New: allowed prefixes per group
   const [allowedPrefixes, setAllowedPrefixes] = useState([]);
 
@@ -89,17 +90,65 @@ export default function NumberTrainingSettings() {
     setAllowedPrefixes(Array(highlightGroups.length).fill(""));
   }, [settings.highlightGrouping]);
 
+  // Restore imageSets and allowedPrefixes from localStorage if applicable
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (
+      !modeLoaded ||
+      allImageSets.length === 0 ||
+      highlightGroups.length === 0 ||
+      restoredRef.current
+    )
+      return;
+    // Restore imageSets
+    const storedImageSets = localStorage.getItem("imageSets");
+    let parsedImageSets = [];
+    if (storedImageSets) {
+      try {
+        parsedImageSets = JSON.parse(storedImageSets);
+      } catch {}
+    }
+    // Only reapply if length matches and all IDs are valid for group
+    if (
+      Array.isArray(parsedImageSets) &&
+      parsedImageSets.length === highlightGroups.length &&
+      parsedImageSets.every((id, idx) => {
+        if (!id) return true;
+        const sets = setsForGroupLength(highlightGroups[idx]);
+        return sets.some((set) => set._id === id);
+      })
+    ) {
+      setSettings((prev) => ({ ...prev, imageSets: parsedImageSets }));
+    }
+    // Restore allowedPrefixes
+    const storedPrefixes = localStorage.getItem("allowedPrefixes");
+    let parsedPrefixes = [];
+    if (storedPrefixes) {
+      try {
+        parsedPrefixes = JSON.parse(storedPrefixes);
+      } catch {}
+    }
+    if (
+      Array.isArray(parsedPrefixes) &&
+      parsedPrefixes.length === highlightGroups.length
+    ) {
+      setAllowedPrefixes(parsedPrefixes);
+    }
+    restoredRef.current = true;
+  }, [modeLoaded, allImageSets, highlightGroups.length]);
+
   // Handler for prefix input
   function handlePrefixChange(idx, val) {
     setAllowedPrefixes((prev) => {
       const arr = [...prev];
       arr[idx] = val;
+      // Save to localStorage
+      localStorage.setItem("allowedPrefixes", JSON.stringify(arr));
       return arr;
     });
   }
 
   // Fetch all image sets (private and public)
-  const [allImageSets, setAllImageSets] = useState([]);
   useEffect(() => {
     async function fetchImageSets() {
       const res = await fetch("/api/imageSets");
@@ -125,6 +174,8 @@ export default function NumberTrainingSettings() {
     setSettings((prev) => {
       const arr = Array.isArray(prev.imageSets) ? [...prev.imageSets] : [];
       arr[idx] = val;
+      // Save to localStorage
+      localStorage.setItem("imageSets", JSON.stringify(arr));
       return { ...prev, imageSets: arr };
     });
   }
@@ -584,13 +635,21 @@ export default function NumberTrainingSettings() {
             type="button"
             className="bg-blue-500 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
             onClick={() => {
-              // Save highlightGrouping to localStorage
+              // Save highlightGrouping, imageSets, allowedPrefixes to localStorage
               if (settings.highlightGrouping) {
                 localStorage.setItem(
                   "highlightGrouping",
                   settings.highlightGrouping
                 );
               }
+              localStorage.setItem(
+                "imageSets",
+                JSON.stringify(settings.imageSets || [])
+              );
+              localStorage.setItem(
+                "allowedPrefixes",
+                JSON.stringify(allowedPrefixes)
+              );
               router.push({
                 pathname: "/training/numbersMemorisation",
                 query: {
@@ -611,7 +670,24 @@ export default function NumberTrainingSettings() {
           <button
             type="button"
             className="bg-green-500 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-900 text-white font-bold py-2 px-4 rounded"
-            onClick={handleSaveOptions}
+            onClick={() => {
+              // Save highlightGrouping, imageSets, allowedPrefixes to localStorage
+              if (settings.highlightGrouping) {
+                localStorage.setItem(
+                  "highlightGrouping",
+                  settings.highlightGrouping
+                );
+              }
+              localStorage.setItem(
+                "imageSets",
+                JSON.stringify(settings.imageSets || [])
+              );
+              localStorage.setItem(
+                "allowedPrefixes",
+                JSON.stringify(allowedPrefixes)
+              );
+              handleSaveOptions();
+            }}
           >
             Save
           </button>
