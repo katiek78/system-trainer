@@ -455,7 +455,6 @@ export default function NumbersMemorisation() {
                   onClose={() => setShowDetailsModal(false)}
                 >
                   <div style={{ textAlign: "center", minWidth: 200 }}>
-                    <h2 className="mb-2 text-lg font-bold">Details</h2>
                     <div
                       style={{
                         margin: "16px 0",
