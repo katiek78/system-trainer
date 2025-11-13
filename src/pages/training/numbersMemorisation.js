@@ -141,6 +141,13 @@ export default function NumbersMemorisation() {
   // Keyboard navigation for highlight group
   useEffect(() => {
     function handleKeyDown(e) {
+      // Spacebar returns to start of first page and first highlight group
+      if (e.key === " " || e.code === "Space") {
+        setPage(0);
+        setHighlightGroupIdx(0);
+        return;
+      }
+      // Arrow navigation for highlight group
       if (highlightRanges.length === 0) return;
       if (e.key === "ArrowRight") {
         setHighlightGroupIdx((idx) =>
@@ -148,12 +155,47 @@ export default function NumbersMemorisation() {
         );
       } else if (e.key === "ArrowLeft") {
         setHighlightGroupIdx((idx) => Math.max(idx - 1, 0));
+      } else if (e.key === "ArrowDown") {
+        // Move to the group containing the digit DIGITS_PER_ROW below the current group's start
+        setHighlightGroupIdx((idx) => {
+          if (highlightRanges.length === 0) return idx;
+          const [curStart] = highlightRanges[idx] || [0];
+          const targetIdx = highlightRanges.findIndex(
+            ([start, end]) =>
+              curStart + DIGITS_PER_ROW >= start &&
+              curStart + DIGITS_PER_ROW < end
+          );
+          return targetIdx !== -1 ? targetIdx : idx;
+        });
+      } else if (e.key === "ArrowUp") {
+        // Move to the group containing the digit DIGITS_PER_ROW above the current group's start
+        setHighlightGroupIdx((idx) => {
+          if (highlightRanges.length === 0) return idx;
+          const [curStart] = highlightRanges[idx] || [0];
+          const targetIdx = highlightRanges.findIndex(
+            ([start, end]) =>
+              curStart - DIGITS_PER_ROW >= start &&
+              curStart - DIGITS_PER_ROW < end
+          );
+          return targetIdx !== -1 ? targetIdx : idx;
+        });
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightRanges.length]);
+
+  // Sync page with highlight group so that navigating highlight moves to the correct page
+  useEffect(() => {
+    if (highlightRanges.length === 0) return;
+    // Find the page that contains the start of the current highlight group
+    const [groupStart] = highlightRanges[highlightGroupIdx] || [0];
+    const groupPage = Math.floor(groupStart / (DIGITS_PER_ROW * ROWS_PER_PAGE));
+    if (groupPage !== page) {
+      setPage(groupPage);
+    }
+  }, [highlightGroupIdx, highlightRanges, page]);
 
   // Reset highlight index if digits or grouping changes
   useEffect(() => {
@@ -211,7 +253,9 @@ export default function NumbersMemorisation() {
 
   const totalRows = Math.ceil(digits.length / DIGITS_PER_ROW);
   const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
-  const startRow = page * ROWS_PER_PAGE;
+  // Clamp page to valid range
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
+  const startRow = safePage * ROWS_PER_PAGE;
   const endRow = startRow + ROWS_PER_PAGE;
 
   // Build all rows for the current page
@@ -668,7 +712,15 @@ export default function NumbersMemorisation() {
                   })()}
                   {row.map((digit, i) => {
                     const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
-                    const highlighted = isDigitHighlighted(globalIdx);
+                    // Find which highlight group this digit belongs to
+                    let groupIdxForDigit = -1;
+                    for (let g = 0; g < highlightRanges.length; g++) {
+                      const [start, end] = highlightRanges[g];
+                      if (globalIdx >= start && globalIdx < end) {
+                        groupIdxForDigit = g;
+                        break;
+                      }
+                    }
                     return (
                       <span
                         key={i}
@@ -676,10 +728,26 @@ export default function NumbersMemorisation() {
                           display: "inline-block",
                           minWidth: digitWidth,
                           textAlign: "center",
-                          color: highlighted ? "#222" : undefined,
+                          color:
+                            groupIdxForDigit === highlightGroupIdx
+                              ? "#222"
+                              : undefined,
                           position: "relative",
                           zIndex: 1,
+                          cursor:
+                            groupIdxForDigit !== -1 ? "pointer" : undefined,
+                          outline: "none",
                         }}
+                        onClick={() => {
+                          if (groupIdxForDigit !== -1)
+                            setHighlightGroupIdx(groupIdxForDigit);
+                        }}
+                        tabIndex={groupIdxForDigit !== -1 ? 0 : -1}
+                        aria-label={
+                          groupIdxForDigit !== -1
+                            ? `Select group ${groupIdxForDigit + 1}`
+                            : undefined
+                        }
                       >
                         {digit}
                       </span>
@@ -695,17 +763,17 @@ export default function NumbersMemorisation() {
           <div className="mt-4 text-center">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
+              disabled={safePage === 0}
               className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
               Previous
             </button>
             <span className="mx-3 text-gray-900 dark:text-gray-100">
-              Page {page + 1} of {totalPages}
+              Page {safePage + 1} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page === totalPages - 1}
+              disabled={safePage === totalPages - 1}
               className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
               Next
