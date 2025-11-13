@@ -42,7 +42,7 @@ export default function NumbersMemorisation() {
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === "d" && !e.repeat) {
-        setShowDetailsModal(true);
+        setShowDetailsModal((prev) => !prev);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -577,12 +577,7 @@ export default function NumbersMemorisation() {
                         />
                       )}
                     </div>
-                    <button
-                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-                      onClick={() => setShowDetailsModal(false)}
-                    >
-                      Close
-                    </button>
+                    {/* Close button removed; use the '×' in the modal corner */}
                   </div>
                 </SimpleModal>
               );
