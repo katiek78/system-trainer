@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 const cardModes = [
   {
@@ -40,6 +41,7 @@ const cardModes = [
 ];
 
 export default function CardTrainingSettings() {
+  const { user, isLoading: userLoading } = useUser();
   const [settings, setSettings] = useState({
     mode: "SC",
     decks: 1,
@@ -85,11 +87,17 @@ export default function CardTrainingSettings() {
         fetchedOptions = data.options || [];
       }
       // Fetch all user journeys
-      const resJourneys = await fetch("/api/journeys");
       let fetchedJourneys = [];
-      if (resJourneys.ok) {
-        const data = await resJourneys.json();
-        fetchedJourneys = data.data.map((j) => ({ id: j._id, name: j.name }));
+      if (user && user.sub) {
+        const resJourneys = await fetch("/api/journeys");
+        if (resJourneys.ok) {
+          const data = await resJourneys.json();
+          // Filter journeys by userId and sort by name
+          fetchedJourneys = data.data
+            .filter((j) => j.userId === user.sub)
+            .map((j) => ({ id: j._id, name: j.name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
       }
       setOptions(fetchedOptions);
       setUserJourneys(fetchedJourneys);
@@ -107,9 +115,9 @@ export default function CardTrainingSettings() {
       setSelectedOption(idx);
       setLoadingJourneys(false);
     }
-    fetchOptionsAndJourneys();
+    if (!userLoading) fetchOptionsAndJourneys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.mode]);
+  }, [settings.mode, user, userLoading]);
 
   function handleModeChange(e) {
     const selected = cardModes.find((m) => m.value === e.target.value);
