@@ -162,17 +162,262 @@ const ImageSetPage = ({
   }, []);
 
   const renderPageNumbers = () => {
+    // Debug: log the first 30 image names to inspect the set order
+    if (allNames && allNames.images && allNames.images.length > 0) {
+      console.log(
+        "First 30 images:",
+        allNames.images.slice(0, 600).map((img) => img.name)
+      );
+    }
     if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div>;
+    // Card navigation helpers
+    const suits = ["♠", "♥", "♦", "♣"];
+    const suitNames = ["Spades", "Hearts", "Diamonds", "Clubs"];
+    const values = [
+      "A",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "J",
+      "Q",
+      "K",
+    ];
+    // Number navigation helpers
+    const getNumberOptions = (step = 10) => {
+      const options = [];
+      for (let i = 0; i < allNames.images.length; i += step) {
+        const label = allNames.images[i]?.name || i.toString().padStart(2, "0");
+        options.push(
+          <option key={i} value={Math.floor(i / pageLimit) + 1}>
+            {label}
+          </option>
+        );
+      }
+      return options;
+    };
+
+    // Single card set (52)
+    if (imageForm.setType === "1c" && allNames.images.length === 52) {
+      return (
+        <div className="flex flex-row items-center mt-3">
+          <span className="mr-2">Jump to:</span>
+
+          <select
+            className="mr-2"
+            onChange={(e) => {
+              const valueIdx = parseInt(e.target.value);
+              const suitIdx = parseInt(
+                document.getElementById("cardSuitSelect").value
+              );
+              const idx = suitIdx * 13 + valueIdx;
+              handlePageChange(Math.floor(idx / pageLimit) + 1);
+            }}
+            id="cardValueSelect"
+            defaultValue={0}
+          >
+            {values.map((v, i) => (
+              <option key={v} value={i}>
+                {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="mr-2"
+            onChange={(e) => {
+              const suitIdx = parseInt(e.target.value);
+              const valueIdx = parseInt(
+                document.getElementById("cardValueSelect").value
+              );
+              const idx = suitIdx * 13 + valueIdx;
+              handlePageChange(Math.floor(idx / pageLimit) + 1);
+            }}
+            id="cardSuitSelect"
+            defaultValue={0}
+          >
+            {suits.map((s, i) => (
+              <option key={s} value={i}>
+                {suitNames[i]}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    // 2-card set (1352 or 2704)
+    if (
+      (imageForm.setType === "2cv" && allNames.images.length === 1352) ||
+      (imageForm.setType === "2c" && allNames.images.length === 2704)
+    ) {
+      // Utility function for both 2cv (1352) and 2c (2704) sets
+      // is2cv: true for 1352 set, false for 2704 set
+      // s1: card 1 suit (0=Spades, 1=Hearts, 2=Diamonds, 3=Clubs)
+      // v1: card 1 value (0=A, 1=2, ... 12=K)
+      // c2: card 2 color (0=Red, 1=Black)
+      function getPageNumber(is2cv, s1, v1, c2) {
+        // For 2cv (1352): only Spades (0) and Clubs (3) for card 1 suit
+        // For 2c (2704): all suits for card 1
+        // Page size is pageLimit (26)
+        let idx = 0;
+        if (is2cv) {
+          // Only Spades (0) and Clubs (3) for card 1 suit
+          // For Spades: block 0, for Clubs: block 1
+          // Each card 1 suit block is 13*52 = 676
+          // For each card 1 value (0-12):
+          //   - Red: offset 0
+          //   - Black: offset 26
+          // So:
+          // Spades: idx = v1 * 52 + (0 if red, 26 if black)
+          // Clubs: idx = 13*52 + v1 * 52 + (0 if red, 26 if black)
+          if (s1 === 0) {
+            // Spades
+            idx = v1 * 52 + (c2 === 0 ? 0 : 26);
+          } else if (s1 === 3) {
+            // Clubs
+            idx = 13 * 52 + v1 * 52 + (c2 === 0 ? 0 : 26);
+          } else {
+            return 1; // fallback for invalid suit
+          }
+        } else {
+          // 2c (2704): all suits for card 1
+          // 4 suits x 13 values x 2 colors x 13 = 2704
+          // Each card1 suit block: 13*2*13 = 338
+          // Each card1 value block: 2*13 = 26
+          // Each color block: 13
+          idx = s1 * 338 + v1 * 26 + c2 * 13;
+        }
+        // Return 1-based page number
+        return Math.floor(idx / pageLimit) + 1;
+      }
+
+      // UI for 2cv (1352)
+      if (imageForm.setType === "2cv" && allNames.images.length === 1352) {
+        const card1SuitOptions = [0, 3]; // Spades, Clubs
+        return (
+          <div className="flex flex-row items-center mt-3">
+            <span className="mr-1">Card 1</span>
+            <select className="mr-2" id="card1Value">
+              {values.map((v, i) => (
+                <option key={v} value={i}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            <select className="mr-1" id="card1Suit">
+              {card1SuitOptions.map((s, i) => (
+                <option key={suits[s]} value={s}>
+                  {suitNames[s]}
+                </option>
+              ))}
+            </select>
+            <span className="mr-1">Card 2</span>
+            <select className="mr-1" id="card2Color">
+              <option value={0}>Red (♥/♦)</option>
+              <option value={1}>Black (♠/♣)</option>
+            </select>
+            <button
+              className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+              onClick={() => {
+                const c1s = parseInt(
+                  document.getElementById("card1Suit").value
+                );
+                const c1v = parseInt(
+                  document.getElementById("card1Value").value
+                );
+                const c2color = parseInt(
+                  document.getElementById("card2Color").value
+                );
+                const page = getPageNumber(true, c1s, c1v, c2color);
+                handlePageChange(page);
+              }}
+            >
+              Go
+            </button>
+          </div>
+        );
+      }
+
+      // UI for 2c (2704)
+      if (imageForm.setType === "2c" && allNames.images.length === 2704) {
+        // All suits for card 1
+        return (
+          <div className="flex flex-row items-center mt-3">
+            <span className="mr-1">Card 1</span>
+            <select className="mr-2" id="card1Value">
+              {values.map((v, i) => (
+                <option key={v} value={i}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            <select className="mr-1" id="card1Suit">
+              {suits.map((s, i) => (
+                <option key={suitNames[i]} value={i}>
+                  {suitNames[i]}
+                </option>
+              ))}
+            </select>
+            <span className="mr-1">Card 2</span>
+            <select className="mr-1" id="card2Color">
+              <option value={0}>Red (♥/♦)</option>
+              <option value={1}>Black (♠/♣)</option>
+            </select>
+            <button
+              className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+              onClick={() => {
+                const c1s = parseInt(
+                  document.getElementById("card1Suit").value
+                );
+                const c1v = parseInt(
+                  document.getElementById("card1Value").value
+                );
+                const c2color = parseInt(
+                  document.getElementById("card2Color").value
+                );
+                const page = getPageNumber(false, c1s, c1v, c2color);
+                handlePageChange(page);
+              }}
+            >
+              Go
+            </button>
+          </div>
+        );
+      }
+    }
+
+    // Number sets (2d, 3d, 4d)
+    if (["2d", "3d", "4d"].includes(imageForm.setType)) {
+      // For 2d: 00, 10, 20, ...; for 3d: 000, 010, ...
+      const step = imageForm.setType === "2d" ? 10 : 100;
+      return (
+        <div className="flex flex-row items-center mt-3">
+          <span className="mr-2">Jump to:</span>
+          <select
+            onChange={(e) => handlePageChange(Number(e.target.value))}
+            defaultValue={1}
+          >
+            {getNumberOptions(step)}
+          </select>
+        </div>
+      );
+    }
+
+    // Fallback: original button navigation
     let div = [];
-    const BUTTON_MAX = 10; //how many buttons are shown before there should be a '...'
+    const BUTTON_MAX = 10;
     const totalButtons = Math.ceil(allNames.images.length / pageLimit);
-    const buttonsToBeShown = Math.min(BUTTON_MAX, totalButtons); //lower of maximum and total buttons
+    const buttonsToBeShown = Math.min(BUTTON_MAX, totalButtons);
     const isEven = BUTTON_MAX % 2 === 0;
     const numberToShowBeforeCurrentPage = isEven
       ? BUTTON_MAX / 2 + 1
-      : (BUTTON_MAX - 1) / 2; //6 when we have 10 buttons max
-
-    //const firstButton = (currentPage <= numberToShowBeforeCurrentPage) ? 0 : currentPage - numberToShowBeforeCurrentPage
+      : (BUTTON_MAX - 1) / 2;
     let firstButton;
     if (currentPage <= numberToShowBeforeCurrentPage) {
       firstButton = 0;
@@ -180,18 +425,14 @@ const ImageSetPage = ({
       currentPage >
       totalButtons - BUTTON_MAX + numberToShowBeforeCurrentPage
     ) {
-      // unless we are in last BUTTON_MAX-nts buttons because then there are none showing after
       firstButton = totalButtons - BUTTON_MAX;
     } else firstButton = currentPage - numberToShowBeforeCurrentPage;
-
     const lastButton = Math.min(
       firstButton + buttonsToBeShown - 1,
       totalButtons - 1
     );
-
     const isThereMoreAtEnd = lastButton < totalButtons - 1;
     const isThereMoreAtStart = firstButton > 0;
-
     if (isThereMoreAtStart) {
       let i = 0;
       const firstInRange = allNames.images[i * pageLimit].name;
@@ -211,7 +452,6 @@ const ImageSetPage = ({
       );
       div.push(" ... ");
     }
-
     for (let i = firstButton; i <= lastButton; i++) {
       const firstInRange = allNames.images[i * pageLimit]?.name;
       const lastInRange =
@@ -241,7 +481,6 @@ const ImageSetPage = ({
           </button>
         );
     }
-
     if (isThereMoreAtEnd) {
       div.push(" ... ");
       let i = totalButtons - 1;
@@ -261,7 +500,6 @@ const ImageSetPage = ({
         </button>
       );
     }
-
     let jump;
     if (isCardSet()) {
       jump = 104;
@@ -272,7 +510,6 @@ const ImageSetPage = ({
         jump = 100;
       }
     }
-
     const options = allNames.images.map((item, index) => {
       if (index % jump === 0) {
         const entryNumber = index / pageLimit;
@@ -284,7 +521,6 @@ const ImageSetPage = ({
       }
       return null;
     });
-
     if (jump)
       div.push(
         <>
@@ -299,7 +535,6 @@ const ImageSetPage = ({
               )
             }
           >
-            {/* Add default option   <option value="">-- Select an option --</option> */}
             {options}
           </select>
         </>
