@@ -208,6 +208,63 @@ export default function CardMemorisation({
           paddingBottom: 0,
         }}
       >
+        <div
+          className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
+          style={{
+            minHeight: "2.5rem",
+            height: "auto",
+            paddingTop: 0,
+            paddingBottom: 0,
+            minWidth: "340px", // Ensures stable width
+            maxWidth: "100%",
+          }}
+        >
+          <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
+            <span
+              className="block truncate font-mono"
+              style={{
+                textAlign: "left",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                whiteSpace: "normal",
+                paddingTop: "0.5rem",
+                height: "2.5rem",
+                minHeight: "2.5rem",
+                maxHeight: "2.5rem",
+                lineHeight: "2.5rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
+                minWidth: "320px", // Ensures text area doesn't shrink
+                maxWidth: "100%",
+              }}
+            >
+              <b>
+                {currentPoint && currentPoint.name ? currentPoint.name : "-"}
+              </b>
+              {currentPoint && currentPoint.memoItem
+                ? ` - ${currentPoint.memoItem}`
+                : ""}
+              {imageItemName && (
+                <>
+                  {` : ${imageItemName}`}
+                  {imagePhonetics && (
+                    <span
+                      style={{
+                        color: "#888",
+                        fontStyle: "italic",
+                        marginLeft: 6,
+                      }}
+                    >
+                      ({imagePhonetics})
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+
         <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
           <span
             className="block truncate"
