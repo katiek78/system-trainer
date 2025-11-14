@@ -49,6 +49,7 @@ export default function CardTrainingSettings() {
     recallTime: 240,
     cardGrouping: "1",
     imageSet: "",
+    cardGroupsPerLocation: 1,
   });
   // Restore settings from localStorage on mount
   useEffect(() => {
@@ -59,6 +60,8 @@ export default function CardTrainingSettings() {
     const recallTime = Number(localStorage.getItem("cardRecallTime")) || 240;
     const cardGrouping = localStorage.getItem("cardGrouping") || "1";
     const imageSet = localStorage.getItem("cardImageSet") || "";
+    const cardGroupsPerLocation =
+      Number(localStorage.getItem("cardGroupsPerLocation")) || 1;
     setSettings({
       mode,
       decks,
@@ -66,6 +69,7 @@ export default function CardTrainingSettings() {
       recallTime,
       cardGrouping,
       imageSet,
+      cardGroupsPerLocation,
     });
   }, []);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
@@ -167,7 +171,11 @@ export default function CardTrainingSettings() {
     setSettings((prev) => ({
       ...prev,
       [name]:
-        name === "cardGrouping" || name === "imageSet" ? value : Number(value),
+        name === "cardGrouping" || name === "imageSet"
+          ? value
+          : name === "cardGroupsPerLocation"
+          ? Math.max(1, Math.min(4, Number(value)))
+          : Number(value),
     }));
   }
 
@@ -232,6 +240,10 @@ export default function CardTrainingSettings() {
     localStorage.setItem("cardImageSet", settings.imageSet);
     localStorage.setItem("cardJourneyOptions", JSON.stringify(options));
     localStorage.setItem("cardSelectedOption", selectedOption);
+    localStorage.setItem(
+      "cardGroupsPerLocation",
+      settings.cardGroupsPerLocation
+    );
 
     // Only save if there are options
     if (!options || options.length === 0) {
@@ -305,6 +317,7 @@ export default function CardTrainingSettings() {
           journeyOption: selectedOption,
           cardGrouping: settings.cardGrouping,
           imageSet: settings.imageSet,
+          cardGroupsPerLocation: settings.cardGroupsPerLocation,
         },
       });
     });
@@ -491,12 +504,25 @@ export default function CardTrainingSettings() {
           name="cardGrouping"
           value={settings.cardGrouping}
           onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+          className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         >
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
         </select>
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Card groups per location
+        </label>
+        <input
+          type="number"
+          name="cardGroupsPerLocation"
+          min={1}
+          max={4}
+          value={settings.cardGroupsPerLocation}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        />
 
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Image set

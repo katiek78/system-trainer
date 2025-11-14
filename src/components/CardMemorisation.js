@@ -48,6 +48,24 @@ export default function CardMemorisation({
   onFinish,
 }) {
   const router = useRouter();
+  // router already declared at the top
+  // Card groups per location: from query, localStorage, or default 1
+  const [groupsPerLocation, setGroupsPerLocation] = useState(1);
+  useEffect(() => {
+    let value = 1;
+    if (router.query.cardGroupsPerLocation) {
+      value = Math.max(
+        1,
+        Math.min(4, Number(router.query.cardGroupsPerLocation))
+      );
+    } else if (typeof window !== "undefined") {
+      const stored = Number(localStorage.getItem("cardGroupsPerLocation"));
+      if (!isNaN(stored) && stored > 0)
+        value = Math.max(1, Math.min(4, stored));
+    }
+    setGroupsPerLocation(value);
+  }, [router.query.cardGroupsPerLocation]);
+
   // Generate and shuffle cards
   const [cards, setCards] = useState([]);
   useEffect(() => {
@@ -74,7 +92,7 @@ export default function CardMemorisation({
   const end = Math.min(start + groupSize, cardsOnPage.length);
   const currentGroup = cardsOnPage.slice(start, end);
 
-  // Get journey point for this group (cycle through points)
+  // Get journey point for this group (cycle through points, shift after groupsPerLocation groups)
   function getCurrentPoint() {
     if (!journey || journey.length === 0) return null;
     // Flatten all points from all journeys
@@ -82,8 +100,9 @@ export default function CardMemorisation({
       Array.isArray(j.points) ? j.points : []
     );
     if (allPoints.length === 0) return null;
-    // One point per group, cycle if needed
-    const idx = (page * totalGroups + highlightIdx) % allPoints.length;
+    // Only shift location after groupsPerLocation groups
+    const groupNumber = page * totalGroups + highlightIdx;
+    const idx = Math.floor(groupNumber / groupsPerLocation) % allPoints.length;
     return allPoints[idx] || { name: "-" };
   }
   const currentPoint = getCurrentPoint();
@@ -148,7 +167,7 @@ export default function CardMemorisation({
     getImageItemAndPhonetics();
 
   // Calculate groups per row for up/down navigation
-  const GROUPS_PER_ROW = Math.ceil(6 / groupSize); // 6 columns in grid
+  const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
 
   // Keyboard navigation (arrows for group, PgUp/PgDn for deck)
   useEffect(() => {
@@ -190,7 +209,7 @@ export default function CardMemorisation({
 
   // Responsive hint bar styling (match numbersMemorisation)
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+    <div className="max-w-5xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
       <button
         onClick={handleExitToSettings}
         className="mb-4 text-blue-600 dark:text-blue-300 hover:underline font-medium"
@@ -198,89 +217,67 @@ export default function CardMemorisation({
         ← Exit to Card Settings
       </button>
       <h2 className="text-2xl font-bold mb-4">Cards Memorisation</h2>
+      {/* No card groups per location input here; should be on settings page */}
       {/* Hint Bar (styled like numbers) */}
       <div
         className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
         style={{
-          minHeight: "2.5rem",
-          height: "auto",
+          minHeight:
+            typeof window !== "undefined" && window.innerWidth < 640
+              ? "6rem"
+              : "2.5rem",
+          height:
+            typeof window !== "undefined" && window.innerWidth < 640
+              ? "6rem"
+              : "2.5rem",
           paddingTop: 0,
           paddingBottom: 0,
+          minWidth: "340px",
+          maxWidth: "100%",
+          fontVariantNumeric: "tabular-nums",
         }}
       >
-        <div
-          className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
-          style={{
-            minHeight: "2.5rem",
-            height: "auto",
-            paddingTop: 0,
-            paddingBottom: 0,
-            minWidth: "340px", // Ensures stable width
-            maxWidth: "100%",
-          }}
-        >
-          <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
-            <span
-              className="block truncate font-mono"
-              style={{
-                textAlign: "left",
-                overflowWrap: "break-word",
-                wordBreak: "break-word",
-                whiteSpace: "normal",
-                paddingTop: "0.5rem",
-                height: "2.5rem",
-                minHeight: "2.5rem",
-                maxHeight: "2.5rem",
-                lineHeight: "2.5rem",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                width: "100%",
-                minWidth: "320px", // Ensures text area doesn't shrink
-                maxWidth: "100%",
-              }}
-            >
-              <b>
-                {currentPoint && currentPoint.name ? currentPoint.name : "-"}
-              </b>
-              {currentPoint && currentPoint.memoItem
-                ? ` - ${currentPoint.memoItem}`
-                : ""}
-              {imageItemName && (
-                <>
-                  {` : ${imageItemName}`}
-                  {imagePhonetics && (
-                    <span
-                      style={{
-                        color: "#888",
-                        fontStyle: "italic",
-                        marginLeft: 6,
-                      }}
-                    >
-                      ({imagePhonetics})
-                    </span>
-                  )}
-                </>
-              )}
-            </span>
-          </div>
-        </div>
-
         <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
           <span
-            className="block truncate"
+            className="block truncate font-mono"
             style={{
               textAlign: "left",
               overflowWrap: "break-word",
               wordBreak: "break-word",
-              whiteSpace: "normal",
+              whiteSpace:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "normal"
+                  : "nowrap",
               paddingTop: "0.5rem",
-              height: "2.5rem",
-              minHeight: "2.5rem",
-              maxHeight: "2.5rem",
-              lineHeight: "2.5rem",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              height:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              minHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              maxHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "6rem"
+                  : "2.5rem",
+              lineHeight:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "1.3"
+                  : "2.5rem",
+              overflow:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "auto"
+                  : "hidden",
+              textOverflow:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "clip"
+                  : "ellipsis",
               width: "100%",
+              margin:
+                typeof window !== "undefined" && window.innerWidth < 640
+                  ? "0 auto"
+                  : undefined,
             }}
           >
             <b>{currentPoint && currentPoint.name ? currentPoint.name : "-"}</b>
@@ -306,8 +303,8 @@ export default function CardMemorisation({
           </span>
         </div>
       </div>
-      {/* Card List (grid) */}
-      <div className="grid grid-cols-6 gap-2 mb-6">
+      {/* Card List (grid, desktop only) */}
+      <div className="grid grid-cols-10 gap-2 mb-6 hidden sm:grid">
         {cardsOnPage.map((card, idx) => {
           const groupIdx = Math.floor(idx / groupSize);
           const isHighlighted = groupIdx === highlightIdx;
@@ -333,6 +330,32 @@ export default function CardMemorisation({
             </div>
           );
         })}
+      </div>
+
+      {/* Focus box for current group (mobile only) */}
+      <div className="block sm:hidden mb-6">
+        <div className="flex justify-center">
+          <div className="border-2 border-yellow-500 rounded-lg bg-yellow-100 dark:bg-yellow-900 p-4 flex gap-2 items-center min-w-[120px]">
+            {currentGroup.map((card, idx) => {
+              const isRedSuit = card.suit === "♥" || card.suit === "♦";
+              return (
+                <span
+                  key={idx}
+                  className="text-2xl font-mono flex items-center"
+                >
+                  {card.value}
+                  <span
+                    className={
+                      isRedSuit ? "ml-1 text-red-600 dark:text-red-400" : "ml-1"
+                    }
+                  >
+                    {card.suit}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
       </div>
       {/* Paging controls (desktop only, like numbers) */}
       {totalPages > 1 && (
