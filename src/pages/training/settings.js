@@ -148,13 +148,20 @@ export default function NumberTrainingSettings() {
     });
   }
 
-  // Fetch all image sets (private and public)
+  // Fetch only this user's image sets (name and count)
   useEffect(() => {
     async function fetchImageSets() {
-      const res = await fetch("/api/imageSets");
+      const res = await fetch("/api/imageSets/names");
       if (res.ok) {
         const data = await res.json();
-        setAllImageSets(data.data || []);
+        // Adapt to expected structure for setsForGroupLength
+        setAllImageSets(
+          data.map((set) => ({
+            _id: set._id,
+            name: set.name,
+            images: Array(set.count).fill(1), // fake array for length check
+          }))
+        );
       }
     }
     fetchImageSets();
@@ -294,11 +301,10 @@ export default function NumberTrainingSettings() {
   // Fetch all user journeys for add-journey dropdown
   useEffect(() => {
     async function fetchUserJourneys() {
-      const res = await fetch("/api/journeys");
+      const res = await fetch("/api/journeys/names");
       if (res.ok) {
         const data = await res.json();
-        // data.data is the array of journeys
-        setUserJourneys(data.data.map((j) => ({ id: j._id, name: j.name })));
+        setUserJourneys(data.map((j) => ({ id: j._id, name: j.name })));
       }
     }
     fetchUserJourneys();

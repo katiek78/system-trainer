@@ -47,11 +47,32 @@ export default function CardTrainingSettings() {
     decks: 1,
     memorisationTime: 60,
     recallTime: 240,
+    cardGrouping: "1",
+    imageSet: "",
   });
+  // Restore settings from localStorage on mount
+  useEffect(() => {
+    const mode = localStorage.getItem("cardMode") || "SC";
+    const decks = Number(localStorage.getItem("cardDecks")) || 1;
+    const memorisationTime =
+      Number(localStorage.getItem("cardMemorisationTime")) || 60;
+    const recallTime = Number(localStorage.getItem("cardRecallTime")) || 240;
+    const cardGrouping = localStorage.getItem("cardGrouping") || "1";
+    const imageSet = localStorage.getItem("cardImageSet") || "";
+    setSettings({
+      mode,
+      decks,
+      memorisationTime,
+      recallTime,
+      cardGrouping,
+      imageSet,
+    });
+  }, []);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(0);
   const [userJourneys, setUserJourneys] = useState([]);
+  const [userImageSets, setUserImageSets] = useState([]);
   const router = useRouter();
 
   // Map mode to discipline label for API
@@ -88,19 +109,30 @@ export default function CardTrainingSettings() {
       }
       // Fetch all user journeys
       let fetchedJourneys = [];
+      let fetchedImageSets = [];
       if (user && user.sub) {
-        const resJourneys = await fetch("/api/journeys");
+        // Fetch only this user's journey names
+        const resJourneys = await fetch("/api/journeys/names");
         if (resJourneys.ok) {
           const data = await resJourneys.json();
-          // Filter journeys by userId and sort by name
-          fetchedJourneys = data.data
-            .filter((j) => j.userId === user.sub)
+          fetchedJourneys = data
             .map((j) => ({ id: j._id, name: j.name }))
             .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        // Fetch all user image sets (names and counts only)
+        const resImageSets = await fetch("/api/imageSets/names");
+        if (resImageSets.ok) {
+          const data = await resImageSets.json();
+          fetchedImageSets = data.map((set) => ({
+            id: set._id,
+            name: set.name,
+            count: set.count,
+          }));
         }
       }
       setOptions(fetchedOptions);
       setUserJourneys(fetchedJourneys);
+      setUserImageSets(fetchedImageSets);
       // Restore selected option from localStorage if available and valid
       const storedSelectedOption = localStorage.getItem("cardSelectedOption");
       let idx = 0;
@@ -132,7 +164,11 @@ export default function CardTrainingSettings() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setSettings((prev) => ({ ...prev, [name]: Number(value) }));
+    setSettings((prev) => ({
+      ...prev,
+      [name]:
+        name === "cardGrouping" || name === "imageSet" ? value : Number(value),
+    }));
   }
 
   function handleSelectOption(idx) {
@@ -186,18 +222,21 @@ export default function CardTrainingSettings() {
     );
   }
 
-  async function handleSave() {
+  // Save settings, optionally suppressing alerts (for Start button)
+  async function handleSave({ suppressAlert = false } = {}) {
     localStorage.setItem("cardMode", settings.mode);
     localStorage.setItem("cardDecks", settings.decks);
     localStorage.setItem("cardMemorisationTime", settings.memorisationTime);
     localStorage.setItem("cardRecallTime", settings.recallTime);
+    localStorage.setItem("cardGrouping", settings.cardGrouping);
+    localStorage.setItem("cardImageSet", settings.imageSet);
     localStorage.setItem("cardJourneyOptions", JSON.stringify(options));
     localStorage.setItem("cardSelectedOption", selectedOption);
 
     // Only save if there are options
     if (!options || options.length === 0) {
-      alert("No journey options to save.");
-      return;
+      if (!suppressAlert) alert("No journey options to save.");
+      return false;
     }
 
     try {
@@ -207,29 +246,67 @@ export default function CardTrainingSettings() {
         body: JSON.stringify({
           discipline: getDisciplineLabel(settings.mode),
           options: options.map((opt) => opt.map((j) => j.id)),
+          cardGrouping: settings.cardGrouping,
+          imageSet: settings.imageSet,
         }),
       });
-      if (res.ok) {
-        alert("Options saved!");
-      } else {
-        alert("Failed to save options.");
+      if (!res.ok) {
+        if (!suppressAlert) alert("Failed to save options.");
+        return false;
       }
+      // No alert on success
+      return true;
     } catch (err) {
-      alert("Error saving options.");
+      if (!suppressAlert) alert("Error saving options.");
+      return false;
     }
   }
 
   function handleStart() {
-    handleSave();
-    router.push({
-      pathname: "/training/cards",
-      query: {
-        mode: settings.mode,
-        decks: settings.decks,
-        memorisationTime: settings.memorisationTime,
-        recallTime: settings.recallTime,
-        journeyOption: selectedOption,
-      },
+    handleSave({ suppressAlert: true }).then(async (saved) => {
+      if (!saved) return;
+      // Store full image set info for hint bar (with images array)
+      let imageSetsToStore = [];
+      if (settings.imageSet) {
+        try {
+          const res = await fetch(`/api/imageSets/${settings.imageSet}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.data) {
+              // Use same shape as before but with images array
+              imageSetsToStore = [
+                {
+                  id: data.data._id,
+                  name: data.data.name,
+                  count: data.data.images.length,
+                  images: data.data.images,
+                },
+              ];
+            }
+          }
+        } catch (e) {
+          // fallback to summary only
+          const selectedImageSet = userImageSets.find(
+            (set) => set.id === settings.imageSet
+          );
+          if (selectedImageSet) {
+            imageSetsToStore = [selectedImageSet];
+          }
+        }
+      }
+      localStorage.setItem("cardImageSets", JSON.stringify(imageSetsToStore));
+      router.push({
+        pathname: "/training/cards",
+        query: {
+          mode: settings.mode,
+          decks: settings.decks,
+          memorisationTime: settings.memorisationTime,
+          recallTime: settings.recallTime,
+          journeyOption: selectedOption,
+          cardGrouping: settings.cardGrouping,
+          imageSet: settings.imageSet,
+        },
+      });
     });
   }
 
@@ -406,6 +483,48 @@ export default function CardTrainingSettings() {
           onChange={handleChange}
           className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         />
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Card grouping
+        </label>
+        <select
+          name="cardGrouping"
+          value={settings.cardGrouping}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        >
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Image set
+        </label>
+        <select
+          name="imageSet"
+          value={settings.imageSet}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        >
+          <option value="">Select image set...</option>
+          {(() => {
+            const cg = settings.cardGrouping;
+            let filterFn = (set) => true;
+            if (cg === "1") {
+              filterFn = (set) => set.count === 52;
+            } else if (cg === "2") {
+              filterFn = (set) => set.count === 1352 || set.count === 2704;
+            } else if (cg === "3") {
+              filterFn = (set) => set.count === 64 || set.count === 2197;
+            }
+            return userImageSets.filter(filterFn).map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name} ({set.count} images)
+              </option>
+            ));
+          })()}
+        </select>
 
         <div className="flex gap-3">
           <button
