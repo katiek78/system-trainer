@@ -178,13 +178,41 @@ export default function CardTrainingSettings() {
     );
   }
 
-  function handleStart() {
+  async function handleSave() {
     localStorage.setItem("cardMode", settings.mode);
     localStorage.setItem("cardDecks", settings.decks);
     localStorage.setItem("cardMemorisationTime", settings.memorisationTime);
     localStorage.setItem("cardRecallTime", settings.recallTime);
     localStorage.setItem("cardJourneyOptions", JSON.stringify(options));
     localStorage.setItem("cardSelectedOption", selectedOption);
+
+    // Only save if there are options
+    if (!options || options.length === 0) {
+      alert("No journey options to save.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/journeyAssignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discipline: getDisciplineLabel(settings.mode),
+          options: options.map((opt) => opt.map((j) => j.id)),
+        }),
+      });
+      if (res.ok) {
+        alert("Options saved!");
+      } else {
+        alert("Failed to save options.");
+      }
+    } catch (err) {
+      alert("Error saving options.");
+    }
+  }
+
+  function handleStart() {
+    handleSave();
     router.push({
       pathname: "/training/cards",
       query: {
@@ -371,13 +399,22 @@ export default function CardTrainingSettings() {
           className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         />
 
-        <button
-          type="button"
-          className="bg-blue-500 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
-          onClick={handleStart}
-        >
-          Start Training
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
+            onClick={handleStart}
+          >
+            Start Training
+          </button>
+          <button
+            type="button"
+            className="bg-green-500 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-900 text-white font-bold py-2 px-4 rounded"
+            onClick={handleSave}
+          >
+            Save
+          </button>
+        </div>
       </form>
     </div>
   );

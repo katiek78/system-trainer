@@ -219,14 +219,8 @@ export default function NumberTrainingSettings() {
     { value: "XN", label: "Customised" },
   ];
 
-  // ...existing code...
-
   // Save journey options to backend
   const handleSaveOptions = async () => {
-    // Save highlightGrouping to localStorage
-    if (settings.highlightGrouping) {
-      localStorage.setItem("highlightGrouping", settings.highlightGrouping);
-    }
     const discipline = getDisciplineLabel(settings.mode);
     const res = await fetch("/api/journeyAssignments", {
       method: "POST",
