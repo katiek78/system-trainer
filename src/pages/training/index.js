@@ -81,9 +81,7 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
               <button
                 className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
                 style={{ cursor: "pointer" }}
-                onClick={() =>
-                  alert("Cards training settings not yet implemented")
-                }
+                onClick={() => (window.location.href = "/training/cardsSettings")}
               >
                 Cards
               </button>
