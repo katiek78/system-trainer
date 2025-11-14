@@ -174,8 +174,19 @@ export default function CardTrainingSettings() {
         name === "cardGrouping" || name === "imageSet"
           ? value
           : name === "cardGroupsPerLocation"
-          ? Math.max(1, Math.min(4, Number(value)))
+          ? value // allow free editing, validate onBlur
           : Number(value),
+    }));
+  }
+
+  function handleCardGroupsPerLocationBlur(e) {
+    let value = e.target.value;
+    let num = Number(value);
+    if (isNaN(num) || value === "") num = 1;
+    num = Math.max(1, Math.min(4, num));
+    setSettings((prev) => ({
+      ...prev,
+      cardGroupsPerLocation: num,
     }));
   }
 
@@ -521,6 +532,7 @@ export default function CardTrainingSettings() {
           max={4}
           value={settings.cardGroupsPerLocation}
           onChange={handleChange}
+          onBlur={handleCardGroupsPerLocationBlur}
           className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         />
 
