@@ -96,7 +96,13 @@ const ImageSetPage = ({
     return determineSetType(allNames.images.length).includes("c");
   };
 
-  const pageLimit = isCardSet() ? 26 : 100;
+  // For 3cv (2197), use 13 per page. For card sets, 26. Otherwise, 100.
+  const pageLimit =
+    imageForm.setType === "3cv" || allNames.images.length === 2197
+      ? 13
+      : isCardSet()
+      ? 26
+      : 100;
 
   // Handler to update the image URL of a specific item
   const handleImageSelect = (index, imageUrl) => {
@@ -110,10 +116,10 @@ const ImageSetPage = ({
 
   const getImageSet = async (id) => {
     //get image set from DB
-    // const res = await fetch(`/api/imageSets/${id}/${currentPage - 1}`, {
-    const url = `/api/imageSets/${id}/${
+    let url = `/api/imageSets/${id}/${
       currentPage - 1
     }?isCardSet=${isCardSet()}`;
+
     const res = await fetch(url, {
       method: "GET",
       headers: {
@@ -201,6 +207,65 @@ const ImageSetPage = ({
       }
       return options;
     };
+
+    // 3cv (2197) navigation: two dropdowns for card 1 and card 2 (A-K), 13 per page
+    if (imageForm.setType === "3cv" && allNames.images.length === 2197) {
+      // Card values A-K
+      const cardValues = [
+        "A",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "J",
+        "Q",
+        "K",
+      ];
+      // Compute index: card1 * 169 + card2 * 13
+      return (
+        <div className="flex flex-row items-center mt-3">
+          <span className="mr-2">Card 1</span>
+          <select className="mr-2" id="card1Value3cv">
+            {cardValues.map((v, i) => (
+              <option key={v} value={i}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <span className="mr-2">Card 2</span>
+          <select className="mr-2" id="card2Value3cv">
+            {cardValues.map((v, i) => (
+              <option key={v} value={i}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            onClick={() => {
+              const c1 = parseInt(
+                document.getElementById("card1Value3cv").value
+              );
+              const c2 = parseInt(
+                document.getElementById("card2Value3cv").value
+              );
+              // Each page is 13 items: so AAA, AA2, ... AAK is page 1, AAQ is page 12, etc.
+              // Index = c1 * 169 + c2 * 13
+              const idx = c1 * 169 + c2 * 13;
+              const page = Math.floor(idx / 13) + 1;
+              handlePageChange(page);
+            }}
+          >
+            Go
+          </button>
+        </div>
+      );
+    }
 
     // Single card set (52)
     if (imageForm.setType === "1c" && allNames.images.length === 52) {

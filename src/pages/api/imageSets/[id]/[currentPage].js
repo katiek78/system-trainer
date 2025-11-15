@@ -12,16 +12,30 @@ export default async function handler(req, res) {
   switch (method) {
     case "GET" /* Get imageSet by ID and return only relevant page */:
       try {
-        const isCardSet = req.query.isCardSet === "true";
-        //const isCardSet = req.params.isCardSet === "true";
-        const pageLimit = isCardSet ? 26 : 100;
-        //const pageLimit = 20;
-        console.log(pageLimit);
+        // Fetch setType and images.length to determine pageLimit
+        const setMeta = await ImageSet.findOne(
+          { _id: id },
+          { setType: 1, images: 1 }
+        );
+        if (!setMeta) {
+          return res.status(400).json({ success: false });
+        }
+        let pageLimit;
+        if (setMeta.setType === "3cv" || setMeta.images.length === 2197) {
+          pageLimit = 13;
+        } else if (req.query.isCardSet === "true") {
+          pageLimit = 26;
+        } else {
+          pageLimit = 100;
+        }
         const imageSet = await ImageSet.findOne(
           { _id: id },
-          { images: { $slice: [currentPage * pageLimit, pageLimit] } }
+          {
+            images: { $slice: [currentPage * pageLimit, pageLimit] },
+            setType: 1,
+            name: 1,
+          }
         );
-        // console.log(imageSet)
         if (!imageSet) {
           return res.status(400).json({ success: false });
         }
