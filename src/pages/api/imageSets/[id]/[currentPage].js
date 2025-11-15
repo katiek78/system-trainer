@@ -21,7 +21,9 @@ export default async function handler(req, res) {
           return res.status(400).json({ success: false });
         }
         let pageLimit;
-        if (setMeta.setType === "3cv" || setMeta.images.length === 2197) {
+        if (setMeta.images.length === 64) {
+          pageLimit = 16;
+        } else if (setMeta.setType === "3cv" || setMeta.images.length === 2197) {
           pageLimit = 13;
         } else if (req.query.isCardSet === "true") {
           pageLimit = 26;

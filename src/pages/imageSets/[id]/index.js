@@ -96,9 +96,11 @@ const ImageSetPage = ({
     return determineSetType(allNames.images.length).includes("c");
   };
 
-  // For 3cv (2197), use 13 per page. For card sets, 26. Otherwise, 100.
+  // For 64-set, use 16 per page. For 3cv (2197), use 13 per page. For card sets, 26. Otherwise, 100.
   const pageLimit =
-    imageForm.setType === "3cv" || allNames.images.length === 2197
+    allNames.images.length === 64
+      ? 16
+      : imageForm.setType === "3cv" || allNames.images.length === 2197
       ? 13
       : isCardSet()
       ? 26
@@ -208,6 +210,38 @@ const ImageSetPage = ({
       return options;
     };
 
+    // 64-set navigation: dropdown for first suit, 16 per page, order is heart-heart-heart, heart-heart-diamond, etc.
+    if (allNames.images.length === 64) {
+      // Suits in order: Hearts, Diamonds, Spades, Clubs
+      const suitNames = ["Hearts", "Diamonds", "Spades", "Clubs"];
+      const suitSymbols = ["♥️", "♦️", "♠️", "♣️"];
+      return (
+        <div className="flex flex-row items-center mt-3">
+          <span className="mr-2">First suit</span>
+          <select className="mr-2" id="firstSuit64">
+            {suitNames.map((s, i) => (
+              <option key={s} value={i}>
+                {suitSymbols[i]} {s}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            onClick={() => {
+              const suitIdx = parseInt(
+                document.getElementById("firstSuit64").value
+              );
+              // Each suit block is 16 items (4^3)
+              const idx = suitIdx * 16;
+              const page = Math.floor(idx / 16) + 1;
+              handlePageChange(page);
+            }}
+          >
+            Go
+          </button>
+        </div>
+      );
+    }
     // 3cv (2197) navigation: two dropdowns for card 1 and card 2 (A-K), 13 per page
     if (imageForm.setType === "3cv" && allNames.images.length === 2197) {
       // Card values A-K
