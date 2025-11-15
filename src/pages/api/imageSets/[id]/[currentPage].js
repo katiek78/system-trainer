@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       try {
         const isCardSet = req.query.isCardSet === "true";
         //const isCardSet = req.params.isCardSet === "true";
-        const pageLimit = isCardSet ? 26 : 20;
+        const pageLimit = isCardSet ? 26 : 100;
         //const pageLimit = 20;
         console.log(pageLimit);
         const imageSet = await ImageSet.findOne(

@@ -96,7 +96,7 @@ const ImageSetPage = ({
     return determineSetType(allNames.images.length).includes("c");
   };
 
-  const pageLimit = isCardSet() ? 26 : 20;
+  const pageLimit = isCardSet() ? 26 : 100;
 
   // Handler to update the image URL of a specific item
   const handleImageSelect = (index, imageUrl) => {
@@ -261,92 +261,54 @@ const ImageSetPage = ({
       // s1: card 1 suit (0=Spades, 1=Hearts, 2=Diamonds, 3=Clubs)
       // v1: card 1 value (0=A, 1=2, ... 12=K)
       // c2: card 2 color (0=Red, 1=Black)
-      function getPageNumber(is2cv, s1, v1, c2) {
-        // For 2cv (1352): only Spades (0) and Clubs (3) for card 1 suit
-        // For 2c (2704): all suits for card 1
-        // Page size is pageLimit (26)
-        let idx = 0;
-        if (is2cv) {
-          // Only Spades (0) and Clubs (3) for card 1 suit
-          // For Spades: block 0, for Clubs: block 1
-          // Each card 1 suit block is 13*52 = 676
-          // For each card 1 value (0-12):
-          //   - Red: offset 0
-          //   - Black: offset 26
-          // So:
-          // Spades: idx = v1 * 52 + (0 if red, 26 if black)
-          // Clubs: idx = 13*52 + v1 * 52 + (0 if red, 26 if black)
-          if (s1 === 0) {
-            // Spades
-            idx = v1 * 52 + (c2 === 0 ? 0 : 26);
-          } else if (s1 === 3) {
-            // Clubs
-            idx = 13 * 52 + v1 * 52 + (c2 === 0 ? 0 : 26);
-          } else {
-            return 1; // fallback for invalid suit
-          }
+      function getPageNumber(is2cv, s1, v1, c2, pageLimit = 26) {
+        // Your internal suit order (from earlier):
+        // 0 = Spades, 1 = Hearts, 2 = Diamonds, 3 = Clubs
+        //
+        // Your dataset suit order (from image list you provided):
+        // Hearts, Diamonds, Spades, Clubs
+        //
+        // So map your s1 → dataset index:
+        const mapToDatasetOrder = [2, 0, 1, 3];
+        // s1=0 (Spades)   → dataset index 2
+        // s1=1 (Hearts)   → dataset index 0
+        // s1=2 (Diamonds) → dataset index 1
+        // s1=3 (Clubs)    → dataset index 3
+
+        const suitIndex = mapToDatasetOrder[s1];
+
+        // Normalise colour:
+        // internal mapping: 0 = red, 1 = black
+        let colour;
+        if (typeof c2 === "string") {
+          colour = c2.toLowerCase().startsWith("r") ? 0 : 1;
         } else {
-          // 2c (2704): all suits for card 1
-          // 4 suits x 13 values x 2 colors x 13 = 2704
-          // Each card1 suit block: 13*2*13 = 338
-          // Each card1 value block: 2*13 = 26
-          // Each color block: 13
-          idx = s1 * 338 + v1 * 26 + c2 * 13;
+          // numeric: treat 0 as red, 1 as black
+          colour = c2 === 0 ? 0 : 1;
         }
-        // Return 1-based page number
+
+        // Dataset structure:
+        // Per suit block:       13 * 52 = 676
+        // Per value block:      52
+        // Per colour block:     26 (reds then blacks)
+        const idxFull = suitIndex * 676 + v1 * 52 + colour * 26;
+
+        let idx = idxFull;
+
+        // Reduced set: skip first 1352 items (all red-first pairs)
+        if (is2cv) {
+          idx = idx - 1352;
+          if (idx < 0) idx = 0; // clamp
+        }
+
         return Math.floor(idx / pageLimit) + 1;
       }
 
-      // UI for 2cv (1352)
-      if (imageForm.setType === "2cv" && allNames.images.length === 1352) {
-        const card1SuitOptions = [0, 3]; // Spades, Clubs
-        return (
-          <div className="flex flex-row items-center mt-3">
-            <span className="mr-1">Card 1</span>
-            <select className="mr-2" id="card1Value">
-              {values.map((v, i) => (
-                <option key={v} value={i}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            <select className="mr-1" id="card1Suit">
-              {card1SuitOptions.map((s, i) => (
-                <option key={suits[s]} value={s}>
-                  {suitNames[s]}
-                </option>
-              ))}
-            </select>
-            <span className="mr-1">Card 2</span>
-            <select className="mr-1" id="card2Color">
-              <option value={0}>Red (♥/♦)</option>
-              <option value={1}>Black (♠/♣)</option>
-            </select>
-            <button
-              className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
-              onClick={() => {
-                const c1s = parseInt(
-                  document.getElementById("card1Suit").value
-                );
-                const c1v = parseInt(
-                  document.getElementById("card1Value").value
-                );
-                const c2color = parseInt(
-                  document.getElementById("card2Color").value
-                );
-                const page = getPageNumber(true, c1s, c1v, c2color);
-                handlePageChange(page);
-              }}
-            >
-              Go
-            </button>
-          </div>
-        );
-      }
-
-      // UI for 2c (2704)
-      if (imageForm.setType === "2c" && allNames.images.length === 2704) {
-        // All suits for card 1
+      // UI for 2c (2704) and 2cv (1352) - both use getPageNumber
+      if (
+        (imageForm.setType === "2c" && allNames.images.length === 2704) ||
+        (imageForm.setType === "2cv" && allNames.images.length === 1352)
+      ) {
         return (
           <div className="flex flex-row items-center mt-3">
             <span className="mr-1">Card 1</span>
@@ -381,7 +343,10 @@ const ImageSetPage = ({
                 const c2color = parseInt(
                   document.getElementById("card2Color").value
                 );
-                const page = getPageNumber(false, c1s, c1v, c2color);
+                const is2cv =
+                  imageForm.setType === "2cv" &&
+                  allNames.images.length === 1352;
+                const page = getPageNumber(is2cv, c1s, c1v, c2color);
                 handlePageChange(page);
               }}
             >
@@ -409,137 +374,7 @@ const ImageSetPage = ({
       );
     }
 
-    // Fallback: original button navigation
-    let div = [];
-    const BUTTON_MAX = 10;
-    const totalButtons = Math.ceil(allNames.images.length / pageLimit);
-    const buttonsToBeShown = Math.min(BUTTON_MAX, totalButtons);
-    const isEven = BUTTON_MAX % 2 === 0;
-    const numberToShowBeforeCurrentPage = isEven
-      ? BUTTON_MAX / 2 + 1
-      : (BUTTON_MAX - 1) / 2;
-    let firstButton;
-    if (currentPage <= numberToShowBeforeCurrentPage) {
-      firstButton = 0;
-    } else if (
-      currentPage >
-      totalButtons - BUTTON_MAX + numberToShowBeforeCurrentPage
-    ) {
-      firstButton = totalButtons - BUTTON_MAX;
-    } else firstButton = currentPage - numberToShowBeforeCurrentPage;
-    const lastButton = Math.min(
-      firstButton + buttonsToBeShown - 1,
-      totalButtons - 1
-    );
-    const isThereMoreAtEnd = lastButton < totalButtons - 1;
-    const isThereMoreAtStart = firstButton > 0;
-    if (isThereMoreAtStart) {
-      let i = 0;
-      const firstInRange = allNames.images[i * pageLimit].name;
-      const lastInRange =
-        i * pageLimit + pageLimit - 1 < allNames.images.length
-          ? allNames.images[i * pageLimit + pageLimit - 1]?.name
-          : allNames.images[allNames.images.length - 1].name;
-      div.push(
-        <button
-          className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-          onClick={() => handlePageChange(i + 1)}
-          key={i + 1}
-        >
-          <RedHeartsAndDiamonds text={firstInRange} />-
-          <RedHeartsAndDiamonds text={lastInRange} />
-        </button>
-      );
-      div.push(" ... ");
-    }
-    for (let i = firstButton; i <= lastButton; i++) {
-      const firstInRange = allNames.images[i * pageLimit]?.name;
-      const lastInRange =
-        i * pageLimit + pageLimit - 1 < allNames.images.length
-          ? allNames.images[i * pageLimit + pageLimit - 1]?.name
-          : allNames.images[allNames.images.length - 1].name;
-      if (i === currentPage - 1) {
-        div.push(
-          <button
-            className="btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-            onClick={() => handlePageChange(i + 1)}
-            key={i + 1}
-          >
-            <RedHeartsAndDiamonds text={firstInRange} />-
-            <RedHeartsAndDiamonds text={lastInRange} />
-          </button>
-        );
-      } else
-        div.push(
-          <button
-            className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-            onClick={() => handlePageChange(i + 1)}
-            key={i + 1}
-          >
-            <RedHeartsAndDiamonds text={firstInRange} />-
-            <RedHeartsAndDiamonds text={lastInRange} />
-          </button>
-        );
-    }
-    if (isThereMoreAtEnd) {
-      div.push(" ... ");
-      let i = totalButtons - 1;
-      const firstInRange = allNames.images[i * pageLimit].name;
-      const lastInRange =
-        i * pageLimit + pageLimit - 1 < allNames.images.length
-          ? allNames.images[i * pageLimit + pageLimit - 1]?.name
-          : allNames.images[allNames.images.length - 1].name;
-      div.push(
-        <button
-          className="btn bg-black hover:bg-gray-700 text-white font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-          onClick={() => handlePageChange(i + 1)}
-          key={i + 1}
-        >
-          <RedHeartsAndDiamonds text={firstInRange} />-
-          <RedHeartsAndDiamonds text={lastInRange} />
-        </button>
-      );
-    }
-    let jump;
-    if (isCardSet()) {
-      jump = 104;
-    } else {
-      if (allNames.images.length > 1000) {
-        jump = 500;
-      } else if (allNames.images.length > 100) {
-        jump = 100;
-      }
-    }
-    const options = allNames.images.map((item, index) => {
-      if (index % jump === 0) {
-        const entryNumber = index / pageLimit;
-        return (
-          <option key={entryNumber} value={entryNumber + 1}>
-            {item.name}
-          </option>
-        );
-      }
-      return null;
-    });
-    if (jump)
-      div.push(
-        <>
-          <span> Jump to: </span>
-          <select
-            id="entry"
-            onChange={() =>
-              handlePageChange(
-                document.getElementById("entry").options[
-                  document.getElementById("entry").selectedIndex
-                ].value
-              )
-            }
-          >
-            {options}
-          </select>
-        </>
-      );
-    return div;
+    return null;
   };
 
   const handleDelete = async () => {
