@@ -54,6 +54,7 @@ const TrainingCenter = ({ user, imageSet }) => {
   const [field, setField] = useState("imageItem");
   const [starredOnly, setStarredOnly] = useState(false);
   const [cardsAvailable, setCardsAvailable] = useState(false);
+  const [emptyOnly, setEmptyOnly] = useState(false);
   // let filteredData = [];
 
   const setType = determineSetType(imageSet.images.length);
@@ -84,14 +85,6 @@ const TrainingCenter = ({ user, imageSet }) => {
             if (!values || values.length < 2) return false; // Ensure at least two values
 
             const [firstValue, secondValue] = values; // Extract first and second card values
-
-            // console.log(
-            //   image.name,
-            //   firstValue,
-            //   secondValue,
-            //   imageGroupD1,
-            //   imageGroupD2
-            // );
 
             return (
               (firstValue === imageGroupD1 || imageGroupD1 === "all") &&
@@ -137,7 +130,6 @@ const TrainingCenter = ({ user, imageSet }) => {
           .replace(/♠️/g, "♠")
           .replace(/♣️/g, "♣")
           .replace(/♦️/g, "♦");
-        console.log(convertedName);
 
         // Now we need to check if the converted name contains both suits
         const suits = convertedName.match(/[♠♣♦♥]/g); // Match all suits after conversion
@@ -161,6 +153,10 @@ const TrainingCenter = ({ user, imageSet }) => {
     }
 
     if (starredOnly) newSet = newSet.filter((image) => image.starred);
+    if (emptyOnly)
+      newSet = newSet.filter(
+        (image) => !image.imageItem || image.imageItem.trim() === ""
+      );
     setFilteredData(newSet, starredOnly);
 
     if (filteredData.length) {
@@ -514,12 +510,29 @@ const TrainingCenter = ({ user, imageSet }) => {
                       </select>
                     </>
                   )}
-                  Starred only?{" "}
-                  <input
-                    type="checkbox"
-                    value="false"
-                    onChange={handleToggleStarredDisplay}
-                  ></input>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={starredOnly}
+                        onChange={handleToggleStarredDisplay}
+                        className="mr-1"
+                      />
+                      Starred only?
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={emptyOnly}
+                        onChange={() => {
+                          setEmptyOnly((prev) => !prev);
+                          setNeedNewCard(true);
+                        }}
+                        className="mr-1"
+                      />
+                      Empty only?
+                    </label>
+                  </div>
                 </div>
               )}
 

@@ -71,7 +71,7 @@ export const kBenCardValues2704 = {
     9: "br",
     10: "z",
     J: "gr",
-    Q: "cl",
+    Q: "kl",
     K: "w",
   },
   black: {
