@@ -107,17 +107,27 @@ export default function CardMemorisation({
   function getVariableLocationMap(cardsOnPage, groupSize, allPoints, mode) {
     const map = [];
     let locIdx = 0;
+    let groupsInCurrentLocation = 0;
     const isBlack = (card) => card && (card.suit === "♠" || card.suit === "♣");
     const isRed = (card) => card && (card.suit === "♥" || card.suit === "♦");
     const numGroups = Math.ceil(cardsOnPage.length / groupSize);
     for (let g = 0; g < numGroups; g++) {
       map.push(locIdx);
+      groupsInCurrentLocation++;
       const firstCard = cardsOnPage[g * groupSize];
+      let shouldAdvance = false;
       if (
         (mode === "variable-black" && isBlack(firstCard)) ||
         (mode === "variable-red" && isRed(firstCard))
       ) {
+        shouldAdvance = true;
+      }
+      if (groupsInCurrentLocation >= 3) {
+        shouldAdvance = true;
+      }
+      if (shouldAdvance) {
         locIdx = (locIdx + 1) % allPoints.length;
+        groupsInCurrentLocation = 0;
       }
     }
     return map;

@@ -548,8 +548,10 @@ export default function CardTrainingSettings() {
           <option value={2}>2</option>
           <option value={3}>3</option>
           <option value={4}>4</option>
-          <option value="variable-black">Variable (end on black)</option>
-          <option value="variable-red">Variable (end on red)</option>
+          <option value="variable-black">
+            Variable (end on black, cap at 3)
+          </option>
+          <option value="variable-red">Variable (end on red, cap at 3)</option>
         </select>
         {(settings.cardGroupsPerLocation === "variable-black" ||
           settings.cardGroupsPerLocation === "variable-red") && (
