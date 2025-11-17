@@ -98,6 +98,46 @@ export default function CardMemorisation({
   const groupSize = Number(grouping) || 1;
   const totalGroups = Math.ceil(cardsOnPage.length / groupSize);
 
+  // Clamp highlightIdx to valid range when page/cardsOnPage/totalGroups change
+  useEffect(() => {
+    if (highlightIdx > totalGroups - 1) {
+      setHighlightIdx(totalGroups - 1);
+    }
+    // eslint-disable-next-line no-console
+    console.log(
+      "[CardMemorisation] DEBUG: highlightIdx:",
+      highlightIdx,
+      "totalGroups:",
+      totalGroups,
+      "page:",
+      page,
+      "cardsOnPage.length:",
+      cardsOnPage.length
+    );
+  }, [page, cardsOnPage.length, totalGroups]);
+
+  // Journey navigation state (for cycling journeys)
+  const [journeyIdx, setJourneyIdx] = useState(0);
+  // Helper to get all points from all journeys
+  const allPoints = journey.flatMap((j) =>
+    Array.isArray(j.points) ? j.points : []
+  );
+  // Helper to get all journeys with points
+  const journeysWithPoints = journey.filter(
+    (j) => Array.isArray(j.points) && j.points.length > 0
+  );
+  // Helper to get current journey (for variable logic)
+  const currentJourney =
+    journeysWithPoints.length > 0
+      ? journeysWithPoints[journeyIdx % journeysWithPoints.length]
+      : null;
+
+  // When journey or journeyIdx changes, reset page/highlightIdx
+  useEffect(() => {
+    setPage(0);
+    setHighlightIdx(0);
+  }, [journeyIdx, journey]);
+
   // Get current group of cards (within deck)
   const start = highlightIdx * groupSize;
   const end = Math.min(start + groupSize, cardsOnPage.length);
@@ -135,29 +175,30 @@ export default function CardMemorisation({
 
   function getCurrentPoint() {
     if (!journey || journey.length === 0) return null;
-    // Flatten all points from all journeys
-    const allPoints = journey.flatMap((j) =>
-      Array.isArray(j.points) ? j.points : []
-    );
-    if (allPoints.length === 0) return null;
-    const groupNumber = page * totalGroups + highlightIdx;
     if (
       groupsPerLocation === "variable-black" ||
       groupsPerLocation === "variable-red"
     ) {
+      // Variable logic: use only current journey, cycle through journeys
+      if (!currentJourney) return { name: "-" };
+      const points = currentJourney.points;
+      if (!points || points.length === 0) return { name: "-" };
       // Compute mapping for this page
       const map = getVariableLocationMap(
         cardsOnPage,
         groupSize,
-        allPoints,
+        points,
         groupsPerLocation
       );
       const idx = map[highlightIdx] || 0;
+      return points[idx] || { name: "-" };
+    } else {
+      // Non-variable: flatten all points, cycle through all journeys
+      if (!allPoints || allPoints.length === 0) return { name: "-" };
+      const groupNumber = page * totalGroups + highlightIdx;
+      const idx = groupNumber % allPoints.length;
       return allPoints[idx] || { name: "-" };
     }
-    // Only shift location after groupsPerLocation groups
-    const idx = Math.floor(groupNumber / groupsPerLocation) % allPoints.length;
-    return allPoints[idx] || { name: "-" };
   }
   const currentPoint = getCurrentPoint();
 
@@ -175,15 +216,9 @@ export default function CardMemorisation({
     const groupName = currentGroup
       .map((card) => card.value + (suitToEmoji[card.suit] || card.suit))
       .join("");
-    // Debug: log groupName
-    // eslint-disable-next-line no-console
-    console.log("[CardMemorisation] groupName:", groupName);
     for (const set of imageSet) {
       if (set.images && Array.isArray(set.images)) {
-        // Debug: log all image names in this set
         const allNames = set.images.map((img) => img.name);
-        // eslint-disable-next-line no-console
-        console.log("[CardMemorisation] all image names:", allNames);
         const found = set.images.find((img) => img.name === groupName);
         // Debug: log found result
         // eslint-disable-next-line no-console
@@ -228,21 +263,54 @@ export default function CardMemorisation({
     function handleKeyDown(e) {
       if (e.key === "ArrowRight") {
         if (highlightIdx === totalGroups - 1) {
-          // At end of group, go to next page if possible
-          if (page < totalPages - 1) {
-            setPage((p) => p + 1);
+          // At end of group, go to next journey for variable logic, else next page
+          if (
+            groupsPerLocation === "variable-black" ||
+            groupsPerLocation === "variable-red"
+          ) {
+            setJourneyIdx((idx) => {
+              // eslint-disable-next-line no-console
+              console.log(
+                "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
+                idx,
+                "journeysWithPoints.length:",
+                journeysWithPoints.length,
+                "current:",
+                journeysWithPoints[idx]?.name || "?"
+              );
+              const newIdx =
+                journeysWithPoints.length > 0
+                  ? (idx + 1) % journeysWithPoints.length
+                  : 0;
+              // eslint-disable-next-line no-console
+              console.log(
+                "[CardMemorisation] Moving to NEXT journey (variable logic):",
+                newIdx,
+                journeysWithPoints[newIdx]?.name || "?"
+              );
+              return newIdx;
+            });
+            setPage(0);
             setHighlightIdx(0);
+          } else {
+            // Non-variable: go to next page or cycle
+            if (page < totalPages - 1) {
+              setPage((p) => p + 1);
+              setHighlightIdx(0);
+            } else {
+              setPage(0);
+              setHighlightIdx(0);
+            }
           }
         } else {
           setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
         }
       } else if (e.key === "ArrowLeft") {
         if (highlightIdx === 0) {
-          // At first group, go to previous page if possible
+          // At first group, go to previous page or previous journey
           if (page > 0) {
             setPage((p) => p - 1);
             // Need to set highlightIdx to last group of previous page
-            // But totalGroups is for current page, so calculate for previous page
             const prevPageStart = (page - 1) * CARDS_PER_DECK;
             const prevPageEnd = Math.min(
               prevPageStart + CARDS_PER_DECK,
@@ -253,6 +321,54 @@ export default function CardMemorisation({
               prevCardsOnPage.length / groupSize
             );
             setHighlightIdx(prevTotalGroups - 1);
+          } else {
+            // At first page
+            if (
+              groupsPerLocation === "variable-black" ||
+              groupsPerLocation === "variable-red"
+            ) {
+              // Variable: move to previous journey, cycle
+              setJourneyIdx((idx) => {
+                // eslint-disable-next-line no-console
+                console.log(
+                  "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
+                  idx,
+                  "journeysWithPoints.length:",
+                  journeysWithPoints.length,
+                  "current:",
+                  journeysWithPoints[idx]?.name || "?"
+                );
+                const newIdx =
+                  journeysWithPoints.length > 0
+                    ? (idx - 1 + journeysWithPoints.length) %
+                      journeysWithPoints.length
+                    : 0;
+                // eslint-disable-next-line no-console
+                console.log(
+                  "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                  newIdx,
+                  journeysWithPoints[newIdx]?.name || "?"
+                );
+                // After journeyIdx is set, set highlightIdx to last group of that journey's first page
+                setTimeout(() => {
+                  // Get the points for the new journey
+                  const points = journeysWithPoints[newIdx]?.points || [];
+                  // Generate a deck for the first page
+                  const deck = generateDecks(decks);
+                  const pageStart = 0;
+                  const pageEnd = Math.min(CARDS_PER_DECK, deck.length);
+                  const cardsOnPage = deck.slice(pageStart, pageEnd);
+                  const totalGroups = Math.ceil(cardsOnPage.length / groupSize);
+                  setHighlightIdx(totalGroups - 1);
+                  setPage(0);
+                }, 0);
+                return newIdx;
+              });
+            } else {
+              // Non-variable: cycle to last group
+              setPage(totalPages - 1);
+              setHighlightIdx(totalGroups - 1);
+            }
           }
         } else {
           setHighlightIdx((idx) => Math.max(idx - 1, 0));
@@ -264,14 +380,62 @@ export default function CardMemorisation({
       } else if (e.key === "ArrowUp") {
         setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
       } else if (e.key === "PageDown") {
-        if (page < totalPages - 1) {
-          setPage((p) => p + 1);
+        if (
+          groupsPerLocation === "variable-black" ||
+          groupsPerLocation === "variable-red"
+        ) {
+          setJourneyIdx((idx) => {
+            const newIdx =
+              journeysWithPoints.length > 0
+                ? (idx + 1) % journeysWithPoints.length
+                : 0;
+            // eslint-disable-next-line no-console
+            console.log(
+              "[CardMemorisation] Moving to NEXT journey (variable logic):",
+              newIdx,
+              journeysWithPoints[newIdx]?.name || "?"
+            );
+            return newIdx;
+          });
+          setPage(0);
           setHighlightIdx(0);
+        } else {
+          if (page < totalPages - 1) {
+            setPage((p) => p + 1);
+            setHighlightIdx(0);
+          } else {
+            setPage(0);
+            setHighlightIdx(0);
+          }
         }
       } else if (e.key === "PageUp") {
         if (page > 0) {
           setPage((p) => p - 1);
           setHighlightIdx(0);
+        } else {
+          // At first page
+          if (
+            groupsPerLocation === "variable-black" ||
+            groupsPerLocation === "variable-red"
+          ) {
+            setJourneyIdx((idx) => {
+              const newIdx =
+                journeysWithPoints.length > 0
+                  ? (idx - 1 + journeysWithPoints.length) %
+                    journeysWithPoints.length
+                  : 0;
+              // eslint-disable-next-line no-console
+              console.log(
+                "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                newIdx,
+                journeysWithPoints[newIdx]?.name || "?"
+              );
+              return newIdx;
+            });
+          } else {
+            setPage(totalPages - 1);
+            setHighlightIdx(totalGroups - 1);
+          }
         }
       } else if (e.key === " " || e.code === "Space") {
         setPage(0);
@@ -286,7 +450,19 @@ export default function CardMemorisation({
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [highlightIdx, totalGroups, onFinish, page, totalPages, GROUPS_PER_ROW]);
+  }, [
+    highlightIdx,
+    totalGroups,
+    onFinish,
+    page,
+    totalPages,
+    GROUPS_PER_ROW,
+    groupsPerLocation,
+    journeysWithPoints.length,
+    groupSize,
+    cards,
+    totalGroups,
+  ]);
 
   function handleExitToSettings() {
     router.push("/training/cardsSettings");
@@ -446,8 +622,41 @@ export default function CardMemorisation({
       {totalPages > 1 && (
         <div className="mt-4 text-center hidden sm:block">
           <button
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
+            onClick={() => {
+              if (page > 0) {
+                setPage((p) => p - 1);
+              } else {
+                if (
+                  groupsPerLocation === "variable-black" ||
+                  groupsPerLocation === "variable-red"
+                ) {
+                  setJourneyIdx((idx) => {
+                    const newIdx =
+                      journeysWithPoints.length > 0
+                        ? (idx - 1 + journeysWithPoints.length) %
+                          journeysWithPoints.length
+                        : 0;
+                    // eslint-disable-next-line no-console
+                    console.log(
+                      "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                      newIdx,
+                      journeysWithPoints[newIdx]?.name || "?"
+                    );
+                    return newIdx;
+                  });
+                } else {
+                  setPage(totalPages - 1);
+                  setHighlightIdx(totalGroups - 1);
+                }
+              }
+              setHighlightIdx(0);
+            }}
+            disabled={
+              page === 0 &&
+              (!journeysWithPoints.length ||
+                (groupsPerLocation !== "variable-black" &&
+                  groupsPerLocation !== "variable-red"))
+            }
             className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
             Previous
@@ -456,8 +665,40 @@ export default function CardMemorisation({
             Page {page + 1} of {totalPages}
           </span>
           <button
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={page === totalPages - 1}
+            onClick={() => {
+              if (page < totalPages - 1) {
+                setPage((p) => p + 1);
+              } else {
+                if (
+                  groupsPerLocation === "variable-black" ||
+                  groupsPerLocation === "variable-red"
+                ) {
+                  setJourneyIdx((idx) => {
+                    const newIdx =
+                      journeysWithPoints.length > 0
+                        ? (idx + 1) % journeysWithPoints.length
+                        : 0;
+                    // eslint-disable-next-line no-console
+                    console.log(
+                      "[CardMemorisation] Moving to NEXT journey (variable logic):",
+                      newIdx,
+                      journeysWithPoints[newIdx]?.name || "?"
+                    );
+                    return newIdx;
+                  });
+                } else {
+                  setPage(0);
+                  setHighlightIdx(0);
+                }
+              }
+              setHighlightIdx(0);
+            }}
+            disabled={
+              page === totalPages - 1 &&
+              (!journeysWithPoints.length ||
+                (groupsPerLocation !== "variable-black" &&
+                  groupsPerLocation !== "variable-red"))
+            }
             className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
             Next
@@ -470,10 +711,8 @@ export default function CardMemorisation({
           <button
             onClick={() => {
               if (highlightIdx === 0) {
-                // At first group, go to previous page if possible
                 if (page > 0) {
                   setPage((p) => p - 1);
-                  // Need to set highlightIdx to last group of previous page
                   const prevPageStart = (page - 1) * CARDS_PER_DECK;
                   const prevPageEnd = Math.min(
                     prevPageStart + CARDS_PER_DECK,
@@ -487,12 +726,50 @@ export default function CardMemorisation({
                     prevCardsOnPage.length / groupSize
                   );
                   setHighlightIdx(prevTotalGroups - 1);
+                } else {
+                  if (
+                    groupsPerLocation === "variable-black" ||
+                    groupsPerLocation === "variable-red"
+                  ) {
+                    setJourneyIdx((idx) => {
+                      // eslint-disable-next-line no-console
+                      console.log(
+                        "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
+                        idx,
+                        "journeysWithPoints.length:",
+                        journeysWithPoints.length,
+                        "current:",
+                        journeysWithPoints[idx]?.name || "?"
+                      );
+                      const newIdx =
+                        journeysWithPoints.length > 0
+                          ? (idx - 1 + journeysWithPoints.length) %
+                            journeysWithPoints.length
+                          : 0;
+                      // eslint-disable-next-line no-console
+                      console.log(
+                        "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                        newIdx,
+                        journeysWithPoints[newIdx]?.name || "?"
+                      );
+                      return newIdx;
+                    });
+                  } else {
+                    setPage(totalPages - 1);
+                    setHighlightIdx(totalGroups - 1);
+                  }
                 }
               } else {
                 setHighlightIdx((idx) => Math.max(0, idx - 1));
               }
             }}
-            disabled={highlightIdx === 0 && page === 0}
+            disabled={
+              highlightIdx === 0 &&
+              page === 0 &&
+              (!journeysWithPoints.length ||
+                (groupsPerLocation !== "variable-black" &&
+                  groupsPerLocation !== "variable-red"))
+            }
             className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
             Previous
@@ -503,10 +780,40 @@ export default function CardMemorisation({
           <button
             onClick={() => {
               if (highlightIdx === (totalGroups || 1) - 1) {
-                // At end of group, go to next page if possible
                 if (page < totalPages - 1) {
                   setPage((p) => p + 1);
                   setHighlightIdx(0);
+                } else {
+                  if (
+                    groupsPerLocation === "variable-black" ||
+                    groupsPerLocation === "variable-red"
+                  ) {
+                    setJourneyIdx((idx) => {
+                      // eslint-disable-next-line no-console
+                      console.log(
+                        "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
+                        idx,
+                        "journeysWithPoints.length:",
+                        journeysWithPoints.length,
+                        "current:",
+                        journeysWithPoints[idx]?.name || "?"
+                      );
+                      const newIdx =
+                        journeysWithPoints.length > 0
+                          ? (idx + 1) % journeysWithPoints.length
+                          : 0;
+                      // eslint-disable-next-line no-console
+                      console.log(
+                        "[CardMemorisation] Moving to NEXT journey (variable logic):",
+                        newIdx,
+                        journeysWithPoints[newIdx]?.name || "?"
+                      );
+                      return newIdx;
+                    });
+                  } else {
+                    setPage(0);
+                    setHighlightIdx(0);
+                  }
                 }
               } else {
                 setHighlightIdx((idx) =>
@@ -515,7 +822,11 @@ export default function CardMemorisation({
               }
             }}
             disabled={
-              highlightIdx === (totalGroups || 1) - 1 && page === totalPages - 1
+              highlightIdx === (totalGroups || 1) - 1 &&
+              page === totalPages - 1 &&
+              (!journeysWithPoints.length ||
+                (groupsPerLocation !== "variable-black" &&
+                  groupsPerLocation !== "variable-red"))
             }
             className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
