@@ -60,8 +60,16 @@ export default function CardTrainingSettings() {
     const recallTime = Number(localStorage.getItem("cardRecallTime")) || 240;
     const cardGrouping = localStorage.getItem("cardGrouping") || "1";
     const imageSet = localStorage.getItem("cardImageSet") || "";
-    const cardGroupsPerLocation =
-      Number(localStorage.getItem("cardGroupsPerLocation")) || 1;
+    let cardGroupsPerLocation = localStorage.getItem("cardGroupsPerLocation");
+    // Support string values for variable options
+    if (
+      cardGroupsPerLocation === "variable-black" ||
+      cardGroupsPerLocation === "variable-red"
+    ) {
+      // leave as string
+    } else {
+      cardGroupsPerLocation = Number(cardGroupsPerLocation) || 1;
+    }
     setSettings({
       mode,
       decks,
@@ -97,8 +105,11 @@ export default function CardTrainingSettings() {
     }
   }
 
-  // Fetch journey options for Cards discipline, whenever mode changes
+  // Fetch journey options for Cards discipline, whenever mode changes (after settings restored)
   useEffect(() => {
+    if (userLoading) return;
+    // Only fetch if settings.mode is set (restored)
+    if (!settings.mode) return;
     async function fetchOptionsAndJourneys() {
       setLoadingJourneys(true);
       const discipline = getDisciplineLabel(settings.mode);
@@ -151,7 +162,7 @@ export default function CardTrainingSettings() {
       setSelectedOption(idx);
       setLoadingJourneys(false);
     }
-    if (!userLoading) fetchOptionsAndJourneys();
+    fetchOptionsAndJourneys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.mode, user, userLoading]);
 
@@ -174,7 +185,9 @@ export default function CardTrainingSettings() {
         name === "cardGrouping" || name === "imageSet"
           ? value
           : name === "cardGroupsPerLocation"
-          ? value // allow free editing, validate onBlur
+          ? value === "variable-black" || value === "variable-red"
+            ? value
+            : Number(value)
           : Number(value),
     }));
   }
@@ -525,16 +538,27 @@ export default function CardTrainingSettings() {
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Card groups per location
         </label>
-        <input
-          type="number"
+        <select
           name="cardGroupsPerLocation"
-          min={1}
-          max={4}
           value={settings.cardGroupsPerLocation}
           onChange={handleChange}
-          onBlur={handleCardGroupsPerLocationBlur}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        />
+          className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        >
+          <option value={1}>1</option>
+          <option value={2}>2</option>
+          <option value={3}>3</option>
+          <option value={4}>4</option>
+          <option value="variable-black">Variable (end on black)</option>
+          <option value="variable-red">Variable (end on red)</option>
+        </select>
+        {(settings.cardGroupsPerLocation === "variable-black" ||
+          settings.cardGroupsPerLocation === "variable-red") && (
+          <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+            {settings.cardGroupsPerLocation === "variable-black"
+              ? "Each location takes a variable number of card groups. Move to the next location after a black-first pair."
+              : "Each location takes a variable number of card groups. Move to the next location after a red-first pair."}
+          </div>
+        )}
 
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Image set

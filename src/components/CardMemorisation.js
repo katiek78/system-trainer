@@ -54,14 +54,25 @@ export default function CardMemorisation({
   useEffect(() => {
     let value = 1;
     if (router.query.cardGroupsPerLocation) {
-      value = Math.max(
-        1,
-        Math.min(4, Number(router.query.cardGroupsPerLocation))
-      );
+      if (
+        router.query.cardGroupsPerLocation === "variable-black" ||
+        router.query.cardGroupsPerLocation === "variable-red"
+      ) {
+        value = router.query.cardGroupsPerLocation;
+      } else {
+        value = Math.max(
+          1,
+          Math.min(4, Number(router.query.cardGroupsPerLocation))
+        );
+      }
     } else if (typeof window !== "undefined") {
-      const stored = Number(localStorage.getItem("cardGroupsPerLocation"));
-      if (!isNaN(stored) && stored > 0)
-        value = Math.max(1, Math.min(4, stored));
+      const stored = localStorage.getItem("cardGroupsPerLocation");
+      if (stored === "variable-black" || stored === "variable-red") {
+        value = stored;
+      } else {
+        const num = Number(stored);
+        if (!isNaN(num) && num > 0) value = Math.max(1, Math.min(4, num));
+      }
     }
     setGroupsPerLocation(value);
   }, [router.query.cardGroupsPerLocation]);
@@ -92,7 +103,26 @@ export default function CardMemorisation({
   const end = Math.min(start + groupSize, cardsOnPage.length);
   const currentGroup = cardsOnPage.slice(start, end);
 
-  // Get journey point for this group (cycle through points, shift after groupsPerLocation groups)
+  // Helper: get the mapping from group index to location index for variable logic
+  function getVariableLocationMap(cardsOnPage, groupSize, allPoints, mode) {
+    const map = [];
+    let locIdx = 0;
+    const isBlack = (card) => card && (card.suit === "♠" || card.suit === "♣");
+    const isRed = (card) => card && (card.suit === "♥" || card.suit === "♦");
+    const numGroups = Math.ceil(cardsOnPage.length / groupSize);
+    for (let g = 0; g < numGroups; g++) {
+      map.push(locIdx);
+      const firstCard = cardsOnPage[g * groupSize];
+      if (
+        (mode === "variable-black" && isBlack(firstCard)) ||
+        (mode === "variable-red" && isRed(firstCard))
+      ) {
+        locIdx = (locIdx + 1) % allPoints.length;
+      }
+    }
+    return map;
+  }
+
   function getCurrentPoint() {
     if (!journey || journey.length === 0) return null;
     // Flatten all points from all journeys
@@ -100,8 +130,22 @@ export default function CardMemorisation({
       Array.isArray(j.points) ? j.points : []
     );
     if (allPoints.length === 0) return null;
-    // Only shift location after groupsPerLocation groups
     const groupNumber = page * totalGroups + highlightIdx;
+    if (
+      groupsPerLocation === "variable-black" ||
+      groupsPerLocation === "variable-red"
+    ) {
+      // Compute mapping for this page
+      const map = getVariableLocationMap(
+        cardsOnPage,
+        groupSize,
+        allPoints,
+        groupsPerLocation
+      );
+      const idx = map[highlightIdx] || 0;
+      return allPoints[idx] || { name: "-" };
+    }
+    // Only shift location after groupsPerLocation groups
     const idx = Math.floor(groupNumber / groupsPerLocation) % allPoints.length;
     return allPoints[idx] || { name: "-" };
   }
