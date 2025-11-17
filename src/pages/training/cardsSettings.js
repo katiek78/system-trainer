@@ -51,6 +51,7 @@ export default function CardTrainingSettings() {
     imageSet: "",
     cardGroupsPerLocation: 1,
   });
+  const [settingsRestored, setSettingsRestored] = useState(false);
   // Restore settings from localStorage on mount
   useEffect(() => {
     const mode = localStorage.getItem("cardMode") || "SC";
@@ -79,6 +80,7 @@ export default function CardTrainingSettings() {
       imageSet,
       cardGroupsPerLocation,
     });
+    setSettingsRestored(true);
   }, []);
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]);
@@ -107,6 +109,7 @@ export default function CardTrainingSettings() {
 
   // Fetch journey options for Cards discipline, whenever mode changes (after settings restored)
   useEffect(() => {
+    if (!settingsRestored) return;
     if (userLoading) return;
     // Only fetch if settings.mode is set (restored)
     if (!settings.mode) return;
@@ -134,14 +137,17 @@ export default function CardTrainingSettings() {
             .map((j) => ({ id: j._id, name: j.name }))
             .sort((a, b) => a.name.localeCompare(b.name));
         }
-        // Fetch all user image sets (names and counts only)
+        // Fetch all user image sets (names and setType only)
         const resImageSets = await fetch("/api/imageSets/names");
         if (resImageSets.ok) {
           const data = await resImageSets.json();
+          // Debug log: print the raw image set data returned from the API
+          // eslint-disable-next-line no-console
+          console.log("Fetched image sets from API:", data);
           fetchedImageSets = data.map((set) => ({
             id: set._id,
             name: set.name,
-            count: set.count,
+            setType: set.setType,
           }));
         }
       }
@@ -164,7 +170,7 @@ export default function CardTrainingSettings() {
     }
     fetchOptionsAndJourneys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.mode, user, userLoading]);
+  }, [settings.mode, user, userLoading, settingsRestored]);
 
   function handleModeChange(e) {
     const selected = cardModes.find((m) => m.value === e.target.value);
@@ -575,16 +581,20 @@ export default function CardTrainingSettings() {
           {(() => {
             const cg = settings.cardGrouping;
             let filterFn = (set) => true;
+            // Use setType for filtering (actual setType values: 2d, 3d, 4d, 2c, 2cv, 3cv)
             if (cg === "1") {
-              filterFn = (set) => set.count === 52;
+              filterFn = (set) =>
+                set.setType === "2d" ||
+                set.setType === "3d" ||
+                set.setType === "4d";
             } else if (cg === "2") {
-              filterFn = (set) => set.count === 1352 || set.count === 2704;
+              filterFn = (set) => set.setType === "2c" || set.setType === "2cv";
             } else if (cg === "3") {
-              filterFn = (set) => set.count === 64 || set.count === 2197;
+              filterFn = (set) => set.setType === "3cv";
             }
             return userImageSets.filter(filterFn).map((set) => (
-              <option key={set.id} value={set.id}>
-                {set.name} ({set.count} images)
+              <option key={set.id || set._id} value={set.id || set._id}>
+                {set.name} {set.setType ? `(${set.setType})` : ""}
               </option>
             ));
           })()}

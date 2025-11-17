@@ -17,13 +17,13 @@ export default async function handler(req, res) {
       try {
         const userId = session.user.sub;
         const imageSets = await ImageSet.find({ userId: userId }).select(
-          "_id name images"
+          "_id name setType"
         );
-        // Only return id, name, and count
+        // Only return id, name, and setType (top-level)
         const result = imageSets.map((set) => ({
           _id: set._id,
           name: set.name,
-          count: set.images.length,
+          setType: set.setType,
         }));
         res.status(200).json(result);
       } catch (error) {

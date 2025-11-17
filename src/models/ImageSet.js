@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 /* JourneySchema will correspond to a collection in your MongoDB database. */
 const ImageSetSchema = new mongoose.Schema({
     name: { type: String},
+  setType: { type: String, required: true }, // <-- setType is now a top-level property and required
     images: [
         /* List of images */
         new mongoose.Schema({
@@ -14,8 +15,7 @@ const ImageSetSchema = new mongoose.Schema({
             type: [Number],
             default: []
           },
-          starred: {type: Boolean},
-          setType: {type: String}
+          starred: {type: Boolean}
         })
       ],
     userId: {
