@@ -141,9 +141,6 @@ export default function CardTrainingSettings() {
         const resImageSets = await fetch("/api/imageSets/names");
         if (resImageSets.ok) {
           const data = await resImageSets.json();
-          // Debug log: print the raw image set data returned from the API
-          // eslint-disable-next-line no-console
-          console.log("Fetched image sets from API:", data);
           fetchedImageSets = data.map((set) => ({
             id: set._id,
             name: set.name,

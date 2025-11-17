@@ -154,12 +154,15 @@ export default function NumberTrainingSettings() {
       const res = await fetch("/api/imageSets/names");
       if (res.ok) {
         const data = await res.json();
-        // Adapt to expected structure for setsForGroupLength
+        // Use setType to determine the length of the set
         setAllImageSets(
           data.map((set) => ({
             _id: set._id,
             name: set.name,
-            images: Array(set.count).fill(1), // fake array for length check
+            setType: set.setType,
+            images: Array(
+              set.setType ? Math.pow(10, parseInt(set.setType)) : 0
+            ).fill(1), // fallback if setType missing
           }))
         );
       }
@@ -169,10 +172,9 @@ export default function NumberTrainingSettings() {
 
   // For each group, filter image sets by image count (e.g. 100 for 2-digit, 1000 for 3-digit, etc.)
   function setsForGroupLength(len) {
-    // 2-digit: 100, 3-digit: 1000, 4-digit: 10000, etc.
-    const expected = Math.pow(10, len);
+    // 2-digit: setType '2', 3-digit: setType '3', etc.
     return allImageSets.filter(
-      (set) => Array.isArray(set.images) && set.images.length === expected
+      (set) => set.setType && parseInt(set.setType) === len
     );
   }
 
