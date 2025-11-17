@@ -227,9 +227,36 @@ export default function CardMemorisation({
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === "ArrowRight") {
-        setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
+        if (highlightIdx === totalGroups - 1) {
+          // At end of group, go to next page if possible
+          if (page < totalPages - 1) {
+            setPage((p) => p + 1);
+            setHighlightIdx(0);
+          }
+        } else {
+          setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
+        }
       } else if (e.key === "ArrowLeft") {
-        setHighlightIdx((idx) => Math.max(idx - 1, 0));
+        if (highlightIdx === 0) {
+          // At first group, go to previous page if possible
+          if (page > 0) {
+            setPage((p) => p - 1);
+            // Need to set highlightIdx to last group of previous page
+            // But totalGroups is for current page, so calculate for previous page
+            const prevPageStart = (page - 1) * CARDS_PER_DECK;
+            const prevPageEnd = Math.min(
+              prevPageStart + CARDS_PER_DECK,
+              cards.length
+            );
+            const prevCardsOnPage = cards.slice(prevPageStart, prevPageEnd);
+            const prevTotalGroups = Math.ceil(
+              prevCardsOnPage.length / groupSize
+            );
+            setHighlightIdx(prevTotalGroups - 1);
+          }
+        } else {
+          setHighlightIdx((idx) => Math.max(idx - 1, 0));
+        }
       } else if (e.key === "ArrowDown") {
         setHighlightIdx((idx) =>
           Math.min(idx + GROUPS_PER_ROW, totalGroups - 1)
@@ -237,11 +264,15 @@ export default function CardMemorisation({
       } else if (e.key === "ArrowUp") {
         setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
       } else if (e.key === "PageDown") {
-        setPage((p) => Math.min(p + 1, totalPages - 1));
-        setHighlightIdx(0);
+        if (page < totalPages - 1) {
+          setPage((p) => p + 1);
+          setHighlightIdx(0);
+        }
       } else if (e.key === "PageUp") {
-        setPage((p) => Math.max(p - 1, 0));
-        setHighlightIdx(0);
+        if (page > 0) {
+          setPage((p) => p - 1);
+          setHighlightIdx(0);
+        }
       } else if (e.key === " " || e.code === "Space") {
         setPage(0);
         setHighlightIdx(0);
@@ -437,8 +468,31 @@ export default function CardMemorisation({
       <div className="block sm:hidden mt-4">
         <div className="flex items-center justify-center">
           <button
-            onClick={() => setHighlightIdx((idx) => Math.max(0, idx - 1))}
-            disabled={highlightIdx === 0}
+            onClick={() => {
+              if (highlightIdx === 0) {
+                // At first group, go to previous page if possible
+                if (page > 0) {
+                  setPage((p) => p - 1);
+                  // Need to set highlightIdx to last group of previous page
+                  const prevPageStart = (page - 1) * CARDS_PER_DECK;
+                  const prevPageEnd = Math.min(
+                    prevPageStart + CARDS_PER_DECK,
+                    cards.length
+                  );
+                  const prevCardsOnPage = cards.slice(
+                    prevPageStart,
+                    prevPageEnd
+                  );
+                  const prevTotalGroups = Math.ceil(
+                    prevCardsOnPage.length / groupSize
+                  );
+                  setHighlightIdx(prevTotalGroups - 1);
+                }
+              } else {
+                setHighlightIdx((idx) => Math.max(0, idx - 1));
+              }
+            }}
+            disabled={highlightIdx === 0 && page === 0}
             className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
             Previous
@@ -447,12 +501,22 @@ export default function CardMemorisation({
             {highlightIdx + 1} / {totalGroups || 1}
           </span>
           <button
-            onClick={() =>
-              setHighlightIdx((idx) =>
-                Math.min((totalGroups || 1) - 1, idx + 1)
-              )
+            onClick={() => {
+              if (highlightIdx === (totalGroups || 1) - 1) {
+                // At end of group, go to next page if possible
+                if (page < totalPages - 1) {
+                  setPage((p) => p + 1);
+                  setHighlightIdx(0);
+                }
+              } else {
+                setHighlightIdx((idx) =>
+                  Math.min((totalGroups || 1) - 1, idx + 1)
+                );
+              }
+            }}
+            disabled={
+              highlightIdx === (totalGroups || 1) - 1 && page === totalPages - 1
             }
-            disabled={highlightIdx === (totalGroups || 1) - 1}
             className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
           >
             Next
