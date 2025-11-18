@@ -13,7 +13,46 @@ const DrillsPage = () => {
   const [userImageSets, setUserImageSets] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [subsetInfo, setSubsetInfo] = useState("");
+  const [showTimeTestInstructions, setShowTimeTestInstructions] =
+    useState(false);
+  const [timeTestActive, setTimeTestActive] = useState(false);
+  const [timeTestItems, setTimeTestItems] = useState([]);
+  const [currentItemIdx, setCurrentItemIdx] = useState(0);
+  const [timings, setTimings] = useState([]); // {item, ms}
+  const [itemStartTime, setItemStartTime] = useState(null);
+  const [showResults, setShowResults] = useState(false);
   // Remove pageLimit and currentPage, not needed for subset selection UI
+
+  // Handler to advance to next item (shared by button and Enter key)
+  const advanceTimeTest = () => {
+    const now = Date.now();
+    const elapsed = itemStartTime ? now - itemStartTime : 0;
+    setTimings((prev) => [
+      ...prev,
+      { item: timeTestItems[currentItemIdx], ms: elapsed },
+    ]);
+    if (currentItemIdx < timeTestItems.length - 1) {
+      setCurrentItemIdx(currentItemIdx + 1);
+      setItemStartTime(Date.now());
+    } else {
+      setTimeTestActive(false);
+      setShowResults(true);
+      setItemStartTime(null);
+    }
+  };
+
+  // Listen for Enter key during time test
+  useEffect(() => {
+    if (!timeTestActive) return;
+    const handler = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        advanceTimeTest();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [timeTestActive, currentItemIdx, itemStartTime, timeTestItems]);
 
   // Fetch image set metadata (name, setType only)
   // Fetch all image sets for the user when modal opens
@@ -38,12 +77,12 @@ const DrillsPage = () => {
     if (imageSet) {
       setLoading(true);
       setError("");
-      fetch(`/api/imageSets/${imageSet}`)
+      fetch(`/api/imageSets/getName?id=${imageSet}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data && data.success && data.data) {
-            setImageSetName(data.data.name || "");
-            setSetType(data.data.setType || "");
+          if (data && (data.name || data.setType)) {
+            setImageSetName(data.name || "");
+            setSetType(data.setType || "");
           } else {
             setImageSetName("");
             setSetType("");
@@ -86,9 +125,10 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: First suit is ${suitNames[suitIdx]} (${suitSymbols[suitIdx]})`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -140,9 +180,10 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Card 1 = ${cardValues[c1]}, Card 2 = ${cardValues[c2]}`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -195,9 +236,10 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: ${values[valueIdx]} of ${suitNames[suitIdx]}`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -256,9 +298,10 @@ const DrillsPage = () => {
                   suitNames[c1s]
                 }, Card 2 color = ${c2color === 0 ? "Red" : "Black"}`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -289,9 +332,10 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Starting at ${idx.toString().padStart(2, "0")}`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -319,9 +363,10 @@ const DrillsPage = () => {
                 document.getElementById("numberSetSelect3d").value
               );
               setSubsetInfo(`Subset: Starting at ${idx}xx`);
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -351,9 +396,10 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Starting at ${idx.toString().padStart(2, "0")}`
               );
+              setShowTimeTestInstructions(true);
             }}
           >
-            Choose
+            Time Test
           </button>
         </div>
       );
@@ -432,6 +478,257 @@ const DrillsPage = () => {
               {subsetInfo && (
                 <div className="mt-4 text-blue-700 dark:text-blue-300 font-mono text-lg">
                   {subsetInfo}
+                </div>
+              )}
+              {showTimeTestInstructions && !timeTestActive && !showResults && (
+                <div className="mt-6 p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 rounded font-mono text-base">
+                  <strong>Time Test Instructions:</strong>
+                  <br />
+                  You will be shown each item of the subset in a shuffled order.
+                  <br />
+                  Press <kbd>Enter</kbd> or the <strong>OK!</strong> button to
+                  move on.
+                  <br />
+                  Your time for recognising each item will be recorded.
+                  <br />
+                  <button
+                    className="mt-4 btn bg-green-700 hover:bg-green-800 text-white font-bold py-1 px-4 rounded"
+                    onClick={() => {
+                      // Generate the subset items based on setType and selection
+                      let items = [];
+                      if (setType === "64") {
+                        const suitIdx = parseInt(
+                          document.getElementById("firstSuit64").value
+                        );
+                        const suitNames = [
+                          "Hearts",
+                          "Diamonds",
+                          "Spades",
+                          "Clubs",
+                        ];
+                        const suit = suitNames[suitIdx];
+                        const values = [
+                          "A",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "J",
+                          "Q",
+                          "K",
+                        ];
+                        items = values.map((v) => `${v} of ${suit}`);
+                      } else if (setType === "3cv") {
+                        const cardValues = [
+                          "A",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "J",
+                          "Q",
+                          "K",
+                        ];
+                        const c1 = parseInt(
+                          document.getElementById("card1Value3cv").value
+                        );
+                        const c2 = parseInt(
+                          document.getElementById("card2Value3cv").value
+                        );
+                        items = [
+                          `Card 1: ${cardValues[c1]}`,
+                          `Card 2: ${cardValues[c2]}`,
+                        ];
+                      } else if (setType === "1c") {
+                        const values = [
+                          "A",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "J",
+                          "Q",
+                          "K",
+                        ];
+                        const suitNames = [
+                          "Spades",
+                          "Hearts",
+                          "Diamonds",
+                          "Clubs",
+                        ];
+                        const valueIdx = parseInt(
+                          document.getElementById("cardValueSelect").value
+                        );
+                        const suitIdx = parseInt(
+                          document.getElementById("cardSuitSelect").value
+                        );
+                        items = [
+                          `${values[valueIdx]} of ${suitNames[suitIdx]}`,
+                        ];
+                      } else if (["2cv", "2c"].includes(setType)) {
+                        const values = [
+                          "A",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "J",
+                          "Q",
+                          "K",
+                        ];
+                        const suitNames = [
+                          "Spades",
+                          "Hearts",
+                          "Diamonds",
+                          "Clubs",
+                        ];
+                        const c1v = parseInt(
+                          document.getElementById("card1Value").value
+                        );
+                        const c1s = parseInt(
+                          document.getElementById("card1Suit").value
+                        );
+                        const c2color = parseInt(
+                          document.getElementById("card2Color").value
+                        );
+                        items = [
+                          `Card 1: ${values[c1v]} of ${suitNames[c1s]}`,
+                          `Card 2 color: ${
+                            c2color === 0 ? "Red (♥/♦)" : "Black (♠/♣)"
+                          }`,
+                        ];
+                      } else if (setType === "2d") {
+                        const start = parseInt(
+                          document.getElementById("numberSetSelect2d").value
+                        );
+                        items = [];
+                        for (let i = start; i < start + 10; i++) {
+                          items.push(i.toString().padStart(2, "0"));
+                        }
+                      } else if (setType === "3d") {
+                        const start = parseInt(
+                          document.getElementById("numberSetSelect3d").value
+                        );
+                        items = [];
+                        for (let i = 0; i < 100; i++) {
+                          items.push(
+                            `${start}${i.toString().padStart(2, "0")}`
+                          );
+                        }
+                      } else if (setType === "4d") {
+                        const start = parseInt(
+                          document.getElementById("numberSetSelect4d").value
+                        );
+                        items = [];
+                        for (let i = 0; i < 100; i++) {
+                          items.push(
+                            `${start.toString().padStart(2, "0")}${i
+                              .toString()
+                              .padStart(2, "0")}`
+                          );
+                        }
+                      }
+                      // Shuffle items
+                      for (let i = items.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [items[i], items[j]] = [items[j], items[i]];
+                      }
+                      setTimeTestItems(items);
+                      setCurrentItemIdx(0);
+                      setTimings([]);
+                      setShowResults(false);
+                      setTimeTestActive(true);
+                      setShowTimeTestInstructions(false);
+                      setItemStartTime(Date.now());
+                    }}
+                  >
+                    Start
+                  </button>
+                </div>
+              )}
+              {timeTestActive && timeTestItems.length > 0 && (
+                <div className="mt-6 p-4 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-mono text-xl flex flex-col items-center">
+                  <div className="mb-2 text-base text-gray-700 dark:text-gray-200">
+                    Item {currentItemIdx + 1} of {timeTestItems.length}
+                  </div>
+                  <div className="mb-4 text-2xl">
+                    {timeTestItems[currentItemIdx]}
+                  </div>
+                  <button
+                    className="btn bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-6 rounded"
+                    onClick={advanceTimeTest}
+                  >
+                    OK!
+                  </button>
+                  <div className="mt-2 text-xs text-gray-500">
+                    (Press Enter to continue)
+                  </div>
+                </div>
+              )}
+              {showResults && timings.length > 0 && (
+                <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded font-mono text-base">
+                  <div className="mb-2 font-bold text-lg">
+                    Time Test Results (slowest to fastest)
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border border-gray-400 dark:border-gray-600">
+                      <thead>
+                        <tr>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
+                            Item
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
+                            Time (seconds)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...timings]
+                          .sort((a, b) => b.ms - a.ms)
+                          .map((t, i) => (
+                            <tr key={i}>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                {t.item}
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                {(t.ms / 1000).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    className="mt-4 btn bg-gray-700 hover:bg-gray-800 text-white font-bold py-1 px-4 rounded"
+                    onClick={() => {
+                      setShowResults(false);
+                      setTimings([]);
+                      setTimeTestItems([]);
+                      setCurrentItemIdx(0);
+                    }}
+                  >
+                    Close
+                  </button>
                 </div>
               )}
             </>
