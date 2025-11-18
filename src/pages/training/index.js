@@ -17,6 +17,11 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
     window.location.href = `/training/set-learning?imageSet=${imageSetId}`;
   };
 
+  const handleSelectDrills = () => {
+    const imageSetId = document.getElementById("imageSet").value;
+    window.location.href = `/training/drills?imageSet=${imageSetId}`;
+  };
+
   return (
     <div className="w-full min-h-screen flex justify-center bg-transparent">
       <div className="z-10 font-mono text-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-2 sm:px-4 md:px-8">
@@ -46,6 +51,27 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
             </select>
             <button
               onClick={handleSelectFlashcards}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
+            >
+              Go
+            </button>
+          </div>
+
+          <p className="font-mono">Drills</p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select
+              className="shadow appearance-none border rounded w-full sm:w-auto mt-1 mb-2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              name="imageSet"
+              id="imageSet"
+            >
+              {imageSets.map((imageSet) => (
+                <option key={imageSet._id} value={imageSet._id}>
+                  {imageSet.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleSelectDrills}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
             >
               Go
@@ -81,7 +107,9 @@ const TrainingPage = ({ user, imageSets, journeys }) => {
               <button
                 className="text-blue-600 hover:underline bg-transparent border-none p-0 m-0 font-mono"
                 style={{ cursor: "pointer" }}
-                onClick={() => (window.location.href = "/training/cardsSettings")}
+                onClick={() =>
+                  (window.location.href = "/training/cardsSettings")
+                }
               >
                 Cards
               </button>
