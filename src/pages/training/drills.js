@@ -500,6 +500,15 @@ const DrillsPage = () => {
   return (
     <div className="w-full min-h-screen flex justify-center bg-transparent">
       <div className="z-10 font-mono text-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-2 sm:px-4 md:px-8">
+        {/* Back to Training page link */}
+        <div className="flex justify-start mt-4 mb-2">
+          <a
+            href="/training"
+            className="text-blue-700 hover:underline font-bold"
+          >
+            &larr; Back to Training page
+          </a>
+        </div>
         <div className="flex justify-end mt-4 mb-2">
           <button
             className="btn bg-gray-200 hover:bg-gray-300 text-black font-mono font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -803,6 +812,19 @@ const DrillsPage = () => {
                       onClick={() => setShowHint(true)}
                     >
                       Hint
+                    </button>
+                    <button
+                      className="btn bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded"
+                      onClick={() => {
+                        setTimeTestActive(false);
+                        setTimeTestItems([]);
+                        setShowHint(false);
+                        setCurrentItemIdx(0);
+                        setItemStartTime(null);
+                        setShowTimeTestInstructions(false);
+                      }}
+                    >
+                      Exit Test
                     </button>
                   </div>
                   <div className="mt-2 text-xs text-gray-500">
