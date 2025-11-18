@@ -1,3 +1,16 @@
+// Utility for rendering card with emoji and color
+function renderCardString(v, s) {
+  const suitToEmoji = { Spades: "♠", Hearts: "♥", Diamonds: "♦", Clubs: "♣" };
+  const suitToColor = {
+    Spades: "black",
+    Clubs: "black",
+    Hearts: "red",
+    Diamonds: "red",
+  };
+  const emoji = suitToEmoji[s] || s;
+  const color = suitToColor[s] || "black";
+  return `<span style='color:${color}'>${v}${emoji}</span>`;
+}
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -125,6 +138,7 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: First suit is ${suitNames[suitIdx]} (${suitSymbols[suitIdx]})`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -180,6 +194,7 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Card 1 = ${cardValues[c1]}, Card 2 = ${cardValues[c2]}`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -236,6 +251,7 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: ${values[valueIdx]} of ${suitNames[suitIdx]}`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -261,43 +277,59 @@ const DrillsPage = () => {
         "Q",
         "K",
       ];
-      const suits = ["♠", "♥", "♦", "♣"];
-      const suitNames = ["Spades", "Hearts", "Diamonds", "Clubs"];
+      const suits = ["Spades", "Hearts", "Diamonds", "Clubs"];
+      const suitColors = ["Black", "Red"];
       return (
         <div className="flex flex-row items-center mt-3">
           <span className="mr-1">Card 1</span>
           <select className="mr-2" id="card1Value">
+            <option value="any">Any</option>
             {values.map((v, i) => (
-              <option key={v} value={i}>
+              <option key={v} value={v}>
                 {v}
               </option>
             ))}
           </select>
           <select className="mr-1" id="card1Suit">
-            {suits.map((s, i) => (
-              <option key={suitNames[i]} value={i}>
-                {suitNames[i]}
+            <option value="any">Any</option>
+            <option value="black">Black (♠/♣)</option>
+            <option value="red">Red (♥/♦)</option>
+            {suits.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </select>
           <span className="mr-1">Card 2</span>
-          <select className="mr-1" id="card2Color">
-            <option value={0}>Red (♥/♦)</option>
-            <option value={1}>Black (♠/♣)</option>
+          <select className="mr-2" id="card2Value">
+            <option value="any">Any</option>
+            {values.map((v, i) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <select className="mr-1" id="card2Suit">
+            <option value="any">Any</option>
+            <option value="black">Black (♠/♣)</option>
+            <option value="red">Red (♥/♦)</option>
+            {suits.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
           <button
             className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
             onClick={() => {
-              const c1s = parseInt(document.getElementById("card1Suit").value);
-              const c1v = parseInt(document.getElementById("card1Value").value);
-              const c2color = parseInt(
-                document.getElementById("card2Color").value
-              );
+              const c1v = document.getElementById("card1Value").value;
+              const c1s = document.getElementById("card1Suit").value;
+              const c2v = document.getElementById("card2Value").value;
+              const c2s = document.getElementById("card2Suit").value;
               setSubsetInfo(
-                `Subset: Card 1 = ${values[c1v]} of ${
-                  suitNames[c1s]
-                }, Card 2 color = ${c2color === 0 ? "Red" : "Black"}`
+                `Subset: Card 1 = ${c1v} of ${c1s}, Card 2 = ${c2v} of ${c2s}`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -332,6 +364,7 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Starting at ${idx.toString().padStart(2, "0")}`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -363,6 +396,7 @@ const DrillsPage = () => {
                 document.getElementById("numberSetSelect3d").value
               );
               setSubsetInfo(`Subset: Starting at ${idx}xx`);
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -396,6 +430,7 @@ const DrillsPage = () => {
               setSubsetInfo(
                 `Subset: Starting at ${idx.toString().padStart(2, "0")}`
               );
+              setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
           >
@@ -451,6 +486,10 @@ const DrillsPage = () => {
                         className="ml-4 btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
                         onClick={() => {
                           setShowModal(false);
+                          setShowResults(false);
+                          setTimings([]);
+                          setTimeTestItems([]);
+                          setCurrentItemIdx(0);
                           router.push(`/training/drills?imageSet=${set._id}`);
                         }}
                       >
@@ -596,27 +635,50 @@ const DrillsPage = () => {
                           "Q",
                           "K",
                         ];
-                        const suitNames = [
-                          "Spades",
-                          "Hearts",
-                          "Diamonds",
-                          "Clubs",
-                        ];
-                        const c1v = parseInt(
-                          document.getElementById("card1Value").value
-                        );
-                        const c1s = parseInt(
-                          document.getElementById("card1Suit").value
-                        );
-                        const c2color = parseInt(
-                          document.getElementById("card2Color").value
-                        );
-                        items = [
-                          `Card 1: ${values[c1v]} of ${suitNames[c1s]}`,
-                          `Card 2 color: ${
-                            c2color === 0 ? "Red (♥/♦)" : "Black (♠/♣)"
-                          }`,
-                        ];
+                        const suits = ["Spades", "Hearts", "Diamonds", "Clubs"];
+                        const suitColors = {
+                          black: ["Spades", "Clubs"],
+                          red: ["Hearts", "Diamonds"],
+                        };
+                        const c1v = document.getElementById("card1Value").value;
+                        const c1s = document.getElementById("card1Suit").value;
+                        const c2v = document.getElementById("card2Value").value;
+                        const c2s = document.getElementById("card2Suit").value;
+                        // Build all combinations for the subset
+                        let card1Values = c1v === "any" ? values : [c1v];
+                        let card2Values = c2v === "any" ? values : [c2v];
+                        let card1Suits =
+                          c1s === "any"
+                            ? suits
+                            : c1s === "black"
+                            ? suitColors.black
+                            : c1s === "red"
+                            ? suitColors.red
+                            : [c1s];
+                        let card2Suits =
+                          c2s === "any"
+                            ? suits
+                            : c2s === "black"
+                            ? suitColors.black
+                            : c2s === "red"
+                            ? suitColors.red
+                            : [c2s];
+                        items = [];
+                        for (let v1 of card1Values) {
+                          for (let s1 of card1Suits) {
+                            for (let v2 of card2Values) {
+                              for (let s2 of card2Suits) {
+                                // Compact string: e.g. 4♥3♠, with red for red suits
+                                items.push(
+                                  `${renderCardString(
+                                    v1,
+                                    s1
+                                  )}${renderCardString(v2, s2)}`
+                                );
+                              }
+                            }
+                          }
+                        }
                       } else if (setType === "2d") {
                         const start = parseInt(
                           document.getElementById("numberSetSelect2d").value
@@ -672,7 +734,11 @@ const DrillsPage = () => {
                     Item {currentItemIdx + 1} of {timeTestItems.length}
                   </div>
                   <div className="mb-4 text-2xl">
-                    {timeTestItems[currentItemIdx]}
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: timeTestItems[currentItemIdx],
+                      }}
+                    />
                   </div>
                   <button
                     className="btn bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-6 rounded"
@@ -708,7 +774,9 @@ const DrillsPage = () => {
                           .map((t, i) => (
                             <tr key={i}>
                               <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
-                                {t.item}
+                                <span
+                                  dangerouslySetInnerHTML={{ __html: t.item }}
+                                />
                               </td>
                               <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
                                 {(t.ms / 1000).toFixed(2)}
