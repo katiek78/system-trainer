@@ -1,16 +1,3 @@
-// Utility for rendering card with emoji and color
-function renderCardString(v, s) {
-  const suitToEmoji = { Spades: "♠", Hearts: "♥", Diamonds: "♦", Clubs: "♣" };
-  const suitToColor = {
-    Spades: "black",
-    Clubs: "black",
-    Hearts: "red",
-    Diamonds: "red",
-  };
-  const emoji = suitToEmoji[s] || s;
-  const color = suitToColor[s] || "black";
-  return `<span style='color:${color}'>${v}${emoji}</span>`;
-}
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -25,17 +12,87 @@ const DrillsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [userImageSets, setUserImageSets] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
-  const [subsetInfo, setSubsetInfo] = useState("");
   const [showTimeTestInstructions, setShowTimeTestInstructions] =
     useState(false);
   const [timeTestActive, setTimeTestActive] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [timeTestItems, setTimeTestItems] = useState([]);
   const [currentItemIdx, setCurrentItemIdx] = useState(0);
   const [timings, setTimings] = useState([]); // {item, ms}
   const [itemStartTime, setItemStartTime] = useState(null);
   const [showResults, setShowResults] = useState(false);
-  // Remove pageLimit and currentPage, not needed for subset selection UI
 
+  const [imageSetData, setImageSetData] = useState(null);
+  // Fetch the full image set data when imageSet changes (for hint lookup)
+  useEffect(() => {
+    if (!imageSet) return;
+    fetch(`/api/imageSets/${imageSet}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setImageSetData(data && data.data ? data.data : null))
+      .catch(() => setImageSetData(null));
+  }, [imageSet]);
+
+  // Utility for rendering card with emoji and color
+  function renderCardString(v, s) {
+    const suitToEmoji = { Spades: "♠", Hearts: "♥", Diamonds: "♦", Clubs: "♣" };
+    const suitToColor = {
+      Spades: "black",
+      Clubs: "black",
+      Hearts: "red",
+      Diamonds: "red",
+    };
+    const emoji = suitToEmoji[s] || s;
+    const color = suitToColor[s] || "black";
+    return `<span style='color:${color}'>${v}${emoji}</span>`;
+  }
+
+  // Helper to get the answer/hint for a card pair string from the image set data
+  function getHintForCurrentItem(itemHtml, imageSetData) {
+    if (!imageSetData || !imageSetData.images) return "(No image data)";
+    // Parse the HTML string to extract card values and suits
+    // e.g. <span style='color:red'>K♥</span><span style='color:black'>8♣</span>
+    const div = document.createElement("div");
+    div.innerHTML = itemHtml;
+    const spans = div.querySelectorAll("span");
+    if (spans.length < 2) return "(No match)";
+    // Convert e.g. 'K♥' to 'K♥', '8♣' to '8♣' (emoji suits)
+    // Use full emoji with variation selector (e.g., '♥️', '♣️')
+    function cardTextToEmoji(card) {
+      const value = card.replace(/[^A-Z0-9]/gi, "");
+      let suit = "";
+      if (card.includes("♠") || card.toLowerCase().includes("s")) suit = "♠️";
+      else if (card.includes("♥") || card.toLowerCase().includes("h"))
+        suit = "♥️";
+      else if (card.includes("♦") || card.toLowerCase().includes("d"))
+        suit = "♦️";
+      else if (card.includes("♣") || card.toLowerCase().includes("c"))
+        suit = "♣️";
+      return value + suit;
+    }
+    const card1 = spans[0].textContent;
+    const card2 = spans[1].textContent;
+    const key =
+      card1 && card2 ? cardTextToEmoji(card1) + cardTextToEmoji(card2) : "";
+    // Try to find an image with a matching name (case-insensitive, no spaces)
+    const found = imageSetData.images.find((img) => {
+      if (!img.name) return false;
+      // Remove spaces and compare case-insensitive
+      return (
+        img.name.replace(/\s+/g, "").toLowerCase() ===
+        key.replace(/\s+/g, "").toLowerCase()
+      );
+    });
+    if (found && found.imageItem) return found.imageItem;
+    // fallback: try key or show the key
+    console.log(key);
+    console.log(imageSetData.images);
+    const foundByKey = imageSetData.images.find((img) => {
+      if (img.key && img.key.toLowerCase() === key.toLowerCase()) return true;
+      return false;
+    });
+    if (foundByKey && foundByKey.imageItem) return foundByKey.imageItem;
+    return key + " not found";
+  }
   // Handler to advance to next item (shared by button and Enter key)
   const advanceTimeTest = () => {
     const now = Date.now();
@@ -44,6 +101,7 @@ const DrillsPage = () => {
       ...prev,
       { item: timeTestItems[currentItemIdx], ms: elapsed },
     ]);
+    setShowHint(false);
     if (currentItemIdx < timeTestItems.length - 1) {
       setCurrentItemIdx(currentItemIdx + 1);
       setItemStartTime(Date.now());
@@ -66,6 +124,18 @@ const DrillsPage = () => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [timeTestActive, currentItemIdx, itemStartTime, timeTestItems]);
+  // Listen for 'h' key to show hint during time test
+  useEffect(() => {
+    if (!timeTestActive) return;
+    const handler = (e) => {
+      if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        setShowHint(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [timeTestActive]);
 
   // Fetch image set metadata (name, setType only)
   // Fetch all image sets for the user when modal opens
@@ -135,9 +205,6 @@ const DrillsPage = () => {
               const suitIdx = parseInt(
                 document.getElementById("firstSuit64").value
               );
-              setSubsetInfo(
-                `Subset: First suit is ${suitNames[suitIdx]} (${suitSymbols[suitIdx]})`
-              );
               setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
@@ -190,9 +257,6 @@ const DrillsPage = () => {
               );
               const c2 = parseInt(
                 document.getElementById("card2Value3cv").value
-              );
-              setSubsetInfo(
-                `Subset: Card 1 = ${cardValues[c1]}, Card 2 = ${cardValues[c2]}`
               );
               setShowResults(false);
               setShowTimeTestInstructions(true);
@@ -247,9 +311,6 @@ const DrillsPage = () => {
               );
               const suitIdx = parseInt(
                 document.getElementById("cardSuitSelect").value
-              );
-              setSubsetInfo(
-                `Subset: ${values[valueIdx]} of ${suitNames[suitIdx]}`
               );
               setShowResults(false);
               setShowTimeTestInstructions(true);
@@ -326,9 +387,7 @@ const DrillsPage = () => {
               const c1s = document.getElementById("card1Suit").value;
               const c2v = document.getElementById("card2Value").value;
               const c2s = document.getElementById("card2Suit").value;
-              setSubsetInfo(
-                `Subset: Card 1 = ${c1v} of ${c1s}, Card 2 = ${c2v} of ${c2s}`
-              );
+
               setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
@@ -361,9 +420,7 @@ const DrillsPage = () => {
               const idx = parseInt(
                 document.getElementById("numberSetSelect2d").value
               );
-              setSubsetInfo(
-                `Subset: Starting at ${idx.toString().padStart(2, "0")}`
-              );
+
               setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
@@ -395,7 +452,7 @@ const DrillsPage = () => {
               const idx = parseInt(
                 document.getElementById("numberSetSelect3d").value
               );
-              setSubsetInfo(`Subset: Starting at ${idx}xx`);
+
               setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
@@ -427,9 +484,7 @@ const DrillsPage = () => {
               const idx = parseInt(
                 document.getElementById("numberSetSelect4d").value
               );
-              setSubsetInfo(
-                `Subset: Starting at ${idx.toString().padStart(2, "0")}`
-              );
+
               setShowResults(false);
               setShowTimeTestInstructions(true);
             }}
@@ -514,11 +569,7 @@ const DrillsPage = () => {
             <>
               <h2 className="font-semibold text-xl">{imageSetName}</h2>
               {renderSubsetSelector()}
-              {subsetInfo && (
-                <div className="mt-4 text-blue-700 dark:text-blue-300 font-mono text-lg">
-                  {subsetInfo}
-                </div>
-              )}
+
               {showTimeTestInstructions && !timeTestActive && !showResults && (
                 <div className="mt-6 p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 rounded font-mono text-base">
                   <strong>Time Test Instructions:</strong>
@@ -740,17 +791,34 @@ const DrillsPage = () => {
                       }}
                     />
                   </div>
-                  <button
-                    className="btn bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-6 rounded"
-                    onClick={advanceTimeTest}
-                  >
-                    OK!
-                  </button>
-                  <div className="mt-2 text-xs text-gray-500">
-                    (Press Enter to continue)
+                  <div className="flex flex-row gap-4 mb-2">
+                    <button
+                      className="btn bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-6 rounded"
+                      onClick={advanceTimeTest}
+                    >
+                      OK!
+                    </button>
+                    <button
+                      className="btn bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded"
+                      onClick={() => setShowHint(true)}
+                    >
+                      Hint
+                    </button>
                   </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    (Press Enter to continue, or H for hint)
+                  </div>
+                  {showHint && (
+                    <div className="mt-3 p-2 bg-yellow-200 dark:bg-yellow-700 text-yellow-900 dark:text-yellow-100 rounded text-lg font-mono">
+                      {getHintForCurrentItem(
+                        timeTestItems[currentItemIdx],
+                        imageSetData
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
+
               {showResults && timings.length > 0 && (
                 <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded font-mono text-base">
                   <div className="mb-2 font-bold text-lg">
