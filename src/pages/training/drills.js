@@ -49,14 +49,30 @@ const DrillsPage = () => {
   // Helper to get the answer/hint for a card pair string from the image set data
   function getHintForCurrentItem(itemHtml, imageSetData) {
     if (!imageSetData || !imageSetData.images) return "(No image data)";
-    // Parse the HTML string to extract card values and suits
-    // e.g. <span style='color:red'>K♥</span><span style='color:black'>8♣</span>
+    // Handle number-based sets (2d, 3d, 4d): itemHtml is just the number string
+    if (/^\d{2,4}$/.test(itemHtml)) {
+      // Try to match by name or key
+      const found = imageSetData.images.find((img) => {
+        if (!img.name) return false;
+        return (
+          img.name.replace(/\s+/g, "").toLowerCase() ===
+          itemHtml.replace(/\s+/g, "").toLowerCase()
+        );
+      });
+      if (found && found.imageItem) return found.imageItem;
+      const foundByKey = imageSetData.images.find((img) => {
+        if (img.key && img.key.toLowerCase() === itemHtml.toLowerCase())
+          return true;
+        return false;
+      });
+      if (foundByKey && foundByKey.imageItem) return foundByKey.imageItem;
+      return itemHtml + " not found";
+    }
+    // Otherwise, assume card HTML as before
     const div = document.createElement("div");
     div.innerHTML = itemHtml;
     const spans = div.querySelectorAll("span");
     if (spans.length < 2) return "(No match)";
-    // Convert e.g. 'K♥' to 'K♥', '8♣' to '8♣' (emoji suits)
-    // Use full emoji with variation selector (e.g., '♥️', '♣️')
     function cardTextToEmoji(card) {
       const value = card.replace(/[^A-Z0-9]/gi, "");
       let suit = "";
@@ -73,19 +89,14 @@ const DrillsPage = () => {
     const card2 = spans[1].textContent;
     const key =
       card1 && card2 ? cardTextToEmoji(card1) + cardTextToEmoji(card2) : "";
-    // Try to find an image with a matching name (case-insensitive, no spaces)
     const found = imageSetData.images.find((img) => {
       if (!img.name) return false;
-      // Remove spaces and compare case-insensitive
       return (
         img.name.replace(/\s+/g, "").toLowerCase() ===
         key.replace(/\s+/g, "").toLowerCase()
       );
     });
     if (found && found.imageItem) return found.imageItem;
-    // fallback: try key or show the key
-    console.log(key);
-    console.log(imageSetData.images);
     const foundByKey = imageSetData.images.find((img) => {
       if (img.key && img.key.toLowerCase() === key.toLowerCase()) return true;
       return false;
@@ -183,6 +194,7 @@ const DrillsPage = () => {
 
   // Navigation UI logic (subset selection)
   const renderSubsetSelector = () => {
+    if (timeTestActive) return null;
     if (!setType) return null;
 
     // 64-set navigation: dropdown for first suit
@@ -232,25 +244,35 @@ const DrillsPage = () => {
         "K",
       ];
       return (
-        <div className="flex flex-row items-center mt-3">
-          <span className="mr-2">Card 1</span>
-          <select className="mr-2" id="card1Value3cv">
-            {cardValues.map((v, i) => (
-              <option key={v} value={i}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <span className="mr-2">Card 2</span>
-          <select className="mr-2" id="card2Value3cv">
-            {cardValues.map((v, i) => (
-              <option key={v} value={i}>
-                {v}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row items-center mt-3 gap-4 w-full">
+          <div className="flex flex-col items-start w-full">
+            <span className="mb-1 font-semibold">Card 1</span>
+            <select
+              className="mb-2 border border-gray-400 rounded px-2 py-1 w-full"
+              id="card1Value3cv"
+            >
+              {cardValues.map((v, i) => (
+                <option key={v} value={i}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col items-start w-full">
+            <span className="mb-1 font-semibold">Card 2</span>
+            <select
+              className="mb-2 border border-gray-400 rounded px-2 py-1 w-full"
+              id="card2Value3cv"
+            >
+              {cardValues.map((v, i) => (
+                <option key={v} value={i}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
-            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline mt-2 sm:mt-6"
             onClick={() => {
               const c1 = parseInt(
                 document.getElementById("card1Value3cv").value
@@ -341,47 +363,67 @@ const DrillsPage = () => {
       const suits = ["Spades", "Hearts", "Diamonds", "Clubs"];
       const suitColors = ["Black", "Red"];
       return (
-        <div className="flex flex-row items-center mt-3">
-          <span className="mr-1">Card 1</span>
-          <select className="mr-2" id="card1Value">
-            <option value="any">Any</option>
-            {values.map((v, i) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <select className="mr-1" id="card1Suit">
-            <option value="any">Any</option>
-            <option value="black">Black (♠/♣)</option>
-            <option value="red">Red (♥/♦)</option>
-            {suits.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <span className="mr-1">Card 2</span>
-          <select className="mr-2" id="card2Value">
-            <option value="any">Any</option>
-            {values.map((v, i) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <select className="mr-1" id="card2Suit">
-            <option value="any">Any</option>
-            <option value="black">Black (♠/♣)</option>
-            <option value="red">Red (♥/♦)</option>
-            {suits.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row items-center mt-3 gap-4 w-full">
+          <div className="flex flex-col items-start w-full">
+            <span className="mb-1 font-semibold">Card 1</span>
+            <div className="flex flex-row gap-2 w-full">
+              <select
+                className="border border-gray-400 rounded px-2 py-1 w-1/2"
+                id="card1Value"
+              >
+                <option value="any">Any</option>
+                {values.map((v, i) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="border border-gray-400 rounded px-2 py-1 w-1/2"
+                id="card1Suit"
+              >
+                <option value="any">Any</option>
+                <option value="black">Black (♠/♣)</option>
+                <option value="red">Red (♥/♦)</option>
+                {suits.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-col items-start w-full mt-2 sm:mt-0">
+            <span className="mb-1 font-semibold">Card 2</span>
+            <div className="flex flex-row gap-2 w-full">
+              <select
+                className="border border-gray-400 rounded px-2 py-1 w-1/2"
+                id="card2Value"
+              >
+                <option value="any">Any</option>
+                {values.map((v, i) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="border border-gray-400 rounded px-2 py-1 w-1/2"
+                id="card2Suit"
+              >
+                <option value="any">Any</option>
+                <option value="black">Black (♠/♣)</option>
+                <option value="red">Red (♥/♦)</option>
+                {suits.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <button
-            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline mt-2 sm:mt-6"
             onClick={() => {
               const c1v = document.getElementById("card1Value").value;
               const c1s = document.getElementById("card1Suit").value;
@@ -554,6 +596,8 @@ const DrillsPage = () => {
                           setTimings([]);
                           setTimeTestItems([]);
                           setCurrentItemIdx(0);
+                          setTimeTestActive(false);
+                          setShowTimeTestInstructions(false);
                           router.push(`/training/drills?imageSet=${set._id}`);
                         }}
                       >
