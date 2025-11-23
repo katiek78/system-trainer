@@ -60,11 +60,8 @@ export default function JourneyMap({ locations, names }) {
         )}
         {/* Markers: first is labeled 'Start', rest are numbered */}
         {points.map((pos, i) => (
-          <Marker
-            key={i}
-            position={[pos.lat, pos.lng]}
-          >
-            <Popup>{`${i + 1}. ${pos.name || ''}`}</Popup>
+          <Marker key={i} position={[pos.lat, pos.lng]}>
+            <Popup>{`${i + 1}. ${pos.name || ""}`}</Popup>
           </Marker>
         ))}
       </MapContainer>
