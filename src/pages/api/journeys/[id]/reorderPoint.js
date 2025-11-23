@@ -49,24 +49,30 @@ export default async function handler(req, res) {
         }
 
         const newIndex = direction === "f" ? index + 1 : index - 1;
-
-        const points = [...journey.points]; // Create a shallow copy
-
+        const points = journey.points;
         if (newIndex < 0 || newIndex >= points.length) {
           return res
             .status(400)
             .json({ success: false, error: "Move out of bounds" });
         }
 
-        // Swap
+        // Save the original memoItem and memoPic sequence
+        const originalMemoItems = points.map((p) => p.memoItem);
+        const originalMemoPics = points.map((p) => p.memoPic);
+
+        // Move the entire point object as before
         const temp = points[index];
         points[index] = points[newIndex];
         points[newIndex] = temp;
 
-        journey.points = points; // Reassign the updated array to the model
+        // Restore the original memoItem and memoPic sequence
+        for (let i = 0; i < points.length; i++) {
+          points[i].memoItem = originalMemoItems[i];
+          points[i].memoPic = originalMemoPics[i];
+        }
 
+        journey.markModified("points");
         const updatedJourney = await journey.save();
-
         return res.status(200).json({ success: true, data: updatedJourney });
       } catch (error) {
         console.error(error);
