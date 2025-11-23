@@ -556,6 +556,7 @@ const JourneyPage = ({
                   <JourneyMap
                     locations={allPoints.map((p) => p.location).filter(Boolean)}
                     names={allPoints.map((p) => p.name || "")}
+                    memoItems={allPoints.map((p) => p.memoItem || "")}
                   />
                 </div>
               )}

@@ -23,7 +23,7 @@ function fixLeafletIcon() {
   }
 }
 
-export default function JourneyMap({ locations, names }) {
+export default function JourneyMap({ locations, names, memoItems }) {
   useEffect(() => {
     fixLeafletIcon();
   }, []);
@@ -33,7 +33,12 @@ export default function JourneyMap({ locations, names }) {
       if (!loc) return null;
       const [lat, lng] = loc.split(",").map(Number);
       if (isNaN(lat) || isNaN(lng)) return null;
-      return { lat, lng, name: names ? names[idx] : undefined };
+      return {
+        lat,
+        lng,
+        name: names ? names[idx] : undefined,
+        memoItem: memoItems ? memoItems[idx] : undefined,
+      };
     })
     .filter(Boolean);
 
@@ -61,7 +66,10 @@ export default function JourneyMap({ locations, names }) {
         {/* Markers: first is labeled 'Start', rest are numbered */}
         {points.map((pos, i) => (
           <Marker key={i} position={[pos.lat, pos.lng]}>
-            <Popup>{`${i + 1}. ${pos.name || ""}`}</Popup>
+            <Popup>
+              {`${i + 1}. ${pos.name || ""}`}
+              {pos.memoItem ? <><br />{pos.memoItem}</> : null}
+            </Popup>
           </Marker>
         ))}
       </MapContainer>
