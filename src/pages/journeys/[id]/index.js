@@ -548,6 +548,7 @@ const JourneyPage = ({
                 <div className="my-4">
                   <JourneyMap
                     locations={allPoints.map((p) => p.location).filter(Boolean)}
+                    names={allPoints.map((p) => p.name || "")}
                   />
                 </div>
               )}

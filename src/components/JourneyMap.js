@@ -23,17 +23,17 @@ function fixLeafletIcon() {
   }
 }
 
-export default function JourneyMap({ locations }) {
+export default function JourneyMap({ locations, names }) {
   useEffect(() => {
     fixLeafletIcon();
   }, []);
-  // Parse locations: ["lat,lng", ...] => [{lat, lng}, ...]
+  // Parse locations: ["lat,lng", ...] => [{lat, lng}], and names: [name, ...]
   const points = locations
-    .map((loc) => {
+    .map((loc, idx) => {
       if (!loc) return null;
       const [lat, lng] = loc.split(",").map(Number);
       if (isNaN(lat) || isNaN(lng)) return null;
-      return { lat, lng };
+      return { lat, lng, name: names ? names[idx] : undefined };
     })
     .filter(Boolean);
 
@@ -64,7 +64,7 @@ export default function JourneyMap({ locations }) {
             key={i}
             position={[pos.lat, pos.lng]}
           >
-            <Popup>{i === 0 ? 'Start' : `Point ${i + 1}`}</Popup>
+            <Popup>{`${i + 1}. ${pos.name || ''}`}</Popup>
           </Marker>
         ))}
       </MapContainer>
