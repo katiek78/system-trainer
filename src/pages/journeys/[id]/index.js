@@ -364,6 +364,15 @@ const JourneyPage = ({
     setShowJourneyModal(false);
   };
 
+  const refetchAllPoints = async () => {
+    setLoadingAllPoints(true);
+    const response = await fetch(`/api/journeys/${router.query.id}`);
+    const data = await response.json();
+    const loadedPoints = data.data.points;
+    setAllPoints(loadedPoints);
+    setLoadingAllPoints(false);
+  };
+
   const movePointBackwards = async (pointIndex) => {
     try {
       await fetch(`/api/journeys/${router.query.id}/reorderPoint`, {
@@ -377,12 +386,14 @@ const JourneyPage = ({
         }),
       });
       refreshData(router);
+      if (showMap) {
+        await refetchAllPoints();
+      }
     } catch (error) {
       setMessage("Failed to move the point.");
     }
   };
 
-  //TODO: Make these two functions the same function with a parameter
   const movePointForwards = async (pointIndex) => {
     try {
       await fetch(`/api/journeys/${router.query.id}/reorderPoint`, {
@@ -396,6 +407,9 @@ const JourneyPage = ({
         }),
       });
       refreshData(router);
+      if (showMap) {
+        await refetchAllPoints();
+      }
     } catch (error) {
       setMessage("Failed to move the point.");
     }
@@ -527,18 +541,11 @@ const JourneyPage = ({
               <button
                 className="btn bg-blue-600 hover:bg-blue-800 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
                 onClick={async () => {
-                  if (!allPoints) {
-                    setLoadingAllPoints(true);
-                    const response = await fetch(
-                      `/api/journeys/${router.query.id}`
-                    );
-                    const data = await response.json();
-                    const loadedPoints = data.data.points;
-                    setAllPoints(loadedPoints);
-                    setLoadingAllPoints(false);
+                  if (!showMap) {
+                    await refetchAllPoints();
                     setShowMap(true);
                   } else {
-                    setShowMap((prev) => !prev);
+                    setShowMap(false);
                   }
                 }}
               >
