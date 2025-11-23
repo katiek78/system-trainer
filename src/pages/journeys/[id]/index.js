@@ -11,6 +11,7 @@ import EmbedStreetViewDynamic from "@/components/EmbedStreetViewDynamic";
 import EmbedImage from "@/components/EmbedImage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PAGE_LIMIT } from "@/lib/journeyConstants";
+import dynamic from "next/dynamic";
 import {
   faCheck,
   faEdit,
@@ -57,6 +58,12 @@ const JourneyPage = ({
 
   const [isEditable, setIsEditable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+
+  // Dynamically import JourneyMap to avoid SSR issues with leaflet
+  const JourneyMap = dynamic(() => import("@/components/JourneyMap"), {
+    ssr: false,
+  });
 
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
@@ -516,6 +523,34 @@ const JourneyPage = ({
         <div className="journey-btn-container">
           {journey.id && points && (
             <>
+              {/* Create journey map button */}
+              <button
+                className="btn bg-blue-600 hover:bg-blue-800 text-white font-bold mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+                onClick={async () => {
+                  if (!allPoints) {
+                    setLoadingAllPoints(true);
+                    const response = await fetch(
+                      `/api/journeys/${router.query.id}`
+                    );
+                    const data = await response.json();
+                    const loadedPoints = data.data.points;
+                    setAllPoints(loadedPoints);
+                    setLoadingAllPoints(false);
+                    setShowMap(true);
+                  } else {
+                    setShowMap((prev) => !prev);
+                  }
+                }}
+              >
+                {showMap ? "Hide journey map" : "Create journey map"}
+              </button>
+              {showMap && allPoints && (
+                <div className="my-4">
+                  <JourneyMap
+                    locations={allPoints.map((p) => p.location).filter(Boolean)}
+                  />
+                </div>
+              )}
               {(!isPublicJourney || !isAdmin) && (
                 <>
                   <Link
