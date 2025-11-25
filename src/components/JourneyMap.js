@@ -68,7 +68,12 @@ export default function JourneyMap({ locations, names, memoItems }) {
           <Marker key={i} position={[pos.lat, pos.lng]}>
             <Popup>
               {`${i + 1}. ${pos.name || ""}`}
-              {pos.memoItem ? <><br />{pos.memoItem}</> : null}
+              {pos.memoItem ? (
+                <>
+                  <br />
+                  {pos.memoItem}
+                </>
+              ) : null}
             </Popup>
           </Marker>
         ))}
