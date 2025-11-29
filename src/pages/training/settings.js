@@ -9,6 +9,7 @@ const defaultSettings = {
   journeys: [],
   highlightGrouping: "", // NEW
   imageSets: [], // NEW: array of selected image set ids
+  journeyHints: true, // NEW: show journey hints by default
 };
 
 export default function NumberTrainingSettings() {
@@ -51,6 +52,20 @@ export default function NumberTrainingSettings() {
     }));
     setModeLoaded(true);
   }, []);
+
+  // Restore journeyHints per mode
+  useEffect(() => {
+    if (!modeLoaded) return;
+    const mode = settings.mode || defaultSettings.mode;
+    const hintsKey = `journeyHints_${mode}`;
+    const storedHints = localStorage.getItem(hintsKey);
+    if (storedHints !== null) {
+      setSettings((prev) => ({
+        ...prev,
+        journeyHints: storedHints === "true",
+      }));
+    }
+  }, [modeLoaded, settings.mode]);
 
   // Restore selectedOption from localStorage after settings.mode is set
   useEffect(() => {
@@ -527,6 +542,24 @@ export default function NumberTrainingSettings() {
           </div>
         )}
 
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+          <input
+            type="checkbox"
+            className="mr-2"
+            checked={settings.journeyHints}
+            onChange={(e) => {
+              setSettings((prev) => ({
+                ...prev,
+                journeyHints: e.target.checked,
+              }));
+              // Save per mode
+              const mode = settings.mode || defaultSettings.mode;
+              localStorage.setItem(`journeyHints_${mode}`, e.target.checked);
+            }}
+          />
+          Show journey hints
+        </label>
+
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Number of digits
         </label>
@@ -663,6 +696,7 @@ export default function NumberTrainingSettings() {
                   allowedPrefixes: allowedPrefixes
                     .map((p) => encodeURIComponent(p))
                     .join("|"),
+                  journeyHints: settings.journeyHints ? "1" : "0",
                 },
               });
             }}
