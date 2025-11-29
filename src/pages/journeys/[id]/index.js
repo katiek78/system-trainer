@@ -632,7 +632,10 @@ const JourneyPage = ({
                         {(currentPage - 1) * PAGE_LIMIT + i + 1}. {point.name}
                       </p>
 
-                      <div className="street-view-container relative">
+                      <div
+                        className="street-view-container relative"
+                        style={{ minHeight: "150px" }}
+                      >
                         {point.location &&
                           isLocationStreetView(point.location) && (
                             <EmbedStreetView
@@ -653,10 +656,16 @@ const JourneyPage = ({
                               location={point.location}
                             />
                           )}
+                        {/* Always show memoPic if it exists */}
                         {point.memoPic && (
                           <img
                             src={point.memoPic}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-20 w-auto object-contain z-20"
+                            style={{
+                              border: "2px solid red",
+                              background: "white",
+                              position: "static",
+                            }}
+                            className="h-12 md:h-20 w-auto object-contain"
                             alt="Memo"
                           />
                         )}
@@ -829,7 +838,10 @@ const JourneyPage = ({
                         {currentSlideshowPoint + 1}.{" "}
                         {allPoints[currentSlideshowPoint].name}
                       </p>
-                      <div className="street-view-container relative">
+                      <div
+                        className="street-view-container relative"
+                        style={{ minHeight: `${height}px` }}
+                      >
                         {allPoints[currentSlideshowPoint].location &&
                           isLocationStreetView(
                             allPoints[currentSlideshowPoint].location
@@ -861,17 +873,21 @@ const JourneyPage = ({
                               }
                             />
                           )}
+                        {/* Always show memoPic if it exists */}
+                        {allPoints[currentSlideshowPoint]?.memoPic && (
+                          <img
+                            src={allPoints[currentSlideshowPoint].memoPic}
+                            style={{
+                              border: "2px solid red",
+                              background: "white",
+                              position: "static",
+                            }}
+                            className="h-12 md:h-64 object-contain"
+                            alt="Memo"
+                          />
+                        )}
                         <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
                           {allPoints[currentSlideshowPoint].memoItem}
-                        </p>
-                        <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
-                          {allPoints[currentSlideshowPoint]?.memoPic && (
-                            <img
-                              src={allPoints[currentSlideshowPoint].memoPic}
-                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-64 object-contain z-20"
-                              alt="Memo"
-                            />
-                          )}
                         </p>
                         <div className="icon-container flex flex-row justify-center items-center">
                           {/* Show the backward button if we're not on the first point */}
