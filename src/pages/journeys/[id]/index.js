@@ -657,18 +657,25 @@ const JourneyPage = ({
                             />
                           )}
                         {/* Always show memoPic if it exists */}
-                        {point.memoPic && (
-                          <img
-                            src={point.memoPic}
-                            style={{
-                              border: "2px solid red",
-                              background: "white",
-                              position: "static",
-                            }}
-                            className="h-12 md:h-20 w-auto object-contain"
-                            alt="Memo"
-                          />
-                        )}
+                        {point.memoPic &&
+                          (point.location ? (
+                            <img
+                              src={point.memoPic}
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-20 w-auto object-contain z-20"
+                              alt="Memo"
+                            />
+                          ) : (
+                            <img
+                              src={point.memoPic}
+                              style={{
+                                border: "2px solid red",
+                                background: "white",
+                                position: "static",
+                              }}
+                              className="h-12 md:h-20 w-auto object-contain"
+                              alt="Memo"
+                            />
+                          ))}
                       </div>
                       <div className=" w-full flex flex-col justify-center items-center">
                         <p className="text-2xl point-name max-w-full text-center whitespace-normal break-words">
@@ -874,18 +881,25 @@ const JourneyPage = ({
                             />
                           )}
                         {/* Always show memoPic if it exists */}
-                        {allPoints[currentSlideshowPoint]?.memoPic && (
-                          <img
-                            src={allPoints[currentSlideshowPoint].memoPic}
-                            style={{
-                              border: "2px solid red",
-                              background: "white",
-                              position: "static",
-                            }}
-                            className="h-12 md:h-64 object-contain"
-                            alt="Memo"
-                          />
-                        )}
+                        {allPoints[currentSlideshowPoint]?.memoPic &&
+                          (allPoints[currentSlideshowPoint].location ? (
+                            <img
+                              src={allPoints[currentSlideshowPoint].memoPic}
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 md:h-64 object-contain z-20"
+                              alt="Memo"
+                            />
+                          ) : (
+                            <img
+                              src={allPoints[currentSlideshowPoint].memoPic}
+                              style={{
+                                border: "2px solid red",
+                                background: "white",
+                                position: "static",
+                              }}
+                              className="h-12 md:h-64 object-contain"
+                              alt="Memo"
+                            />
+                          ))}
                         <p className="text-2xl point-name max-w-full text-center whitespace-normal overflow-wrap break-word">
                           {allPoints[currentSlideshowPoint].memoItem}
                         </p>
