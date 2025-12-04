@@ -23,21 +23,23 @@ function fixLeafletIcon() {
   }
 }
 
-export default function JourneyMap({ locations, names, memoItems }) {
+export default function JourneyMap({ streetViewPoints }) {
   useEffect(() => {
     fixLeafletIcon();
   }, []);
-  // Parse locations: ["lat,lng", ...] => [{lat, lng}], and names: [name, ...]
-  const points = locations
-    .map((loc, idx) => {
-      if (!loc) return null;
-      const [lat, lng] = loc.split(",").map(Number);
+
+  // Parse streetViewPoints: [{ location, name, memoItem, originalIndex, ... }]
+  const points = (streetViewPoints || [])
+    .map((p) => {
+      if (!p.location) return null;
+      const [lat, lng] = p.location.split(",").map(Number);
       if (isNaN(lat) || isNaN(lng)) return null;
       return {
         lat,
         lng,
-        name: names ? names[idx] : undefined,
-        memoItem: memoItems ? memoItems[idx] : undefined,
+        name: p.name,
+        memoItem: p.memoItem,
+        originalIndex: p.originalIndex,
       };
     })
     .filter(Boolean);
@@ -63,11 +65,11 @@ export default function JourneyMap({ locations, names, memoItems }) {
             color="blue"
           />
         )}
-        {/* Markers: first is labeled 'Start', rest are numbered */}
+        {/* Markers: show original index and name */}
         {points.map((pos, i) => (
           <Marker key={i} position={[pos.lat, pos.lng]}>
             <Popup>
-              {`${i + 1}. ${pos.name || ""}`}
+              {`${pos.originalIndex}. ${pos.name || ""}`}
               {pos.memoItem ? (
                 <>
                   <br />

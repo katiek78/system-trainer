@@ -544,6 +544,19 @@ const JourneyPage = ({
                   if (!showMap) {
                     await refetchAllPoints();
                     setShowMap(true);
+                    // Wait for map to render, then invalidate size
+                    setTimeout(() => {
+                      if (window && window.L && window.L.Map) {
+                        const mapContainers =
+                          document.getElementsByClassName("leaflet-container");
+                        if (mapContainers.length > 0) {
+                          const mapInstance = mapContainers[0]._leaflet_map;
+                          if (mapInstance && mapInstance.invalidateSize) {
+                            mapInstance.invalidateSize();
+                          }
+                        }
+                      }
+                    }, 300);
                   } else {
                     setShowMap(false);
                   }
@@ -553,11 +566,18 @@ const JourneyPage = ({
               </button>
               {showMap && allPoints && (
                 <div className="my-4">
-                  <JourneyMap
-                    locations={allPoints.map((p) => p.location).filter(Boolean)}
-                    names={allPoints.map((p) => p.name || "")}
-                    memoItems={allPoints.map((p) => p.memoItem || "")}
-                  />
+                  {/* Pass street view points with original index and name */}
+                  {(() => {
+                    const streetViewPoints = allPoints
+                      .map((p, idx) => ({
+                        ...p,
+                        originalIndex: idx + 1, // 1-based index for display
+                      }))
+                      .filter(
+                        (p) => p.location && isLocationStreetView(p.location)
+                      );
+                    return <JourneyMap streetViewPoints={streetViewPoints} />;
+                  })()}
                 </div>
               )}
               {(!isPublicJourney || !isAdmin) && (
