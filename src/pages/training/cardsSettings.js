@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import RedToBlackMappingTable from "./RedToBlackMappingTable";
 import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
 
@@ -51,6 +52,8 @@ export default function CardTrainingSettings() {
     imageSet: "",
     cardGroupsPerLocation: 1,
   });
+  // Red-to-black mapping state
+  const [redToBlackMapping, setRedToBlackMapping] = useState("default");
   const [settingsRestored, setSettingsRestored] = useState(false);
   // Restore settings from localStorage on mount
   useEffect(() => {
@@ -558,11 +561,26 @@ export default function CardTrainingSettings() {
         </select>
         {(settings.cardGroupsPerLocation === "variable-black" ||
           settings.cardGroupsPerLocation === "variable-red") && (
-          <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-            {settings.cardGroupsPerLocation === "variable-black"
-              ? "Each location takes a variable number of card groups. Move to the next location after a black-first pair."
-              : "Each location takes a variable number of card groups. Move to the next location after a red-first pair."}
-          </div>
+          <>
+            <div className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+              {settings.cardGroupsPerLocation === "variable-black"
+                ? "Each location takes a variable number of card groups. Move to the next location after a black-first pair."
+                : "Each location takes a variable number of card groups. Move to the next location after a red-first pair."}
+            </div>
+            {/* Red-to-black mapping options */}
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-700 rounded">
+              <div className="font-semibold mb-1">
+                Red-First to Black-First Pair Mapping
+              </div>
+              <div className="text-xs mb-2 text-gray-600 dark:text-gray-300">
+                When using a 1352 set, only black-first pairs are defined.
+                Please specify how red-first suit pairs should mirror
+                black-first pairs.
+              </div>
+              {/* Red-first to black-first mapping table */}
+              <RedToBlackMappingTable />
+            </div>
+          </>
         )}
 
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">

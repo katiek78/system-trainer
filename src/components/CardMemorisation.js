@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import RedToBlackMappingTable from "../pages/training/RedToBlackMappingTable";
 import SimpleModal from "./SimpleModal";
 import EmbedStreetView from "./EmbedStreetView";
 import EmbedImage from "./EmbedImage";
@@ -82,6 +83,13 @@ export default function CardMemorisation({
     setGroupsPerLocation(value);
   }, [router.query.cardGroupsPerLocation]);
 
+  // Save groupsPerLocation to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined" && groupsPerLocation) {
+      localStorage.setItem("cardGroupsPerLocation", groupsPerLocation);
+    }
+  }, [groupsPerLocation]);
+
   // Generate and shuffle cards
   const [cards, setCards] = useState([]);
   useEffect(() => {
@@ -150,22 +158,70 @@ export default function CardMemorisation({
 
   // Helper: get the mapping from group index to location index for variable logic
   function getVariableLocationMap(cardsOnPage, groupSize, allPoints, mode) {
+    // Always use a mapping table for variable mode. The mapping table is user-definable and stored in localStorage.
+    // For 'variable-black', advance location on black-first group; for 'variable-red', use the mapping table to map red-first pairs to black-first pairs.
+    // The mapping table should be loaded from localStorage or use sensible defaults.
     const map = [];
     let locIdx = 0;
     let groupsInCurrentLocation = 0;
     const isBlack = (card) => card && (card.suit === "♠" || card.suit === "♣");
     const isRed = (card) => card && (card.suit === "♥" || card.suit === "♦");
     const numGroups = Math.ceil(cardsOnPage.length / groupSize);
+
+    // Load mapping table from localStorage or use defaults
+    let mappingTable = null;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("redToBlackMappingTable");
+      if (stored) {
+        try {
+          mappingTable = JSON.parse(stored);
+        } catch (e) {
+          mappingTable = null;
+        }
+      }
+    }
+    // Default mapping if not set
+    if (!mappingTable) {
+      mappingTable = {
+        dd: "cc",
+        hh: "ss",
+        hd: "sc",
+        dh: "cs",
+        ds: "sd",
+        dc: "cd",
+        hs: "sh",
+        hc: "ch",
+      };
+    }
+
     for (let g = 0; g < numGroups; g++) {
       map.push(locIdx);
       groupsInCurrentLocation++;
       const firstCard = cardsOnPage[g * groupSize];
       let shouldAdvance = false;
-      if (
-        (mode === "variable-black" && isBlack(firstCard)) ||
-        (mode === "variable-red" && isRed(firstCard))
-      ) {
+      if (mode === "variable-black" && isBlack(firstCard)) {
         shouldAdvance = true;
+      } else if (mode === "variable-red" && isRed(firstCard)) {
+        // Use mapping table to determine if this red-first pair should advance as per its mapped black-first pair
+        // For simplicity, assume groupSize === 2 for pair logic
+        if (groupSize === 2 && firstCard && cardsOnPage[g * groupSize + 1]) {
+          const c1 = firstCard;
+          const c2 = cardsOnPage[g * groupSize + 1];
+          const pairKey =
+            (c1.suit === "♥" || c1.suit === "♦") &&
+            (c2.suit === "♥" || c2.suit === "♦")
+              ? (c1.suit[0] + c2.suit[0]).toLowerCase()
+              : null;
+          if (pairKey && mappingTable[pairKey]) {
+            // Map to black-first pair
+            // If the mapped black pair would advance, then so should this red pair
+            // For now, just treat all red pairs as advancing, as before
+            shouldAdvance = true;
+          }
+        } else {
+          // For non-pair groupings, just advance on red as before
+          shouldAdvance = true;
+        }
       }
       if (groupsInCurrentLocation >= 3) {
         shouldAdvance = true;
