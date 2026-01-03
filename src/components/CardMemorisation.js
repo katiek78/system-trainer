@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import SimpleModal from "./SimpleModal";
+import EmbedStreetView from "./EmbedStreetView";
+import EmbedImage from "./EmbedImage";
+import { isLocationStreetView } from "@/utilities/isLocationStreetView";
 import { useRouter } from "next/router";
 
 // Helper to generate a deck of cards (array of {value, suit})
@@ -48,6 +52,7 @@ export default function CardMemorisation({
   onFinish,
 }) {
   const router = useRouter();
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   // router already declared at the top
   // Card groups per location: from query, localStorage, or default 1
   const [groupsPerLocation, setGroupsPerLocation] = useState(1);
@@ -202,11 +207,10 @@ export default function CardMemorisation({
   }
   const currentPoint = getCurrentPoint();
 
-  // Get imageItem and phonetics for this group (if available, like numbers)
+  // Get imageItem, phonetics, compImageUrl for this group (like numbers)
   function getImageItemAndPhonetics() {
     if (!imageSet || imageSet.length === 0 || !currentGroup.length)
-      return { item: "", phonetics: "" };
-    // Map suit to emoji with variation selector (to match image set names)
+      return { item: "", phonetics: "", compImageUrl: null };
     const suitToEmoji = {
       "♠": "\u2660\uFE0F",
       "♥": "\u2665\uFE0F",
@@ -220,40 +224,34 @@ export default function CardMemorisation({
       if (set.images && Array.isArray(set.images)) {
         const allNames = set.images.map((img) => img.name);
         const found = set.images.find((img) => img.name === groupName);
-        // Debug: log found result
-        // eslint-disable-next-line no-console
-        console.log(
-          "[CardMemorisation] found for groupName",
-          groupName,
-          ":",
-          found
-        );
         if (!found) {
-          // Try to find a close match (e.g. with/without variation selectors)
           const groupNameNoVS = groupName.replace(/\uFE0F/g, "");
           const close = allNames.find(
             (n) => n && n.replace(/\uFE0F/g, "") === groupNameNoVS
           );
-          if (close) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              "[CardMemorisation] groupName matches after removing variation selectors:",
-              close
-            );
-          }
         }
         if (found) {
           return {
             item: found.imageItem || found.name || groupName,
             phonetics: found.phonetics || "",
+            compImageUrl: found.url || found.URL || null,
           };
         }
       }
     }
-    return { item: "", phonetics: "" };
+    return { item: "", phonetics: "", compImageUrl: null };
   }
-  const { item: imageItemName, phonetics: imagePhonetics } =
-    getImageItemAndPhonetics();
+  const {
+    item: imageItemName,
+    phonetics: imagePhonetics,
+    compImageUrl,
+  } = getImageItemAndPhonetics();
+
+  // Get journey point location, memoPic, etc for modal
+  const locationUrl =
+    currentPoint && currentPoint.location ? currentPoint.location : null;
+  const memoPicUrl =
+    currentPoint && currentPoint.memoPic ? currentPoint.memoPic : null;
 
   // Calculate groups per row for up/down navigation
   const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
@@ -261,7 +259,9 @@ export default function CardMemorisation({
   // Keyboard navigation (arrows for group, PgUp/PgDn for deck)
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === "ArrowRight") {
+      if (e.key === "d" && !e.repeat) {
+        setShowDetailsModal((prev) => !prev);
+      } else if (e.key === "ArrowRight") {
         if (highlightIdx === totalGroups - 1) {
           // At end of group, go to next journey for variable logic, else next page
           if (
@@ -471,6 +471,138 @@ export default function CardMemorisation({
   // Responsive hint bar styling (match numbersMemorisation)
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+      {/* Details Modal: show on 'd' key */}
+      {showDetailsModal && (
+        <SimpleModal
+          open={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+        >
+          <div style={{ textAlign: "center", minWidth: 200 }}>
+            <div className="mb-2 p-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 rounded text-base">
+              <b>
+                {currentPoint && currentPoint.name ? currentPoint.name : "-"}
+              </b>
+              {currentPoint && currentPoint.memoItem
+                ? ` - ${currentPoint.memoItem}`
+                : ""}
+              {imageItemName ? `: ${imageItemName}` : ""}
+              {imagePhonetics && (
+                <span
+                  style={{ color: "#888", fontStyle: "italic", marginLeft: 6 }}
+                >
+                  ({imagePhonetics})
+                </span>
+              )}
+            </div>
+            <div
+              style={{
+                margin: "16px 0",
+                position: "relative",
+                display: "inline-block",
+                width: 320,
+                height: 200,
+              }}
+            >
+              {locationUrl ? (
+                isLocationStreetView(locationUrl) ? (
+                  <EmbedStreetView
+                    location={locationUrl}
+                    width={320}
+                    height={200}
+                  />
+                ) : (
+                  <EmbedImage location={locationUrl} width={320} height={200} />
+                )
+              ) : (
+                <div
+                  style={{
+                    color: "#888",
+                    width: 320,
+                    height: 200,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  No location available
+                </div>
+              )}
+              {/* Overlay memoPicUrl (left) */}
+              {memoPicUrl && (
+                <img
+                  src={memoPicUrl}
+                  alt="Memo"
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    left: 10,
+                    width: 80,
+                    height: 60,
+                    objectFit: "contain",
+                    zIndex: 3,
+                    border: "2px solid #fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    background: "rgba(255,255,255,0.7)",
+                    borderRadius: 8,
+                  }}
+                />
+              )}
+              {/* Overlay compImageUrl (right) */}
+              {compImageUrl && (
+                <img
+                  src={compImageUrl}
+                  alt="Comp"
+                  style={{
+                    position: "absolute",
+                    bottom: 10,
+                    right: 10,
+                    width: 120,
+                    height: 90,
+                    objectFit: "contain",
+                    zIndex: 2,
+                    border: "2px solid #fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    background: "rgba(255,255,255,0.7)",
+                    borderRadius: 8,
+                  }}
+                />
+              )}
+            </div>
+            <div className="mb-2">
+              <div>Current Group:</div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 8,
+                  marginTop: 8,
+                }}
+              >
+                {currentGroup.map((card, idx) => {
+                  const isRedSuit = card.suit === "♥" || card.suit === "♦";
+                  return (
+                    <span
+                      key={idx}
+                      className="text-2xl font-mono flex items-center"
+                    >
+                      {card.value}
+                      <span
+                        className={
+                          isRedSuit
+                            ? "ml-1 text-red-600 dark:text-red-400"
+                            : "ml-1"
+                        }
+                      >
+                        {card.suit}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </SimpleModal>
+      )}
       <button
         onClick={handleExitToSettings}
         className="mb-4 text-blue-600 dark:text-blue-300 hover:underline font-medium"
