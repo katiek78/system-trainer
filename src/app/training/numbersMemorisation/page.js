@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import SimpleModal from "@/components/SimpleModal";
 
 import EmbedStreetView from "@/components/EmbedStreetView";
@@ -10,7 +10,7 @@ import { isLocationStreetView } from "@/utilities/isLocationStreetView";
 
 export const dynamic = "force-dynamic";
 
-export default function NumbersMemorisation() {
+function NumbersMemorisationContent() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -791,5 +791,19 @@ export default function NumbersMemorisation() {
         )}
       </div>
     </>
+  );
+}
+
+export default function NumbersMemorisation() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-xl">Loading...</div>
+        </div>
+      }
+    >
+      <NumbersMemorisationContent />
+    </Suspense>
   );
 }

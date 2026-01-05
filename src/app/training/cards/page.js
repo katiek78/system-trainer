@@ -1,12 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import CardMemorisation from "@/components/CardMemorisation";
 
 export const dynamic = "force-dynamic";
 
-export default function CardsMemorisationPage() {
+function CardsContent() {
   const searchParams = useSearchParams();
 
   // Extract params from searchParams
@@ -113,5 +113,19 @@ export default function CardsMemorisationPage() {
       imageSet={imageSetData}
       onFinish={() => {}}
     />
+  );
+}
+
+export default function CardsMemorisationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-xl">Loading...</div>
+        </div>
+      }
+    >
+      <CardsContent />
+    </Suspense>
   );
 }

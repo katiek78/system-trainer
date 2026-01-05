@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default function DrillsPage() {
+function DrillsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const imageSet = searchParams.get("imageSet");
@@ -928,5 +928,19 @@ export default function DrillsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DrillsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-xl">Loading...</div>
+        </div>
+      }
+    >
+      <DrillsContent />
+    </Suspense>
   );
 }
