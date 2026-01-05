@@ -593,7 +593,7 @@ export default function CardTrainingSettings() {
           <option value="">Select image set...</option>
           {filteredImageSets.map((set) => (
             <option key={set.id || set._id} value={set.id || set._id}>
-              {set.name} {set.setType ? `(${set.setType})` : ""}
+              {`${set.name}${set.setType ? ` (${set.setType})` : ""}`}
             </option>
           ))}
         </select>

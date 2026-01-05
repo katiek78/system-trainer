@@ -8,6 +8,8 @@ import EmbedStreetView from "@/components/EmbedStreetView";
 import EmbedImage from "@/components/EmbedImage";
 import { isLocationStreetView } from "@/utilities/isLocationStreetView";
 
+export const dynamic = "force-dynamic";
+
 export default function NumbersMemorisation() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const router = useRouter();

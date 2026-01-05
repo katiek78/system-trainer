@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import CardMemorisation from "@/components/CardMemorisation";
 
+export const dynamic = "force-dynamic";
+
 export default function CardsMemorisationPage() {
   const searchParams = useSearchParams();
 
