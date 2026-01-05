@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import { mutate } from "swr";
 import LocationExplanation from "@/components/LocationExplanation";
 import EmbedStreetView from "./EmbedStreetView";
@@ -17,6 +17,7 @@ const PointForm = ({
   pointIndex,
 }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -48,7 +49,7 @@ const PointForm = ({
 
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
-    const { id } = router.query;
+    const id = params.id;
 
     try {
       const res = await fetch(`/api/points/${id}`, {
@@ -65,18 +66,11 @@ const PointForm = ({
         throw new Error(res.status);
       }
 
-      //const { data } = await res.json();
       await res.json();
 
-      // mutate(`/api/journeys/${id}`, data, false) // Update the local data without a revalidation
       const pageToGoTo = Math.floor(pointIndex / PAGE_LIMIT) + 1;
 
-      //router.push(`/journeys/${journeyId}?page=${pageToGoTo}`);
-      router.push(`/journeys/${journeyId}?page=${pageToGoTo}`, undefined, {
-        shallow: false,
-      });
-
-      //router.push(`/journeys/${journeyId}`);
+      router.push(`/journeys/${journeyId}?page=${pageToGoTo}`);
     } catch (error) {
       setMessage("Failed to update location");
     }
@@ -84,10 +78,9 @@ const PointForm = ({
 
   /* The POST method adds a new entry in the mongodb database. */
   const postData = async (form) => {
-    const { id } = router.query;
+    const id = params.id;
 
     const insertAt = pointIndex;
-    console.log(insertAt); //undefined
 
     try {
       const res = await fetch(`/api/points/${id}`, {
@@ -110,10 +103,9 @@ const PointForm = ({
       const { data } = await res.json();
       const pageToGoTo = pointIndex
         ? Math.floor(pointIndex / PAGE_LIMIT) + 1
-        : Math.floor((points.length - 1) / PAGE_LIMIT) + 1;
+        : 1;
 
       router.push(`/journeys/${data._id}?page=${pageToGoTo}`);
-      //router.push(`/journeys/${data._id}`);
     } catch (error) {
       setMessage("Failed to add point");
     }

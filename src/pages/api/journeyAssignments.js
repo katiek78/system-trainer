@@ -1,11 +1,11 @@
 import dbConnect from "@/lib/dbConnect";
 import JourneyAssignment from "@/models/JourneyAssignment";
 import Journey from "@/models/Journey";
-import { getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 
 export default async function handler(req, res) {
   await dbConnect();
-  const session = await getSession(req, res);
+  const session = await auth0.getSession(req, res);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -28,7 +28,10 @@ export default async function handler(req, res) {
     );
     // Build options: each option is an array of {id, name}
     const options = allJourneySets.map((set) =>
-      set.journeyIDs.map((id) => ({ id, name: journeyMap[id] || "Unknown" }))
+      set.journeyIDs.map((id) => ({
+        id: id.toString(),
+        name: journeyMap[id.toString()] || "Unknown",
+      }))
     );
     return res.status(200).json({ options });
   }

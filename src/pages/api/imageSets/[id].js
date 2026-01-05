@@ -16,10 +16,16 @@ export default async function handler(req, res) {
         if (!imageSet) {
           return res.status(400).json({ success: false });
         }
-        // Debug log: output the fetched imageSet document
-        // eslint-disable-next-line no-console
-        console.log("Fetched imageSet:", JSON.stringify(imageSet, null, 2));
-        res.status(200).json({ success: true, data: imageSet });
+        // Serialize to plain object to avoid ObjectId issues
+        const serializedImageSet = {
+          ...imageSet.toObject(),
+          _id: imageSet._id.toString(),
+          images: imageSet.images.map((img) => ({
+            ...img.toObject(),
+            _id: img._id.toString(),
+          })),
+        };
+        res.status(200).json({ success: true, data: serializedImageSet });
       } catch (error) {
         res.status(400).json({ success: false });
       }

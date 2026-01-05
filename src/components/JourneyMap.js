@@ -4,11 +4,12 @@ import {
   Marker,
   Popup,
   Polyline,
+  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -23,14 +24,78 @@ function fixLeafletIcon() {
   }
 }
 
-export default function JourneyMap({ streetViewPoints }) {
+function MapContent({ points }) {
+  const map = useMap();
+
+  useEffect(() => {
+    // Invalidate size when map is shown
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }, [map]);
+
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {points.length > 1 && (
+        <Polyline positions={points.map((p) => [p.lat, p.lng])} color="blue" />
+      )}
+      {points.map((pos, i) => (
+        <Marker key={i} position={[pos.lat, pos.lng]}>
+          <Popup>
+            {`${pos.originalIndex}. ${pos.name || ""}`}
+            {pos.memoItem ? (
+              <>
+                <br />
+                {pos.memoItem}
+              </>
+            ) : null}
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
+}
+
+export default function JourneyMap({
+  points: streetViewPoints,
+  width,
+  height,
+}) {
+  const containerRef = useRef(null);
+  const [mapKey, setMapKey] = useState(Date.now());
+
   useEffect(() => {
     fixLeafletIcon();
+
+    // Force remount on every render by updating key
+    setMapKey(Date.now());
+
+    // Cleanup function to remove any lingering map instances
+    return () => {
+      if (containerRef.current) {
+        const container = containerRef.current;
+        // Remove all leaflet-specific data
+        if (container._leaflet_id) {
+          delete container._leaflet_id;
+        }
+        // Find and remove any map instances
+        const maps = container.querySelectorAll(".leaflet-container");
+        maps.forEach((mapEl) => {
+          if (mapEl._leaflet_map) {
+            mapEl._leaflet_map.remove();
+          }
+        });
+      }
+    };
   }, []);
 
   // Parse streetViewPoints: [{ location, name, memoItem, originalIndex, ... }]
   const points = (streetViewPoints || [])
-    .map((p) => {
+    .map((p, idx) => {
       if (!p.location) return null;
       const [lat, lng] = p.location.split(",").map(Number);
       if (isNaN(lat) || isNaN(lng)) return null;
@@ -39,7 +104,7 @@ export default function JourneyMap({ streetViewPoints }) {
         lng,
         name: p.name,
         memoItem: p.memoItem,
-        originalIndex: p.originalIndex,
+        originalIndex: idx + 1,
       };
     })
     .filter(Boolean);
@@ -48,37 +113,18 @@ export default function JourneyMap({ streetViewPoints }) {
   const center = points.length > 0 ? [points[0].lat, points[0].lng] : [0, 0];
 
   return (
-    <div style={{ height: "400px", width: "100%" }}>
+    <div
+      ref={containerRef}
+      style={{ height: height || "400px", width: width || "100%" }}
+    >
       <MapContainer
+        key={mapKey}
         center={center}
         zoom={13}
         style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {/* Draw polyline connecting all points */}
-        {points.length > 1 && (
-          <Polyline
-            positions={points.map((p) => [p.lat, p.lng])}
-            color="blue"
-          />
-        )}
-        {/* Markers: show original index and name */}
-        {points.map((pos, i) => (
-          <Marker key={i} position={[pos.lat, pos.lng]}>
-            <Popup>
-              {`${pos.originalIndex}. ${pos.name || ""}`}
-              {pos.memoItem ? (
-                <>
-                  <br />
-                  {pos.memoItem}
-                </>
-              ) : null}
-            </Popup>
-          </Marker>
-        ))}
+        <MapContent points={points} />
       </MapContainer>
     </div>
   );

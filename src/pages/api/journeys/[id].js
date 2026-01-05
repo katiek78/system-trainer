@@ -16,7 +16,16 @@ export default async function handler(req, res) {
         if (!journey) {
           return res.status(400).json({ success: false });
         }
-        res.status(200).json({ success: true, data: journey });
+        // Serialize to plain object to avoid ObjectId issues
+        const serializedJourney = {
+          ...journey.toObject(),
+          _id: journey._id.toString(),
+          points: journey.points.map((point) => ({
+            ...point.toObject(),
+            _id: point._id.toString(),
+          })),
+        };
+        res.status(200).json({ success: true, data: serializedJourney });
       } catch (error) {
         res.status(400).json({ success: false });
       }

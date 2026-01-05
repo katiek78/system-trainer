@@ -1,10 +1,12 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import RedToBlackMappingTable from "../pages/training/RedToBlackMappingTable";
+import RedToBlackMappingTable from "./RedToBlackMappingTable";
 import SimpleModal from "./SimpleModal";
 import EmbedStreetView from "./EmbedStreetView";
 import EmbedImage from "./EmbedImage";
 import { isLocationStreetView } from "@/utilities/isLocationStreetView";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 // Helper to generate a deck of cards (array of {value, suit})
 function generateDecks(numDecks = 1) {
@@ -51,25 +53,23 @@ export default function CardMemorisation({
   journey = [],
   imageSet = [],
   onFinish,
+  cardGroupsPerLocation: cardGroupsPerLocationProp,
 }) {
   const router = useRouter();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   // router already declared at the top
-  // Card groups per location: from query, localStorage, or default 1
+  // Card groups per location: from prop, localStorage, or default 1
   const [groupsPerLocation, setGroupsPerLocation] = useState(1);
   useEffect(() => {
     let value = 1;
-    if (router.query.cardGroupsPerLocation) {
+    if (cardGroupsPerLocationProp) {
       if (
-        router.query.cardGroupsPerLocation === "variable-black" ||
-        router.query.cardGroupsPerLocation === "variable-red"
+        cardGroupsPerLocationProp === "variable-black" ||
+        cardGroupsPerLocationProp === "variable-red"
       ) {
-        value = router.query.cardGroupsPerLocation;
+        value = cardGroupsPerLocationProp;
       } else {
-        value = Math.max(
-          1,
-          Math.min(4, Number(router.query.cardGroupsPerLocation))
-        );
+        value = Math.max(1, Math.min(4, Number(cardGroupsPerLocationProp)));
       }
     } else if (typeof window !== "undefined") {
       const stored = localStorage.getItem("cardGroupsPerLocation");
@@ -81,7 +81,7 @@ export default function CardMemorisation({
       }
     }
     setGroupsPerLocation(value);
-  }, [router.query.cardGroupsPerLocation]);
+  }, [cardGroupsPerLocationProp]);
 
   // Save groupsPerLocation to localStorage whenever it changes
   useEffect(() => {

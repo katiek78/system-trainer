@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import { mutate } from "swr";
 
 const ImportLocationsForm = ({ formId, importLocationsForm }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -14,7 +15,7 @@ const ImportLocationsForm = ({ formId, importLocationsForm }) => {
 
   /* The POST method adds a new entry in the mongodb database. */
   const postData = async (form) => {
-    const { id } = router.query;
+    const id = params.id;
     const pointNames = form.locationList
       .split("\n")
       .map((point) => point.trim()); // Split input into an array of point names

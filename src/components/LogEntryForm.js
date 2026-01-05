@@ -1,13 +1,11 @@
-import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import { mutate } from "swr";
 import { ML_DISCIPLINES } from "@/lib/disciplines";
 import { TRADITIONAL_DISCIPLINES } from "@/lib/disciplines";
 import { getTodayDate, formatDate } from "@/utilities/day";
 
 const LogEntryForm = ({
-  userId,
   journeys,
   publicJourneys,
   formId,
@@ -15,6 +13,7 @@ const LogEntryForm = ({
   forNewEntry = true,
 }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -38,7 +37,7 @@ const LogEntryForm = ({
 
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
-    const { id } = router.query;
+    const id = params.id;
     // const { setType, ...formDataToStore } = form;
 
     try {
@@ -58,8 +57,8 @@ const LogEntryForm = ({
 
       const { data } = await res.json();
 
-      mutate(`/api/logEntries/${id}`, data, false); // Update the local data without a revalidation
-      router.push({ pathname: `/log` });
+      mutate(`/api/logEntries/${id}`, data, false);
+      router.push(`/log`);
     } catch (error) {
       setMessage("Failed to update log entry");
     }
@@ -74,7 +73,7 @@ const LogEntryForm = ({
           Accept: contentType,
           "Content-Type": contentType,
         },
-        body: JSON.stringify({ ...form, userId: userId }),
+        body: JSON.stringify(form),
       });
 
       // Throw error with status code in case Fetch API req failed
@@ -82,7 +81,7 @@ const LogEntryForm = ({
         throw new Error(res.status);
       }
 
-      router.push({ pathname: `/log` });
+      router.push(`/log`);
     } catch (error) {
       setMessage("Failed to add log entry");
     }

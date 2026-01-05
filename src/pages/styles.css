@@ -1,89 +1,30 @@
-/* Default padding for larger screens */
-.main-div {
-  padding-top: 80px; /* or any padding value you prefer */
-  padding-left: 30px;
-  padding-right: 30px;
-  padding-bottom: 60px;
-  flex: 1;
-}
-
-
-
-.footer {
-  position: fixed;
-  bottom: 0;
+/* Responsive table styles */
+table {
   width: 100%;
-  background-color: #f5f5f5;
-  color: #333;
-  padding: 20px;
-  text-align: center;
-  margin-top: auto;
+  border-collapse: collapse;
+  margin: 20px 0;
 }
 
-.footer-content {
-  max-width: 960px;
-  margin: 0 auto;
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
 }
 
-/* Media query for smaller screens */
-@media (max-width: 767px) {
-  .footer {
-    position: fixed;
-    bottom: 0;
-  }
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
 }
 
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+tr:nth-child(even) {
+  background-color: #f9f9f9;
 }
 
-/* Media query for smaller screens (adjust max-width as needed) */
-@media (max-width: 768px) {
-  .main-div {
-    padding-top: 36px;
-    padding-left: 12px; /* Adjust this value for less padding on mobile */
-    padding-right: 12px;
+/* Make tables scrollable on small screens */
+@media screen and (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
-
-.animation {
-    width: 80px;
-    height: 80px;
-    border-radius: 24%;  
-    transform: translateY(50%);
-    background-color: red;
-    animation: colorChange 1s linear infinite; /* Updated animation */
-  }
-
-
-  .result { 
-    font-size: 24px;
-  opacity: 0;
-  animation: moveUp 1s ease forwards; 
-  }
-  
-  @keyframes colorChange {
-    0% { background-color: red; }
-    12.5% { background-color: orange; }
-    25% { background-color: yellow; }
-    37.5% { background-color: olive; }
-    50% { background-color: green; }
-    62.5% { background-color: turquoise; }
-    75% { background-color: blue; }
-    87.5% { background-color: purple; }
-    100% { background-color: violet; }
-  }
-  
-  @keyframes moveUp {
-    0% {
-      opacity: 0;
-      transform: translateY(50px); /* Initial position */
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0); /* Move to the top */
-    }
-  }
-

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 
 const PasteImagesForm = ({ formId, pasteImagesForm }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -14,7 +15,7 @@ const PasteImagesForm = ({ formId, pasteImagesForm }) => {
 
   /* The POST method adds a new entry in the mongodb database. */
   const postData = async (form) => {
-    const { id } = router.query;
+    const id = params.id;
     console.log(id);
     const newImages = form.imageList
       .split("\n")

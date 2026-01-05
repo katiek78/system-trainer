@@ -1,14 +1,14 @@
-import { withApiAuthRequired, getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 import dbConnect from "@/lib/dbConnect";
 import Journey from "@/models/Journey";
 
-export default withApiAuthRequired(async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
   await dbConnect();
-  const session = await getSession(req, res);
+  const session = await auth0.getSession(req, res);
   const user = session?.user;
   if (!user) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -55,4 +55,4 @@ export default withApiAuthRequired(async function handler(req, res) {
     message: "Journey created",
     journey: { _id: newJourney._id, name: newJourney.name },
   });
-});
+}

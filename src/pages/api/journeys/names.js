@@ -1,11 +1,11 @@
 import dbConnect from "../../../lib/dbConnect";
 import Journey from "@/models/Journey";
-import { getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 
 export default async function handler(req, res) {
   const { method } = req;
 
-  const session = await getSession(req, res);
+  const session = await auth0.getSession(req, res);
 
   if (!session || !session.user) {
     return res.status(401).json({ error: "Unauthorised" });
@@ -20,7 +20,12 @@ export default async function handler(req, res) {
         const journeys = await Journey.find({ userId: userId }).select(
           "_id name"
         );
-        res.status(200).json(journeys);
+        // Serialize ObjectIds to strings
+        const serializedJourneys = journeys.map((journey) => ({
+          _id: journey._id.toString(),
+          name: journey.name,
+        }));
+        res.status(200).json(serializedJourneys);
       } catch (error) {
         res.status(400).json({ success: false });
       }

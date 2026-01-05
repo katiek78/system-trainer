@@ -1,5 +1,5 @@
 import dbConnect from "@/lib/dbConnect";
-import { getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 import Journey from "@/models/Journey";
 
 export default async function handler(req, res) {
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     method,
   } = req;
 
-  const session = await getSession(req, res);
+  const session = await auth0.getSession(req, res);
 
   if (!session || !session.user) {
     return res.status(401).json({ error: "Unauthorised" });

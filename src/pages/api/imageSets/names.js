@@ -1,11 +1,11 @@
 import dbConnect from "../../../lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
-import { getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 
 export default async function handler(req, res) {
   const { method } = req;
 
-  const session = await getSession(req, res);
+  const session = await auth0.getSession(req, res);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Unauthorised" });
   }
@@ -16,14 +16,22 @@ export default async function handler(req, res) {
     case "GET":
       try {
         const userId = session.user.sub;
-        const imageSets = await ImageSet.find({ userId: userId }).select(
-          "_id name setType"
+        // Get user's private image sets
+        const privateImageSets = await ImageSet.find({ userId: userId }).select(
+          "_id name setType userId"
         );
-        // Only return id, name, and setType (top-level)
-        const result = imageSets.map((set) => ({
-          _id: set._id,
+        // Get public image sets (no userId or null)
+        const publicImageSets = await ImageSet.find({
+          $or: [{ userId: null }, { userId: { $exists: false } }],
+        }).select("_id name setType userId");
+
+        // Combine and serialize ObjectIds to strings
+        const allSets = [...privateImageSets, ...publicImageSets];
+        const result = allSets.map((set) => ({
+          _id: set._id.toString(),
           name: set.name,
           setType: set.setType,
+          userId: set.userId || null,
         }));
         res.status(200).json(result);
       } catch (error) {
