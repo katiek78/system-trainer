@@ -130,6 +130,18 @@ export default function TrainingInteractive({ imageSets, journeys }) {
           </li>
         </ul>
       </div>
+      <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mt-5 mb-4">
+        <h3 className="font-semibold">Timing</h3>
+        <p className="font-mono mb-3">
+          Find songs with the right tempo for your memory training
+        </p>
+        <a
+          href="/training/timing"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block"
+        >
+          Go to Timing
+        </a>
+      </div>
     </>
   );
 }
