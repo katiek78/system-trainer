@@ -14,10 +14,14 @@ export const getRequiredBPM = (
     "ML Cards": 52,
   };
 
+  // If grabData is 0 or empty, don't subtract grabTime from target
+  const effectiveGrabData = grabData || 0;
+  const effectiveGrabTime = effectiveGrabData > 0 ? grabTime : 0;
+
   const result =
-    ((DISCIPLINE_TOTALS[ML_discipline] - grabData) /
+    ((DISCIPLINE_TOTALS[ML_discipline] - effectiveGrabData) /
       grouping /
-      (target - grabTime)) *
+      (target - effectiveGrabTime)) *
     60;
   console.log(result);
   // Initialize a Set to store feasible BPM options
