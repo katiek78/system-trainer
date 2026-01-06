@@ -6,8 +6,9 @@ import EmbedStreetView from "./EmbedStreetView";
 import ImageSearch from "./ImageSearch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { PAGE_LIMIT } from "@/lib/journeyConstants";
 import { isLocationStreetView } from "@/utilities/isLocationStreetView";
+
+const PAGE_LIMIT = 20; // Must match the PAGE_LIMIT in JourneyDetail.js
 
 const PointForm = ({
   formId,
@@ -101,9 +102,17 @@ const PointForm = ({
       }
 
       const { data } = await res.json();
-      const pageToGoTo = pointIndex
-        ? Math.floor(pointIndex / PAGE_LIMIT) + 1
-        : 1;
+
+      // Calculate the correct page based on where the point was inserted
+      let pageToGoTo;
+      if (pointIndex !== null && pointIndex !== undefined) {
+        // If inserting at a specific index, go to that page
+        pageToGoTo = Math.floor(pointIndex / PAGE_LIMIT) + 1;
+      } else {
+        // If adding to the end, go to the last page
+        const totalPoints = data.points.length;
+        pageToGoTo = Math.ceil(totalPoints / PAGE_LIMIT);
+      }
 
       router.push(`/journeys/${data._id}?page=${pageToGoTo}`);
     } catch (error) {
