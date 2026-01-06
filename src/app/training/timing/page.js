@@ -1,4 +1,5 @@
 import { auth0 } from "@/lib/auth0";
+import TimingInteractive from "./TimingInteractive";
 
 export default async function TimingPage() {
   const session = await auth0.getSession();
@@ -18,23 +19,7 @@ export default async function TimingPage() {
         <h1 className="py-2 font-mono text-3xl sm:text-4xl text-center">
           Timing
         </h1>
-        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mb-4">
-          <h3 className="font-semibold mb-3">BPM Data Provider</h3>
-          <p className="font-mono mb-3">
-            This page will help you find songs with the right tempo for your memory training.
-          </p>
-          <p className="font-mono mb-3">
-            BPM data provided by:{" "}
-            <a
-              href="https://getsongbpm.com/api"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              GetSongBPM API
-            </a>
-          </p>
-        </div>
+        <TimingInteractive />
       </div>
     </div>
   );
