@@ -171,8 +171,13 @@ export default function ImageSetStatsPage() {
 
         {/* Filter */}
         <div className="mt-4 mb-2">
-          <form onSubmit={handleFilterSubmit} className="flex items-center gap-2 flex-wrap">
-            <label className="text-sm font-semibold">Filter by name starts with:</label>
+          <form
+            onSubmit={handleFilterSubmit}
+            className="flex items-center gap-2 flex-wrap"
+          >
+            <label className="text-sm font-semibold">
+              Filter by name starts with:
+            </label>
             <input
               type="text"
               value={filterInput}

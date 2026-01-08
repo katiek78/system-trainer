@@ -139,8 +139,16 @@ export default async function handler(req, res) {
           return 0;
       }
 
+      // Primary sort by the selected column
       if (aVal < bVal) return isDesc ? 1 : -1;
       if (aVal > bVal) return isDesc ? -1 : 1;
+
+      // Secondary sort by image name (when primary values are equal)
+      const aName = getCardSortValue(a.name || a.imageItem || "");
+      const bName = getCardSortValue(b.name || b.imageItem || "");
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+
       return 0;
     });
 

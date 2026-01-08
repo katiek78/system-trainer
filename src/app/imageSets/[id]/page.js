@@ -212,13 +212,6 @@ export default function ImageSetPage() {
   }, []);
 
   const renderPageNumbers = () => {
-    // Debug: log the first 30 image names to inspect the set order
-    if (allNames && allNames.images && allNames.images.length > 0) {
-      console.log(
-        "First 30 images:",
-        allNames.images.slice(0, 600).map((img) => img.name)
-      );
-    }
     if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div>;
     // Card navigation helpers
     const suits = ["♥", "♦", "♣", "♠"];

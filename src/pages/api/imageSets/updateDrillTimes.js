@@ -32,11 +32,19 @@ export default async function handler(req, res) {
         .json({ success: false, message: "Image set not found" });
     }
 
+    // Helper function to extract key from item (same logic as in drills page)
+    const getItemKey = (item) => {
+      if (typeof item === "string") return item;
+      if (item.type === "cards") {
+        return item.cards.map((c) => `${c.value}${c.suit}`).join("");
+      }
+      return item.key || item.display || JSON.stringify(item);
+    };
+
     // Group timings by image name/key
     const timingsByImage = {};
     drillTimings.forEach(({ item, ms }) => {
-      const key =
-        typeof item === "string" ? item : item.key || JSON.stringify(item);
+      const key = getItemKey(item);
       if (!timingsByImage[key]) {
         timingsByImage[key] = [];
       }
