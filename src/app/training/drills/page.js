@@ -5,11 +5,40 @@ import { useEffect, useState, Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-// Component to render card items with proper colors
+// Component to render card items and strings with proper suit colors
 function ItemDisplay({ item }) {
+  // Handle string with suit symbols (for subset descriptions)
   if (typeof item === "string") {
-    return <span>{item}</span>;
+    const parts = [];
+    let currentText = "";
+    
+    for (let i = 0; i < item.length; i++) {
+      const char = item[i];
+      if (char === "♥" || char === "♦") {
+        if (currentText) {
+          parts.push(<span key={`text-${i}`}>{currentText}</span>);
+          currentText = "";
+        }
+        parts.push(<span key={`suit-${i}`} style={{ color: "red" }}>{char}</span>);
+      } else if (char === "♠" || char === "♣") {
+        if (currentText) {
+          parts.push(<span key={`text-${i}`}>{currentText}</span>);
+          currentText = "";
+        }
+        parts.push(<span key={`suit-${i}`} style={{ color: "black" }}>{char}</span>);
+      } else {
+        currentText += char;
+      }
+    }
+    
+    if (currentText) {
+      parts.push(<span key="text-final">{currentText}</span>);
+    }
+    
+    return parts.length > 0 ? <>{parts}</> : <span>{item}</span>;
   }
+  
+  // Handle card objects
   if (item.type === "cards") {
     return (
       <>
@@ -22,6 +51,7 @@ function ItemDisplay({ item }) {
       </>
     );
   }
+  
   return <span>{item.display || ""}</span>;
 }
 
@@ -60,6 +90,8 @@ function DrillsContent() {
   const [currentRound, setCurrentRound] = useState(1);
   const [allRoundsHistory, setAllRoundsHistory] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
+  const [recentAttempts, setRecentAttempts] = useState([]);
+  const [subsetDescription, setSubsetDescription] = useState("");
 
   useEffect(() => {
     if (!imageSet) return;
@@ -68,6 +100,21 @@ function DrillsContent() {
       .then((data) => setImageSetData(data && data.data ? data.data : null))
       .catch(() => setImageSetData(null));
   }, [imageSet]);
+
+  useEffect(() => {
+    if (!imageSet) return;
+    fetch(`/api/drillAttempts`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.data) {
+          const filtered = data.data
+            .filter((a) => a.imageSetId === imageSet)
+            .slice(0, 10);
+          setRecentAttempts(filtered);
+        }
+      })
+      .catch(() => setRecentAttempts([]));
+  }, [imageSet, showResults]);
 
   function createCardObject(v, s) {
     const suitToEmoji = { Spades: "♠", Hearts: "♥", Diamonds: "♦", Clubs: "♣" };
@@ -141,10 +188,11 @@ function DrillsContent() {
       setItemStartTime(Date.now());
     } else {
       // Round complete
-      setAllRoundsHistory((prev) => [
-        ...prev,
+      const updatedHistory = [
+        ...allRoundsHistory,
         { round: currentRound, timings: newTimings },
-      ]);
+      ];
+      setAllRoundsHistory(updatedHistory);
 
       if (repeatSlowItems) {
         const targetMs = targetTimeSeconds * 1000;
@@ -174,6 +222,42 @@ function DrillsContent() {
       setTimeTestActive(false);
       setShowResults(true);
       setItemStartTime(null);
+
+      // Save drill attempt with the updated history
+      saveDrillAttempt(
+        updatedHistory,
+        window.currentDrillDescription || subsetDescription
+      );
+    }
+  };
+
+  const saveDrillAttempt = async (finalRoundsHistory, description) => {
+    if (!imageSet) return;
+
+    // Calculate total time and items attempted
+    const allTimings = finalRoundsHistory.flatMap((r) => r.timings);
+    const totalTimeMs = allTimings.reduce((sum, t) => sum + t.ms, 0);
+    const uniqueItems = new Set(allTimings.map((t) => getItemKey(t.item)));
+
+    const payload = {
+      imageSetId: imageSet,
+      subsetDescription: description,
+      targetTimeSeconds: repeatSlowItems ? targetTimeSeconds : null,
+      totalTimeSeconds: totalTimeMs / 1000,
+      roundsCompleted: finalRoundsHistory.length,
+      itemsAttempted: uniqueItems.size,
+    };
+
+    try {
+      await fetch("/api/drillAttempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // TODO: Update image averages here
+    } catch (error) {
+      console.error("Failed to save drill attempt:", error);
     }
   };
 
@@ -268,7 +352,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -331,7 +415,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -385,7 +469,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -481,7 +565,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -513,7 +597,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -545,7 +629,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -577,7 +661,7 @@ function DrillsContent() {
               setShowTimeTestInstructions(true);
             }}
           >
-            Time Test
+            Start drill
           </button>
         </div>
       );
@@ -597,7 +681,15 @@ function DrillsContent() {
             &larr; Back to Training page
           </a>
         </div>
-        <div className="flex justify-end mt-4 mb-2">
+        <div className="flex justify-between items-center mt-4 mb-2">
+          <a
+            href={`/training/drillHistory${
+              imageSet ? `?imageSet=${imageSet}` : ""
+            }`}
+            className="text-blue-700 hover:underline font-bold"
+          >
+            View Drill History →
+          </a>
           <button
             className="btn bg-gray-200 hover:bg-gray-300 text-black font-mono font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline"
             onClick={() => {
@@ -670,7 +762,7 @@ function DrillsContent() {
 
               {showTimeTestInstructions && !timeTestActive && !showResults && (
                 <div className="mt-6 p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 rounded font-mono text-base">
-                  <strong>Time Test Instructions:</strong>
+                  <strong>Drill instructions:</strong>
                   <br />
                   You will be shown each item of the subset in a shuffled order.
                   <br />
@@ -731,6 +823,8 @@ function DrillsContent() {
                     onClick={() => {
                       // Generate the subset items based on setType and selection
                       let items = [];
+                      let description = "";
+
                       if (setType === "64") {
                         const suitIdx = parseInt(
                           document.getElementById("firstSuit64").value
@@ -741,7 +835,9 @@ function DrillsContent() {
                           "Spades",
                           "Clubs",
                         ];
+                        const suitSymbols = ["♥️", "♦️", "♠️", "♣️"];
                         const suit = suitNames[suitIdx];
+                        description = `${suitSymbols[suitIdx]} ${suit}`;
                         const values = [
                           "A",
                           "2",
@@ -780,6 +876,7 @@ function DrillsContent() {
                         const c2 = parseInt(
                           document.getElementById("card2Value3cv").value
                         );
+                        description = `Cards: ${cardValues[c1]} & ${cardValues[c2]}`;
                         items = [
                           `Card 1: ${cardValues[c1]}`,
                           `Card 2: ${cardValues[c2]}`,
@@ -806,12 +903,14 @@ function DrillsContent() {
                           "Diamonds",
                           "Clubs",
                         ];
+                        const suitSymbols = ["♠", "♥", "♦", "♣"];
                         const valueIdx = parseInt(
                           document.getElementById("cardValueSelect").value
                         );
                         const suitIdx = parseInt(
                           document.getElementById("cardSuitSelect").value
                         );
+                        description = `${values[valueIdx]}${suitSymbols[suitIdx]}`;
                         items = [
                           `${values[valueIdx]} of ${suitNames[suitIdx]}`,
                         ];
@@ -832,6 +931,12 @@ function DrillsContent() {
                           "K",
                         ];
                         const suits = ["Spades", "Hearts", "Diamonds", "Clubs"];
+                        const suitSymbols = {
+                          Spades: "♠",
+                          Hearts: "♥",
+                          Diamonds: "♦",
+                          Clubs: "♣",
+                        };
                         const suitColors = {
                           black: ["Spades", "Clubs"],
                           red: ["Hearts", "Diamonds"],
@@ -840,6 +945,26 @@ function DrillsContent() {
                         const c1s = document.getElementById("card1Suit").value;
                         const c2v = document.getElementById("card2Value").value;
                         const c2s = document.getElementById("card2Suit").value;
+
+                        // Format card description
+                        const formatCard = (value, suit) => {
+                          if (value === "any" && suit === "any") return "XX";
+                          if (value === "any") {
+                            if (suit === "red") return "X🔴";
+                            if (suit === "black") return "X⚫";
+                            return "X" + suitSymbols[suit];
+                          }
+                          if (suit === "any") return value + "X";
+                          if (suit === "red") return value + "🔴";
+                          if (suit === "black") return value + "⚫";
+                          return value + suitSymbols[suit];
+                        };
+
+                        description = `${formatCard(c1v, c1s)}${formatCard(
+                          c2v,
+                          c2s
+                        )}`;
+
                         // Build all combinations for the subset
                         let card1Values = c1v === "any" ? values : [c1v];
                         let card2Values = c2v === "any" ? values : [c2v];
@@ -879,6 +1004,11 @@ function DrillsContent() {
                         const start = parseInt(
                           document.getElementById("numberSetSelect2d").value
                         );
+                        description = `${start.toString().padStart(2, "0")}-${(
+                          start + 9
+                        )
+                          .toString()
+                          .padStart(2, "0")}`;
                         items = [];
                         for (let i = start; i < start + 10; i++) {
                           items.push(i.toString().padStart(2, "0"));
@@ -887,6 +1017,7 @@ function DrillsContent() {
                         const start = parseInt(
                           document.getElementById("numberSetSelect3d").value
                         );
+                        description = `${start}XX`;
                         items = [];
                         for (let i = 0; i < 100; i++) {
                           items.push(
@@ -897,6 +1028,7 @@ function DrillsContent() {
                         const start = parseInt(
                           document.getElementById("numberSetSelect4d").value
                         );
+                        description = `${start.toString().padStart(2, "0")}XX`;
                         items = [];
                         for (let i = 0; i < 100; i++) {
                           items.push(
@@ -911,8 +1043,14 @@ function DrillsContent() {
                         const j = Math.floor(Math.random() * (i + 1));
                         [items[i], items[j]] = [items[j], items[i]];
                       }
+                      console.log(
+                        "Starting drill with description:",
+                        description
+                      );
                       setTimeTestItems(items);
                       setOriginalItems(items);
+                      setSubsetDescription(description);
+                      window.currentDrillDescription = description; // Store for save
                       setCurrentItemIdx(0);
                       setTimings([]);
                       setCurrentRound(1);
@@ -987,9 +1125,7 @@ function DrillsContent() {
 
               {showResults && allRoundsHistory.length > 0 && (
                 <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded font-mono text-base">
-                  <div className="mb-3 font-bold text-lg">
-                    Time Test Results
-                  </div>
+                  <div className="mb-3 font-bold text-lg">Drill Results</div>
                   {repeatSlowItems && allRoundsHistory.length > 1 && (
                     <div className="mb-4 p-3 bg-green-200 dark:bg-green-800 rounded">
                       <div className="font-bold mb-1">Summary</div>
@@ -1062,6 +1198,73 @@ function DrillsContent() {
                   >
                     Close
                   </button>
+                </div>
+              )}
+
+              {!timeTestActive && recentAttempts.length > 0 && (
+                <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded">
+                  <h3 className="font-bold text-lg mb-3">
+                    Recent Drills (Last 10)
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border border-gray-400 dark:border-gray-600 text-sm">
+                      <thead>
+                        <tr>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-left">
+                            Date
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-left">
+                            Subset
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-center">
+                            Items
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-center">
+                            Rounds
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-right">
+                            Avg Time
+                          </th>
+                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600 text-right">
+                            Target
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentAttempts.map((attempt) => {
+                          const avgTime =
+                            attempt.totalTimeSeconds / attempt.itemsAttempted;
+                          return (
+                            <tr
+                              key={attempt._id}
+                              className="hover:bg-gray-200 dark:hover:bg-gray-700"
+                            >
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                {new Date(attempt.date).toLocaleDateString()}
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                <ItemDisplay item={attempt.subsetDescription || "-"} />
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 text-center">
+                                {attempt.itemsAttempted}
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 text-center">
+                                {attempt.roundsCompleted}
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 text-right">
+                                {avgTime.toFixed(2)}s
+                              </td>
+                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 text-right">
+                                {attempt.targetTimeSeconds
+                                  ? `${attempt.targetTimeSeconds}s`
+                                  : "-"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
