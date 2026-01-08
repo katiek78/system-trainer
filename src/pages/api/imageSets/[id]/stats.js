@@ -1,5 +1,6 @@
 import dbConnect from "../../../../lib/dbConnect";
 import ImageSet from "@/models/ImageSet";
+import DrillAttempt from "@/models/DrillAttempt";
 import { getConfidenceLevel } from "@/utilities/confidenceLevel";
 
 export default async function handler(req, res) {
@@ -182,8 +183,13 @@ export default async function handler(req, res) {
           drilledImages.length
         : 0;
 
-    const totalAttempts = sortedImages.reduce(
-      (sum, img) => sum + (img.totalDrills || 0),
+    // Calculate total attempts from DrillAttempt records
+    const drillAttempts = await DrillAttempt.find({
+      imageSetId: id,
+    }).lean();
+
+    const totalAttempts = drillAttempts.reduce(
+      (sum, attempt) => sum + (attempt.itemsAttempted || 0),
       0
     );
 
