@@ -7,11 +7,11 @@ import { useEffect, useState, Suspense } from "react";
 // Component to render strings with colored suit symbols
 function ItemDisplay({ item }) {
   if (!item) return <span>-</span>;
-  
+
   if (typeof item === "string") {
     const parts = [];
     let currentText = "";
-    
+
     for (let i = 0; i < item.length; i++) {
       const char = item[i];
       if (char === "♥" || char === "♦") {
@@ -19,25 +19,33 @@ function ItemDisplay({ item }) {
           parts.push(<span key={`text-${i}`}>{currentText}</span>);
           currentText = "";
         }
-        parts.push(<span key={`suit-${i}`} style={{ color: "red" }}>{char}</span>);
+        parts.push(
+          <span key={`suit-${i}`} style={{ color: "red" }}>
+            {char}
+          </span>
+        );
       } else if (char === "♠" || char === "♣") {
         if (currentText) {
           parts.push(<span key={`text-${i}`}>{currentText}</span>);
           currentText = "";
         }
-        parts.push(<span key={`suit-${i}`} style={{ color: "black" }}>{char}</span>);
+        parts.push(
+          <span key={`suit-${i}`} style={{ color: "black" }}>
+            {char}
+          </span>
+        );
       } else {
         currentText += char;
       }
     }
-    
+
     if (currentText) {
       parts.push(<span key="text-final">{currentText}</span>);
     }
-    
+
     return parts.length > 0 ? <>{parts}</> : <span>{item}</span>;
   }
-  
+
   return <span>{item}</span>;
 }
 
@@ -184,7 +192,9 @@ function DrillHistoryContent() {
                           {imageSetMap[attempt.imageSetId] || "Unknown"}
                         </td>
                         <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700">
-                          <ItemDisplay item={attempt.subsetDescription || "-"} />
+                          <ItemDisplay
+                            item={attempt.subsetDescription || "-"}
+                          />
                         </td>
                         <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700 text-center">
                           {attempt.itemsAttempted}

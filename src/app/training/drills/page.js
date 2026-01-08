@@ -11,7 +11,7 @@ function ItemDisplay({ item }) {
   if (typeof item === "string") {
     const parts = [];
     let currentText = "";
-    
+
     for (let i = 0; i < item.length; i++) {
       const char = item[i];
       if (char === "♥" || char === "♦") {
@@ -19,25 +19,33 @@ function ItemDisplay({ item }) {
           parts.push(<span key={`text-${i}`}>{currentText}</span>);
           currentText = "";
         }
-        parts.push(<span key={`suit-${i}`} style={{ color: "red" }}>{char}</span>);
+        parts.push(
+          <span key={`suit-${i}`} style={{ color: "red" }}>
+            {char}
+          </span>
+        );
       } else if (char === "♠" || char === "♣") {
         if (currentText) {
           parts.push(<span key={`text-${i}`}>{currentText}</span>);
           currentText = "";
         }
-        parts.push(<span key={`suit-${i}`} style={{ color: "black" }}>{char}</span>);
+        parts.push(
+          <span key={`suit-${i}`} style={{ color: "black" }}>
+            {char}
+          </span>
+        );
       } else {
         currentText += char;
       }
     }
-    
+
     if (currentText) {
       parts.push(<span key="text-final">{currentText}</span>);
     }
-    
+
     return parts.length > 0 ? <>{parts}</> : <span>{item}</span>;
   }
-  
+
   // Handle card objects
   if (item.type === "cards") {
     return (
@@ -51,7 +59,7 @@ function ItemDisplay({ item }) {
       </>
     );
   }
-  
+
   return <span>{item.display || ""}</span>;
 }
 
@@ -234,6 +242,12 @@ function DrillsContent() {
   const saveDrillAttempt = async (finalRoundsHistory, description) => {
     if (!imageSet) return;
 
+    // Ask user if they want to save drill times to images
+    const saveToImages = confirm(
+      "Save drill times to individual images?\n\n" +
+        "This will update the average drill time for each image in this set."
+    );
+
     // Calculate total time and items attempted
     const allTimings = finalRoundsHistory.flatMap((r) => r.timings);
     const totalTimeMs = allTimings.reduce((sum, t) => sum + t.ms, 0);
@@ -249,13 +263,24 @@ function DrillsContent() {
     };
 
     try {
+      // Save drill attempt record
       await fetch("/api/drillAttempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      // TODO: Update image averages here
+      // Update individual image drill times if user confirmed
+      if (saveToImages) {
+        await fetch("/api/imageSets/updateDrillTimes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageSetId: imageSet,
+            drillTimings: allTimings,
+          }),
+        });
+      }
     } catch (error) {
       console.error("Failed to save drill attempt:", error);
     }
@@ -1243,7 +1268,9 @@ function DrillsContent() {
                                 {new Date(attempt.date).toLocaleDateString()}
                               </td>
                               <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
-                                <ItemDisplay item={attempt.subsetDescription || "-"} />
+                                <ItemDisplay
+                                  item={attempt.subsetDescription || "-"}
+                                />
                               </td>
                               <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 text-center">
                                 {attempt.itemsAttempted}
