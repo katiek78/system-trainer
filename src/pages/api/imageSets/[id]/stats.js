@@ -94,13 +94,14 @@ export default async function handler(req, res) {
     const totalDrilled = sortedImages.filter(
       (img) => img.totalDrills > 0
     ).length;
+    
+    // Only include items that have actually been drilled in average calculation
+    const drilledImages = sortedImages.filter((img) => img.totalDrills > 0 && img.averageDrillTime > 0);
     const avgTimeOverall =
-      sortedImages.length > 0
-        ? sortedImages.reduce(
-            (sum, img) => sum + (img.averageDrillTime || 0),
-            0
-          ) / sortedImages.length
+      drilledImages.length > 0
+        ? drilledImages.reduce((sum, img) => sum + img.averageDrillTime, 0) / drilledImages.length
         : 0;
+    
     const totalAttempts = sortedImages.reduce(
       (sum, img) => sum + (img.totalDrills || 0),
       0

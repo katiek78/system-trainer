@@ -19,6 +19,7 @@ export default function ImageSetStatsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [overallStats, setOverallStats] = useState(null);
+  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -51,6 +52,51 @@ export default function ImageSetStatsPage() {
 
   const goToPage = (page) => {
     setCurrentPage(page);
+  };
+
+  const handlePageJump = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(pageInput);
+    if (pageNum && pageNum >= 1 && pageNum <= pagination.totalPages) {
+      goToPage(pageNum);
+      setPageInput("");
+    }
+  };
+
+  const renderQuickNav = () => {
+    if (!pagination || !imageSet || sortBy !== "name") return null;
+
+    const totalImages = pagination.totalImages;
+    const pageLimit = 100;
+
+    // For 2-digit, 3-digit, 4-digit number sets
+    if (totalImages === 100 || totalImages === 1000 || totalImages === 10000) {
+      const step = totalImages === 100 ? 10 : 100;
+      const numDigits = totalImages === 100 ? 2 : totalImages === 1000 ? 3 : 4;
+
+      return (
+        <div className="flex flex-row items-center gap-2 mt-3 flex-wrap">
+          <span>Jump to:</span>
+          <select
+            onChange={(e) => goToPage(Number(e.target.value))}
+            value={currentPage}
+            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+          >
+            {Array.from({ length: Math.ceil(totalImages / step) }, (_, i) => {
+              const startNum = (i * step).toString().padStart(numDigits, "0");
+              const page = Math.floor((i * step) / pageLimit) + 1;
+              return (
+                <option key={i} value={page}>
+                  {startNum}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   const getSortedImages = () => {
@@ -107,6 +153,9 @@ export default function ImageSetStatsPage() {
         <h1 className="py-2 font-mono text-3xl sm:text-4xl text-center">
           Statistics: {imageSet.name}
         </h1>
+
+        {/* Quick Navigation */}
+        {renderQuickNav()}
 
         <div className="bg-white dark:bg-slate-800 py-5 px-1 sm:px-5 rounded mb-4">
           <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-900 rounded">
@@ -301,12 +350,12 @@ export default function ImageSetStatsPage() {
 
           {/* Pagination Controls */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Page {pagination.currentPage} of {pagination.totalPages} (
                 {pagination.totalImages} total images)
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2 justify-center">
                 <button
                   onClick={() => goToPage(1)}
                   disabled={loading || currentPage === 1}
@@ -321,6 +370,30 @@ export default function ImageSetStatsPage() {
                 >
                   ‹ Prev
                 </button>
+
+                {/* Page Jump Input */}
+                <form
+                  onSubmit={handlePageJump}
+                  className="flex items-center gap-1"
+                >
+                  <span className="text-sm">Go to:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={pagination.totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    placeholder="#"
+                    className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-center"
+                  />
+                  <button
+                    type="submit"
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+                  >
+                    Go
+                  </button>
+                </form>
+
                 <button
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={loading || currentPage === pagination.totalPages}

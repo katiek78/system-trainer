@@ -715,15 +715,25 @@ function DrillsContent() {
           >
             View Drill History →
           </a>
-          <button
-            className="btn bg-gray-200 hover:bg-gray-300 text-black font-mono font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline"
-            onClick={() => {
-              setShowModal(true);
-              fetchUserImageSets();
-            }}
-          >
-            Switch image set
-          </button>
+          <div className="flex gap-3">
+            {imageSet && (
+              <a
+                href={`/imageSets/${imageSet}/stats`}
+                className="text-blue-700 hover:underline font-bold"
+              >
+                View Stats →
+              </a>
+            )}
+            <button
+              className="btn bg-gray-200 hover:bg-gray-300 text-black font-mono font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+              onClick={() => {
+                setShowModal(true);
+                fetchUserImageSets();
+              }}
+            >
+              Switch image set
+            </button>
+          </div>
         </div>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
