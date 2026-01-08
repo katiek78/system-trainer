@@ -20,13 +20,16 @@ export default function ImageSetStatsPage() {
   const [pagination, setPagination] = useState(null);
   const [overallStats, setOverallStats] = useState(null);
   const [pageInput, setPageInput] = useState("");
+  const [filter, setFilter] = useState("");
+  const [filterInput, setFilterInput] = useState("");
 
   useEffect(() => {
     if (!id) return;
 
     setLoading(true);
+    const filterParam = filter ? `&filter=${encodeURIComponent(filter)}` : "";
     fetch(
-      `/api/imageSets/${id}/stats?page=${currentPage}&limit=100&sortBy=${sortBy}&sortDesc=${sortDesc}`
+      `/api/imageSets/${id}/stats?page=${currentPage}&limit=100&sortBy=${sortBy}&sortDesc=${sortDesc}${filterParam}`
     )
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -38,7 +41,7 @@ export default function ImageSetStatsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id, currentPage, sortBy, sortDesc]);
+  }, [id, currentPage, sortBy, sortDesc, filter]);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -63,8 +66,20 @@ export default function ImageSetStatsPage() {
     }
   };
 
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    setFilter(filterInput);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const clearFilter = () => {
+    setFilter("");
+    setFilterInput("");
+    setCurrentPage(1);
+  };
+
   const renderQuickNav = () => {
-    if (!pagination || !imageSet || sortBy !== "name") return null;
+    if (!pagination || !imageSet || sortBy !== "name" || filter) return null; // Hide when filter is active
 
     const totalImages = pagination.totalImages;
     const pageLimit = 100;
@@ -153,6 +168,40 @@ export default function ImageSetStatsPage() {
         <h1 className="py-2 font-mono text-3xl sm:text-4xl text-center">
           Statistics: {imageSet.name}
         </h1>
+
+        {/* Filter */}
+        <div className="mt-4 mb-2">
+          <form onSubmit={handleFilterSubmit} className="flex items-center gap-2 flex-wrap">
+            <label className="text-sm font-semibold">Filter by name starts with:</label>
+            <input
+              type="text"
+              value={filterInput}
+              onChange={(e) => setFilterInput(e.target.value)}
+              placeholder="e.g. 10"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 w-32"
+            />
+            <button
+              type="submit"
+              className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+            >
+              Apply
+            </button>
+            {filter && (
+              <button
+                type="button"
+                onClick={clearFilter}
+                className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded"
+              >
+                Clear Filter
+              </button>
+            )}
+            {filter && (
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                (Filtered: showing items starting with "{filter}")
+              </span>
+            )}
+          </form>
+        </div>
 
         {/* Quick Navigation */}
         {renderQuickNav()}

@@ -10,6 +10,7 @@ export default async function handler(req, res) {
       limit = "100",
       sortBy = "name",
       sortDesc = "false",
+      filter = "",
     },
     method,
   } = req;
@@ -37,10 +38,20 @@ export default async function handler(req, res) {
         .json({ success: false, message: "Image set not found" });
     }
 
-    const totalImages = imageSet.images.length;
+    // Apply filter first
+    let filteredImages = imageSet.images;
+    if (filter) {
+      const filterLower = filter.toLowerCase();
+      filteredImages = imageSet.images.filter((img) => {
+        const name = (img.name || img.imageItem || "").toLowerCase();
+        return name.startsWith(filterLower);
+      });
+    }
+
+    const totalImages = filteredImages.length;
 
     // Sort images on server side
-    let sortedImages = [...imageSet.images];
+    let sortedImages = [...filteredImages];
 
     sortedImages.sort((a, b) => {
       let aVal, bVal;
@@ -94,14 +105,17 @@ export default async function handler(req, res) {
     const totalDrilled = sortedImages.filter(
       (img) => img.totalDrills > 0
     ).length;
-    
+
     // Only include items that have actually been drilled in average calculation
-    const drilledImages = sortedImages.filter((img) => img.totalDrills > 0 && img.averageDrillTime > 0);
+    const drilledImages = sortedImages.filter(
+      (img) => img.totalDrills > 0 && img.averageDrillTime > 0
+    );
     const avgTimeOverall =
       drilledImages.length > 0
-        ? drilledImages.reduce((sum, img) => sum + img.averageDrillTime, 0) / drilledImages.length
+        ? drilledImages.reduce((sum, img) => sum + img.averageDrillTime, 0) /
+          drilledImages.length
         : 0;
-    
+
     const totalAttempts = sortedImages.reduce(
       (sum, img) => sum + (img.totalDrills || 0),
       0
