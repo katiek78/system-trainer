@@ -5,6 +5,35 @@ import { useEffect, useState, Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
+// Component to render card items with proper colors
+function ItemDisplay({ item }) {
+  if (typeof item === "string") {
+    return <span>{item}</span>;
+  }
+  if (item.type === "cards") {
+    return (
+      <>
+        {item.cards.map((card, idx) => (
+          <span key={idx} style={{ color: card.color }}>
+            {card.value}
+            {card.suit}
+          </span>
+        ))}
+      </>
+    );
+  }
+  return <span>{item.display || ""}</span>;
+}
+
+// Parse item for comparison (used in hints and filtering)
+function getItemKey(item) {
+  if (typeof item === "string") return item;
+  if (item.type === "cards") {
+    return item.cards.map((c) => `${c.value}${c.suit}`).join("");
+  }
+  return item.key || item.display || "";
+}
+
 function DrillsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,6 +55,11 @@ function DrillsContent() {
   const [itemStartTime, setItemStartTime] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [imageSetData, setImageSetData] = useState(null);
+  const [repeatSlowItems, setRepeatSlowItems] = useState(false);
+  const [targetTimeSeconds, setTargetTimeSeconds] = useState(2.0);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [allRoundsHistory, setAllRoundsHistory] = useState([]);
+  const [originalItems, setOriginalItems] = useState([]);
 
   useEffect(() => {
     if (!imageSet) return;
@@ -35,7 +69,7 @@ function DrillsContent() {
       .catch(() => setImageSetData(null));
   }, [imageSet]);
 
-  function renderCardString(v, s) {
+  function createCardObject(v, s) {
     const suitToEmoji = { Spades: "♠", Hearts: "♥", Diamonds: "♦", Clubs: "♣" };
     const suitToColor = {
       Spades: "black",
@@ -45,76 +79,98 @@ function DrillsContent() {
     };
     const emoji = suitToEmoji[s] || s;
     const color = suitToColor[s] || "black";
-    return `<span style='color:${color}'>${v}${emoji}</span>`;
+    return { value: v, suit: emoji, color };
   }
 
-  function getHintForCurrentItem(itemHtml, imageSetData) {
+  function getHintForCurrentItem(item, imageSetData) {
     if (!imageSetData || !imageSetData.images) return "(No image data)";
-    if (/^\d{2,4}$/.test(itemHtml)) {
+    const key = getItemKey(item);
+
+    // For numbers (2d, 3d, 4d)
+    if (/^\d{2,4}$/.test(key)) {
       const found = imageSetData.images.find((img) => {
         if (!img.name) return false;
         return (
           img.name.replace(/\s+/g, "").toLowerCase() ===
-          itemHtml.replace(/\s+/g, "").toLowerCase()
+          key.replace(/\s+/g, "").toLowerCase()
         );
       });
       if (found && found.imageItem) return found.imageItem;
       const foundByKey = imageSetData.images.find((img) => {
-        if (img.key && img.key.toLowerCase() === itemHtml.toLowerCase())
+        if (img.key && img.key.toLowerCase() === key.toLowerCase()) return true;
+        return false;
+      });
+      if (foundByKey && foundByKey.imageItem) return foundByKey.imageItem;
+      return key + " not found";
+    }
+
+    // For cards
+    if (item.type === "cards") {
+      const searchKey = item.cards.map((c) => `${c.value}${c.suit}️`).join("");
+      const found = imageSetData.images.find((img) => {
+        if (!img.name) return false;
+        return (
+          img.name.replace(/\s+/g, "").toLowerCase() ===
+          searchKey.replace(/\s+/g, "").toLowerCase()
+        );
+      });
+      if (found && found.imageItem) return found.imageItem;
+      const foundByKey = imageSetData.images.find((img) => {
+        if (img.key && img.key.toLowerCase() === searchKey.toLowerCase())
           return true;
         return false;
       });
       if (foundByKey && foundByKey.imageItem) return foundByKey.imageItem;
-      return itemHtml + " not found";
+      return searchKey + " not found";
     }
-    const div = document.createElement("div");
-    div.innerHTML = itemHtml;
-    const spans = div.querySelectorAll("span");
-    if (spans.length < 2) return "(No match)";
-    function cardTextToEmoji(card) {
-      const value = card.replace(/[^A-Z0-9]/gi, "");
-      let suit = "";
-      if (card.includes("♠") || card.toLowerCase().includes("s")) suit = "♠️";
-      else if (card.includes("♥") || card.toLowerCase().includes("h"))
-        suit = "♥️";
-      else if (card.includes("♦") || card.toLowerCase().includes("d"))
-        suit = "♦️";
-      else if (card.includes("♣") || card.toLowerCase().includes("c"))
-        suit = "♣️";
-      return value + suit;
-    }
-    const card1 = spans[0].textContent;
-    const card2 = spans[1].textContent;
-    const key =
-      card1 && card2 ? cardTextToEmoji(card1) + cardTextToEmoji(card2) : "";
-    const found = imageSetData.images.find((img) => {
-      if (!img.name) return false;
-      return (
-        img.name.replace(/\s+/g, "").toLowerCase() ===
-        key.replace(/\s+/g, "").toLowerCase()
-      );
-    });
-    if (found && found.imageItem) return found.imageItem;
-    const foundByKey = imageSetData.images.find((img) => {
-      if (img.key && img.key.toLowerCase() === key.toLowerCase()) return true;
-      return false;
-    });
-    if (foundByKey && foundByKey.imageItem) return foundByKey.imageItem;
+
     return key + " not found";
   }
 
   const advanceTimeTest = () => {
     const now = Date.now();
     const elapsed = itemStartTime ? now - itemStartTime : 0;
-    setTimings((prev) => [
-      ...prev,
+    const newTimings = [
+      ...timings,
       { item: timeTestItems[currentItemIdx], ms: elapsed },
-    ]);
+    ];
+    setTimings(newTimings);
     setShowHint(false);
     if (currentItemIdx < timeTestItems.length - 1) {
       setCurrentItemIdx(currentItemIdx + 1);
       setItemStartTime(Date.now());
     } else {
+      // Round complete
+      setAllRoundsHistory((prev) => [
+        ...prev,
+        { round: currentRound, timings: newTimings },
+      ]);
+
+      if (repeatSlowItems) {
+        const targetMs = targetTimeSeconds * 1000;
+        const slowItems = newTimings
+          .filter((t) => t.ms > targetMs)
+          .map((t) => t.item);
+
+        if (slowItems.length > 0) {
+          // Shuffle slow items for next round
+          const shuffled = [...slowItems];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+
+          // Start next round
+          setTimeTestItems(shuffled);
+          setCurrentItemIdx(0);
+          setTimings([]);
+          setCurrentRound(currentRound + 1);
+          setItemStartTime(Date.now());
+          return;
+        }
+      }
+
+      // No more rounds or repeat mode off
       setTimeTestActive(false);
       setShowResults(true);
       setItemStartTime(null);
@@ -623,6 +679,53 @@ function DrillsContent() {
                   <br />
                   Your time for recognising each item will be recorded.
                   <br />
+                  <div className="mt-3 mb-3 p-3 bg-white dark:bg-slate-700 rounded">
+                    <label className="flex items-center gap-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={repeatSlowItems}
+                        onChange={(e) => setRepeatSlowItems(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-semibold">
+                        Repeat items above target time
+                      </span>
+                    </label>
+                    {repeatSlowItems && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <label className="font-semibold">
+                          Target time (seconds):
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0.1"
+                          value={targetTimeSeconds}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || val === ".") {
+                              setTargetTimeSeconds("");
+                            } else {
+                              const parsed = parseFloat(val);
+                              if (!isNaN(parsed)) {
+                                setTargetTimeSeconds(parsed);
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (
+                              e.target.value === "" ||
+                              e.target.value === "." ||
+                              parseFloat(e.target.value) < 0.1
+                            ) {
+                              setTargetTimeSeconds(2.0);
+                            }
+                          }}
+                          className="border border-gray-400 rounded px-2 py-1 w-20 text-black"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <button
                     className="mt-4 btn bg-green-700 hover:bg-green-800 text-white font-bold py-1 px-4 rounded"
                     onClick={() => {
@@ -761,13 +864,13 @@ function DrillsContent() {
                           for (let s1 of card1Suits) {
                             for (let v2 of card2Values) {
                               for (let s2 of card2Suits) {
-                                // Compact string: e.g. 4♥3♠, with red for red suits
-                                items.push(
-                                  `${renderCardString(
-                                    v1,
-                                    s1
-                                  )}${renderCardString(v2, s2)}`
-                                );
+                                items.push({
+                                  type: "cards",
+                                  cards: [
+                                    createCardObject(v1, s1),
+                                    createCardObject(v2, s2),
+                                  ],
+                                });
                               }
                             }
                           }
@@ -809,8 +912,11 @@ function DrillsContent() {
                         [items[i], items[j]] = [items[j], items[i]];
                       }
                       setTimeTestItems(items);
+                      setOriginalItems(items);
                       setCurrentItemIdx(0);
                       setTimings([]);
+                      setCurrentRound(1);
+                      setAllRoundsHistory([]);
                       setShowResults(false);
                       setTimeTestActive(true);
                       setShowTimeTestInstructions(false);
@@ -825,14 +931,16 @@ function DrillsContent() {
               {timeTestActive && timeTestItems.length > 0 && (
                 <div className="mt-6 p-4 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-mono text-xl flex flex-col items-center">
                   <div className="mb-2 text-base text-gray-700 dark:text-gray-200">
+                    {repeatSlowItems && (
+                      <div className="font-bold mb-1">Round {currentRound}</div>
+                    )}
                     Item {currentItemIdx + 1} of {timeTestItems.length}
+                    <div className="text-sm mt-1">
+                      ({timeTestItems.length - currentItemIdx - 1} remaining)
+                    </div>
                   </div>
                   <div className="mb-4 text-2xl">
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: timeTestItems[currentItemIdx],
-                      }}
-                    />
+                    <ItemDisplay item={timeTestItems[currentItemIdx]} />
                   </div>
                   <div className="flex flex-row gap-4 mb-2">
                     <button
@@ -856,6 +964,8 @@ function DrillsContent() {
                         setCurrentItemIdx(0);
                         setItemStartTime(null);
                         setShowTimeTestInstructions(false);
+                        setCurrentRound(1);
+                        setAllRoundsHistory([]);
                       }}
                     >
                       Exit Test
@@ -875,41 +985,70 @@ function DrillsContent() {
                 </div>
               )}
 
-              {showResults && timings.length > 0 && (
+              {showResults && allRoundsHistory.length > 0 && (
                 <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded font-mono text-base">
-                  <div className="mb-2 font-bold text-lg">
-                    Time Test Results (slowest to fastest)
+                  <div className="mb-3 font-bold text-lg">
+                    Time Test Results
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border border-gray-400 dark:border-gray-600">
-                      <thead>
-                        <tr>
-                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
-                            Item
-                          </th>
-                          <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
-                            Time (seconds)
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...timings]
-                          .sort((a, b) => b.ms - a.ms)
-                          .map((t, i) => (
-                            <tr key={i}>
-                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
-                                <span
-                                  dangerouslySetInnerHTML={{ __html: t.item }}
-                                />
-                              </td>
-                              <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
-                                {(t.ms / 1000).toFixed(2)}
-                              </td>
+                  {repeatSlowItems && allRoundsHistory.length > 1 && (
+                    <div className="mb-4 p-3 bg-green-200 dark:bg-green-800 rounded">
+                      <div className="font-bold mb-1">Summary</div>
+                      <div>Completed {allRoundsHistory.length} rounds</div>
+                      <div>Started with {originalItems.length} items</div>
+                      <div>All items now under {targetTimeSeconds}s!</div>
+                    </div>
+                  )}
+                  {allRoundsHistory.map((roundData, roundIdx) => (
+                    <div key={roundIdx} className="mb-4">
+                      {allRoundsHistory.length > 1 && (
+                        <div className="font-bold mb-2 text-base">
+                          Round {roundData.round} ({roundData.timings.length}{" "}
+                          items)
+                        </div>
+                      )}
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full border border-gray-400 dark:border-gray-600 mb-2">
+                          <thead>
+                            <tr>
+                              <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
+                                Item
+                              </th>
+                              <th className="px-2 py-1 border-b border-gray-400 dark:border-gray-600">
+                                Time (seconds)
+                              </th>
                             </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
+                          </thead>
+                          <tbody>
+                            {[...roundData.timings]
+                              .sort((a, b) => b.ms - a.ms)
+                              .map((t, i) => {
+                                const overTarget =
+                                  repeatSlowItems &&
+                                  t.ms > targetTimeSeconds * 1000;
+                                return (
+                                  <tr
+                                    key={i}
+                                    className={
+                                      overTarget
+                                        ? "bg-red-200 dark:bg-red-800"
+                                        : ""
+                                    }
+                                  >
+                                    <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                      <ItemDisplay item={t.item} />
+                                    </td>
+                                    <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
+                                      {(t.ms / 1000).toFixed(2)}
+                                      {overTarget && " ⚠️"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                   <button
                     className="mt-4 btn bg-gray-700 hover:bg-gray-800 text-white font-bold py-1 px-4 rounded"
                     onClick={() => {
@@ -917,6 +1056,8 @@ function DrillsContent() {
                       setTimings([]);
                       setTimeTestItems([]);
                       setCurrentItemIdx(0);
+                      setCurrentRound(1);
+                      setAllRoundsHistory([]);
                     }}
                   >
                     Close
