@@ -918,6 +918,11 @@ export default function ImageSetPage() {
             </button>
           </Link>
         )}
+        <Link href={`/imageSets/${imageSetID}/stats`}>
+          <button className="btn bg-blue-600 hover:bg-blue-700 text-white font-bold ml-3 mt-3 py-1 px-4 rounded focus:outline-none focus:shadow-outline">
+            View Statistics
+          </button>
+        </Link>
 
         {isShowingPhoneticsDiv && (
           <div

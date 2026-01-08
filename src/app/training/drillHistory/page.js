@@ -116,8 +116,8 @@ function DrillHistoryContent() {
   }
 
   return (
-    <div className="w-full min-h-screen flex justify-center bg-transparent">
-      <div className="z-10 font-mono text-lg w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-8">
+    <div className="w-full min-h-screen bg-transparent">
+      <div className="z-10 font-mono text-lg w-full sm:mx-auto px-1 sm:px-4 md:px-8 lg:max-w-7xl">
         <div className="flex justify-between items-center mt-4 mb-2">
           <Link
             href="/training"
@@ -139,7 +139,7 @@ function DrillHistoryContent() {
           Drill History
         </h1>
 
-        <div className="bg-white dark:bg-slate-800 py-5 px-3 sm:px-5 rounded mb-4">
+        <div className="bg-white dark:bg-slate-800 py-5 px-1 sm:px-5 rounded mb-4">
           {drillAttempts.length === 0 ? (
             <p className="text-center text-gray-500">
               No drill attempts recorded yet.
@@ -189,7 +189,12 @@ function DrillHistoryContent() {
                           {new Date(attempt.date).toLocaleDateString()}
                         </td>
                         <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700">
-                          {imageSetMap[attempt.imageSetId] || "Unknown"}
+                          <Link
+                            href={`/imageSets/${attempt.imageSetId}`}
+                            className="text-blue-700 hover:underline"
+                          >
+                            {imageSetMap[attempt.imageSetId] || "Unknown"}
+                          </Link>
                         </td>
                         <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700">
                           <ItemDisplay

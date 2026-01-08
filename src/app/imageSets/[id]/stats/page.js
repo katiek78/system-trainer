@@ -1,0 +1,345 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import {
+  getConfidenceLevel,
+  confidenceLabels,
+  confidenceColours,
+} from "@/utilities/confidenceLevel";
+
+export default function ImageSetStatsPage() {
+  const params = useParams();
+  const id = params.id;
+  const [imageSet, setImageSet] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDesc, setSortDesc] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [overallStats, setOverallStats] = useState(null);
+
+  useEffect(() => {
+    if (!id) return;
+
+    setLoading(true);
+    fetch(
+      `/api/imageSets/${id}/stats?page=${currentPage}&limit=100&sortBy=${sortBy}&sortDesc=${sortDesc}`
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.data) {
+          setImageSet(data.data);
+          setPagination(data.data.pagination);
+          setOverallStats(data.data.overallStats);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id, currentPage, sortBy, sortDesc]);
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDesc(!sortDesc);
+    } else {
+      setSortBy(field);
+      setSortDesc(false);
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+  };
+
+  const getSortedImages = () => {
+    // Server is handling sorting now, so just return the images
+    if (!imageSet || !imageSet.images) return [];
+    return imageSet.images;
+  };
+
+  const SortIcon = ({ field }) => {
+    if (sortBy !== field) return <span className="text-gray-400"> ↕</span>;
+    return sortDesc ? <span> ↓</span> : <span> ↑</span>;
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex justify-center items-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!imageSet) {
+    return (
+      <div className="w-full min-h-screen flex justify-center items-center">
+        <div className="text-lg">Image set not found</div>
+      </div>
+    );
+  }
+
+  const sortedImages = getSortedImages();
+
+  if (!imageSet || !overallStats) {
+    return null;
+  }
+
+  return (
+    <div className="w-full min-h-screen bg-transparent">
+      <div className="z-10 font-mono text-lg w-full sm:mx-auto px-1 sm:px-4 md:px-8 lg:max-w-7xl">
+        <div className="flex justify-between items-center mt-4 mb-2">
+          <Link
+            href={`/imageSets/${id}`}
+            className="text-blue-700 hover:underline font-bold"
+          >
+            ← Back to Image Set
+          </Link>
+          <Link
+            href="/imageSets"
+            className="text-blue-700 hover:underline font-bold"
+          >
+            All Image Sets →
+          </Link>
+        </div>
+
+        <h1 className="py-2 font-mono text-3xl sm:text-4xl text-center">
+          Statistics: {imageSet.name}
+        </h1>
+
+        <div className="bg-white dark:bg-slate-800 py-5 px-1 sm:px-5 rounded mb-4">
+          <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-900 rounded">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold">
+                  {pagination ? pagination.totalImages : 0}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Images
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {overallStats.totalDrilled}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Images Drilled
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {overallStats.avgTimeOverall.toFixed(2)}s
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Avg Time (All)
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {overallStats.totalAttempts}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Attempts
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {sortedImages.map((image, idx) => {
+              const level = getConfidenceLevel(image.recentAttempts);
+              const color = confidenceColours[level] || confidenceColours[0];
+              return (
+                <div
+                  key={idx}
+                  className="border border-gray-300 dark:border-gray-600 rounded p-3 bg-gray-50 dark:bg-slate-900"
+                >
+                  <div className="font-bold text-lg mb-2">
+                    {image.name || image.imageItem || "-"}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Confidence:
+                      </span>
+                      <div className="mt-1">
+                        <span
+                          style={{
+                            backgroundColor: color,
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            color: level >= 4 ? "black" : "white",
+                            fontWeight: "bold",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {confidenceLabels[level]}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Avg Time:
+                      </span>
+                      <div className="font-semibold">
+                        {image.averageDrillTime > 0
+                          ? `${image.averageDrillTime.toFixed(2)}s`
+                          : "-"}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Drills:
+                      </span>
+                      <div className="font-semibold">
+                        {image.totalDrills || 0}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Last Drilled:
+                      </span>
+                      <div className="font-semibold text-xs">
+                        {image.lastDrilledAt
+                          ? new Date(image.lastDrilledAt).toLocaleDateString()
+                          : "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full border border-gray-400 dark:border-gray-600">
+              <thead>
+                <tr>
+                  <th
+                    className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-left cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => handleSort("name")}
+                  >
+                    Image <SortIcon field="name" />
+                  </th>
+                  <th
+                    className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => handleSort("confidence")}
+                  >
+                    Flashcard confidence <SortIcon field="confidence" />
+                  </th>
+                  <th
+                    className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-right cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => handleSort("avgTime")}
+                  >
+                    Avg Time <SortIcon field="avgTime" />
+                  </th>
+                  <th
+                    className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => handleSort("totalDrills")}
+                  >
+                    Drills <SortIcon field="totalDrills" />
+                  </th>
+                  <th
+                    className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-left cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => handleSort("lastDrilled")}
+                  >
+                    Last Drilled <SortIcon field="lastDrilled" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedImages.map((image, idx) => (
+                  <tr
+                    key={idx}
+                    className="hover:bg-gray-100 dark:hover:bg-slate-700"
+                  >
+                    <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700">
+                      {image.name || image.imageItem || "-"}
+                    </td>
+                    <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700 text-center">
+                      {(() => {
+                        const level = getConfidenceLevel(image.recentAttempts);
+                        const color =
+                          confidenceColours[level] || confidenceColours[0];
+                        return (
+                          <span
+                            style={{
+                              backgroundColor: color,
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              color: level >= 4 ? "black" : "white",
+                              fontWeight: "bold",
+                            }}
+                            title={confidenceLabels[level]}
+                          >
+                            {confidenceLabels[level]}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700 text-right">
+                      {image.averageDrillTime > 0
+                        ? `${image.averageDrillTime.toFixed(2)}s`
+                        : "-"}
+                    </td>
+                    <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700 text-center">
+                      {image.totalDrills || 0}
+                    </td>
+                    <td className="px-2 py-2 border-b border-gray-300 dark:border-gray-700">
+                      {image.lastDrilledAt
+                        ? new Date(image.lastDrilledAt).toLocaleString()
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Page {pagination.currentPage} of {pagination.totalPages} (
+                {pagination.totalImages} total images)
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => goToPage(1)}
+                  disabled={loading || currentPage === 1}
+                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  ««
+                </button>
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={loading || currentPage === 1}
+                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  ‹ Prev
+                </button>
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={loading || currentPage === pagination.totalPages}
+                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  Next ›
+                </button>
+                <button
+                  onClick={() => goToPage(pagination.totalPages)}
+                  disabled={loading || currentPage === pagination.totalPages}
+                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
