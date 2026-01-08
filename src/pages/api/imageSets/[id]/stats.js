@@ -50,6 +50,64 @@ export default async function handler(req, res) {
 
     const totalImages = filteredImages.length;
 
+    // Helper function to get card sort value
+    const getCardSortValue = (name) => {
+      if (!name) return "";
+
+      // Card value order
+      const cardOrder = {
+        A: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        10: 10,
+        J: 11,
+        Q: 12,
+        K: 13,
+      };
+
+      // Suit order: hearts, diamonds, clubs, spades (with and without variation selectors)
+      const suitOrder = {
+        "♥": 1,
+        "♥️": 1,
+        "♦": 2,
+        "♦️": 2,
+        "♣": 3,
+        "♣️": 3,
+        "♠": 4,
+        "♠️": 4,
+      };
+
+      // Extract cards from the name
+      // Match patterns like "A♠", "10♥️", "A♠K♥", etc.
+      const cardPattern = /(A|[2-9]|10|J|Q|K)(♠️?|♥️?|♦️?|♣️?)/g;
+      const matches = [...name.matchAll(cardPattern)];
+
+      if (matches.length === 0) {
+        // Not a card format, use original lowercase string
+        return name.toLowerCase();
+      }
+
+      // Create a sortable string based on card values and suits
+      // For card sets: sort by card1 suit, card1 value, card2 suit, card2 value
+      let sortValue = "";
+      for (const match of matches) {
+        const value = match[1];
+        const suit = match[2];
+        const valueNum = cardOrder[value] || 0;
+        const suitNum = suitOrder[suit] || 0;
+        // All cards: suit then value
+        sortValue += suitNum + valueNum.toString().padStart(2, "0");
+      }
+
+      return sortValue;
+    };
+
     // Sort images on server side
     let sortedImages = [...filteredImages];
 
@@ -58,8 +116,8 @@ export default async function handler(req, res) {
 
       switch (sortBy) {
         case "name":
-          aVal = (a.name || a.imageItem || "").toLowerCase();
-          bVal = (b.name || b.imageItem || "").toLowerCase();
+          aVal = getCardSortValue(a.name || a.imageItem || "");
+          bVal = getCardSortValue(b.name || b.imageItem || "");
           break;
         case "confidence":
           aVal = getConfidenceLevel(a.recentAttempts || []);

@@ -118,8 +118,19 @@ export default function ImageSetPage() {
   }, [allNames]);
 
   const isCardSet = () => {
-    // return imageForm && imageForm.setType && imageForm.setType.includes("c");
-    return determineSetType(allNames.images.length).includes("c");
+    // Use setType from allNames (fetched from getName API) if available
+    if (allNames && allNames.setType) {
+      return allNames.setType.includes("c");
+    }
+    // Fall back to imageForm.setType
+    if (imageForm && imageForm.setType) {
+      return imageForm.setType.includes("c");
+    }
+    // Last resort: determine from length
+    if (allNames && allNames.images && allNames.images.length > 0) {
+      return determineSetType(allNames.images.length).includes("c");
+    }
+    return false;
   };
 
   // For 64-set, use 16 per page. For 3cv (2197), use 13 per page. For card sets, 26. Otherwise, 100.
@@ -144,9 +155,14 @@ export default function ImageSetPage() {
 
   const getImageSet = async (id) => {
     //get image set from DB
-    let url = `/api/imageSets/${id}/${
-      currentPage - 1
-    }?isCardSet=${isCardSet()}`;
+    const isCard = isCardSet();
+    console.log(
+      "getImageSet called, isCardSet():",
+      isCard,
+      "allNames.images.length:",
+      allNames.images.length
+    );
+    let url = `/api/imageSets/${id}/${currentPage - 1}?isCardSet=${isCard}`;
 
     const res = await fetch(url, {
       method: "GET",
@@ -169,11 +185,13 @@ export default function ImageSetPage() {
 
   useEffect(() => {
     if (!imageSetID) return;
+    // Wait for allNames to be populated before fetching paginated data
+    if (!allNames.setType) return;
 
     setIsLoading(true);
     getImageSet(imageSetID);
     setIsLoading(false);
-  }, [currentPage, imageSetID]);
+  }, [currentPage, imageSetID, allNames.setType]);
 
   // <script
   //                           async
@@ -203,8 +221,8 @@ export default function ImageSetPage() {
     }
     if (isEditable) return <div className="mt-3 mx-0.5 h-10"></div>;
     // Card navigation helpers
-    const suits = ["♠", "♥", "♦", "♣"];
-    const suitNames = ["Spades", "Hearts", "Diamonds", "Clubs"];
+    const suits = ["♥", "♦", "♣", "♠"];
+    const suitNames = ["Hearts", "Diamonds", "Clubs", "Spades"];
     const values = [
       "A",
       "2",
@@ -236,9 +254,9 @@ export default function ImageSetPage() {
 
     // 64-set navigation: dropdown for first suit, 16 per page, order is heart-heart-heart, heart-heart-diamond, etc.
     if (allNames.images.length === 64) {
-      // Suits in order: Hearts, Diamonds, Spades, Clubs
-      const suitNames = ["Hearts", "Diamonds", "Spades", "Clubs"];
-      const suitSymbols = ["♥️", "♦️", "♠️", "♣️"];
+      // Suits in order: Hearts, Diamonds, Clubs, Spades
+      const suitNames = ["Hearts", "Diamonds", "Clubs", "Spades"];
+      const suitSymbols = ["♥️", "♦️", "♣️", "♠️"];
       return (
         <div className="flex flex-row items-center mt-3">
           <span className="mr-2">First suit</span>
@@ -381,103 +399,89 @@ export default function ImageSetPage() {
     ) {
       // Utility function for both 2cv (1352) and 2c (2704) sets
       // is2cv: true for 1352 set, false for 2704 set
-      // s1: card 1 suit (0=Spades, 1=Hearts, 2=Diamonds, 3=Clubs)
+      // s1: card 1 suit (0=Hearts, 1=Diamonds, 2=Clubs, 3=Spades) - but for 2cv only Clubs/Spades allowed
       // v1: card 1 value (0=A, 1=2, ... 12=K)
       // c2: card 2 color (0=Red, 1=Black)
       function getPageNumber(is2cv, s1, v1, c2, pageLimit = 26) {
-        // Your internal suit order (from earlier):
-        // 0 = Spades, 1 = Hearts, 2 = Diamonds, 3 = Clubs
-        //
-        // Your dataset suit order (from image list you provided):
-        // Hearts, Diamonds, Spades, Clubs
-        //
-        // So map your s1 → dataset index:
-        const mapToDatasetOrder = [2, 0, 1, 3];
-        // s1=0 (Spades)   → dataset index 2
-        // s1=1 (Hearts)   → dataset index 0
-        // s1=2 (Diamonds) → dataset index 1
-        // s1=3 (Clubs)    → dataset index 3
+        // After sorting, cards are ordered by:
+        // 1. Card 1 suit (Hearts, Diamonds, Clubs, Spades)
+        // 2. Card 1 value (A, 2, 3, ... K)
+        // 3. Card 2 suit (Hearts, Diamonds, Clubs, Spades)
+        // 4. Card 2 value (A, 2, 3, ... K)
 
-        const suitIndex = mapToDatasetOrder[s1];
+        // For each card 1 suit:
+        //   For each card 1 value (13 values):
+        //     For each card 2 color (red/black):
+        //       26 cards per color
+        //     Total per card1 value: 52 cards
+        //   Total per card1 suit: 13 * 52 = 676 cards
 
-        // Normalise colour:
-        // internal mapping: 0 = red, 1 = black
         let colour;
         if (typeof c2 === "string") {
           colour = c2.toLowerCase().startsWith("r") ? 0 : 1;
         } else {
-          // numeric: treat 0 as red, 1 as black
           colour = c2 === 0 ? 0 : 1;
         }
 
-        // Dataset structure:
-        // Per suit block:       13 * 52 = 676
-        // Per value block:      52
-        // Per colour block:     26 (reds then blacks)
-        const idxFull = suitIndex * 676 + v1 * 52 + colour * 26;
-
-        let idx = idxFull;
-
-        // Reduced set: skip first 1352 items (all red-first pairs)
+        let idx;
         if (is2cv) {
-          idx = idx - 1352;
-          if (idx < 0) idx = 0; // clamp
+          // For 2cv, only Clubs (2) and Spades (3) are available as card 1
+          // Map them to relative positions 0 and 1
+          const relativeS1 = s1 - 2;
+          idx = relativeS1 * (13 * 52) + v1 * 52 + colour * 26;
+        } else {
+          // For 2c, all suits are available
+          idx = s1 * (13 * 52) + v1 * 52 + colour * 26;
         }
 
         return Math.floor(idx / pageLimit) + 1;
       }
 
-      // UI for 2c (2704) and 2cv (1352) - both use getPageNumber
-      if (
-        (imageForm.setType === "2c" && allNames.images.length === 2704) ||
-        (imageForm.setType === "2cv" && allNames.images.length === 1352)
-      ) {
-        return (
-          <div className="flex flex-row items-center mt-3">
-            <span className="mr-1">Card 1</span>
-            <select className="mr-2" id="card1Value">
-              {values.map((v, i) => (
-                <option key={v} value={i}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            <select className="mr-1" id="card1Suit">
-              {suits.map((s, i) => (
-                <option key={suitNames[i]} value={i}>
-                  {suitNames[i]}
-                </option>
-              ))}
-            </select>
-            <span className="mr-1">Card 2</span>
-            <select className="mr-1" id="card2Color">
-              <option value={0}>Red (♥/♦)</option>
-              <option value={1}>Black (♠/♣)</option>
-            </select>
-            <button
-              className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
-              onClick={() => {
-                const c1s = parseInt(
-                  document.getElementById("card1Suit").value
-                );
-                const c1v = parseInt(
-                  document.getElementById("card1Value").value
-                );
-                const c2color = parseInt(
-                  document.getElementById("card2Color").value
-                );
-                const is2cv =
-                  imageForm.setType === "2cv" &&
-                  allNames.images.length === 1352;
-                const page = getPageNumber(is2cv, c1s, c1v, c2color);
-                handlePageChange(page);
-              }}
-            >
-              Go
-            </button>
-          </div>
-        );
-      }
+      const is2cv =
+        imageForm.setType === "2cv" && allNames.images.length === 1352;
+      // For 2cv, only show black suits (Clubs, Spades)
+      const availableSuits = is2cv ? [2, 3] : [0, 1, 2, 3];
+
+      return (
+        <div className="flex flex-row items-center mt-3">
+          <span className="mr-1">Card 1</span>
+          <select className="mr-2" id="card1Value">
+            {values.map((v, i) => (
+              <option key={v} value={i}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <select className="mr-1" id="card1Suit">
+            {availableSuits.map((suitIdx) => (
+              <option key={suitNames[suitIdx]} value={suitIdx}>
+                {suitNames[suitIdx]}
+              </option>
+            ))}
+          </select>
+          <span className="mr-1">Card 2</span>
+          <select className="mr-1" id="card2Color">
+            <option value={0}>Red (♥/♦)</option>
+            <option value={1}>Black (♠/♣)</option>
+          </select>
+          <button
+            className="btn bg-black hover:bg-gray-700 text-white font-bold py-1 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+            onClick={() => {
+              const c1s = parseInt(document.getElementById("card1Suit").value);
+              const c1v = parseInt(document.getElementById("card1Value").value);
+              const c2color = parseInt(
+                document.getElementById("card2Color").value
+              );
+              const is2cv =
+                imageForm.setType === "2cv" && allNames.images.length === 1352;
+              const page = getPageNumber(is2cv, c1s, c1v, c2color);
+              handlePageChange(page);
+            }}
+          >
+            Go
+          </button>
+        </div>
+      );
     }
 
     // Number sets (2d, 3d, 4d)

@@ -43,11 +43,36 @@ export default async function handler(req, res) {
       timingsByImage[key].push(ms / 1000); // Convert to seconds
     });
 
+    // Helper function to normalize emoji variation selectors
+    // Removes variation selector (U+FE0F) from strings for comparison
+    const normalizeEmoji = (str) => {
+      return str ? str.replace(/\uFE0F/g, "") : str;
+    };
+
     // Update each image
     const now = new Date();
     imageSet.images.forEach((image) => {
-      const timings =
+      // Try exact match first
+      let timings =
         timingsByImage[image.name] || timingsByImage[image.imageItem];
+
+      // If no exact match, try matching without emoji variation selectors
+      if (!timings) {
+        const normalizedImageName = normalizeEmoji(image.name);
+        const normalizedImageItem = normalizeEmoji(image.imageItem);
+
+        // Find matching timing key by comparing normalized versions
+        for (const [key, times] of Object.entries(timingsByImage)) {
+          const normalizedKey = normalizeEmoji(key);
+          if (
+            normalizedKey === normalizedImageName ||
+            normalizedKey === normalizedImageItem
+          ) {
+            timings = times;
+            break;
+          }
+        }
+      }
 
       if (timings && timings.length > 0) {
         const totalNewDrills = timings.length;
