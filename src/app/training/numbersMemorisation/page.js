@@ -195,15 +195,22 @@ function NumbersMemorisationContent() {
   }, [highlightRanges.length]);
 
   // Sync page with highlight group so that navigating highlight moves to the correct page
+  // Use a ref to prevent interference with manual page changes
+  const [lastManualPage, setLastManualPage] = useState(null);
+
   useEffect(() => {
     if (highlightRanges.length === 0) return;
     // Find the page that contains the start of the current highlight group
     const [groupStart] = highlightRanges[highlightGroupIdx] || [0];
     const groupPage = Math.floor(groupStart / (DIGITS_PER_ROW * ROWS_PER_PAGE));
-    if (groupPage !== page) {
+    // Only sync if this wasn't a manual page change
+    if (groupPage !== page && lastManualPage === null) {
       setPage(groupPage);
     }
-  }, [highlightGroupIdx, highlightRanges, page]);
+    if (lastManualPage !== null) {
+      setLastManualPage(null);
+    }
+  }, [highlightGroupIdx, highlightRanges, page, lastManualPage]);
 
   // Reset highlight index if digits or grouping changes
   useEffect(() => {
@@ -771,7 +778,21 @@ function NumbersMemorisationContent() {
         {totalPages > 1 && (
           <div className="mt-4 text-center">
             <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              onClick={() => {
+                const newPage = Math.max(0, safePage - 1);
+                setPage(newPage);
+                setLastManualPage(newPage);
+                // Move highlight to first group on the new page
+                if (highlightRanges.length > 0) {
+                  const pageStartIdx = newPage * DIGITS_PER_ROW * ROWS_PER_PAGE;
+                  const firstGroupOnPage = highlightRanges.findIndex(
+                    ([start]) => start >= pageStartIdx
+                  );
+                  if (firstGroupOnPage !== -1) {
+                    setHighlightGroupIdx(firstGroupOnPage);
+                  }
+                }
+              }}
               disabled={safePage === 0}
               className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
@@ -781,7 +802,21 @@ function NumbersMemorisationContent() {
               Page {safePage + 1} of {totalPages}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              onClick={() => {
+                const newPage = Math.min(totalPages - 1, safePage + 1);
+                setPage(newPage);
+                setLastManualPage(newPage);
+                // Move highlight to first group on the new page
+                if (highlightRanges.length > 0) {
+                  const pageStartIdx = newPage * DIGITS_PER_ROW * ROWS_PER_PAGE;
+                  const firstGroupOnPage = highlightRanges.findIndex(
+                    ([start]) => start >= pageStartIdx
+                  );
+                  if (firstGroupOnPage !== -1) {
+                    setHighlightGroupIdx(firstGroupOnPage);
+                  }
+                }
+              }}
               disabled={safePage === totalPages - 1}
               className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
