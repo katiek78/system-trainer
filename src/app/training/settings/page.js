@@ -695,7 +695,9 @@ export default function NumberTrainingSettings() {
                   settings.journeyHints ? "1" : "0"
                 }&timedMode=${
                   settings.timedMode ? "1" : "0"
-                }&memorisationTime=${settings.memorisationTime}`
+                }&memorisationTime=${settings.memorisationTime}&recallTime=${
+                  settings.recallTime
+                }`
               );
             }}
           >

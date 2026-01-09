@@ -32,10 +32,17 @@ function NumbersMemorisationContent() {
 
   const timedMode = timedModeParam === "1";
   const memorisationTime = Number(memorisationTimeParam);
+  const recallTimeParam = searchParams.get("recallTime") || "240";
+  const recallTime = Number(recallTimeParam);
 
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [showRecall, setShowRecall] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [recallTimeRemaining, setRecallTimeRemaining] = useState(null);
+  const [userInput, setUserInput] = useState([]);
+  const [score, setScore] = useState(null);
+  const [showScore, setShowScore] = useState(false);
+  const [hoveredInput, setHoveredInput] = useState(null);
 
   const showJourneyHints =
     journeyHints === "1" || journeyHints === 1 || journeyHints === true;
@@ -54,6 +61,13 @@ function NumbersMemorisationContent() {
         )
     : [];
   // Now allowedPrefixesArr[i] is an array of allowed prefixes for group i, or [] for no restriction
+
+  // --- State for digits, highlight, and page ---
+  const [digits, setDigits] = useState("");
+  const [highlightGroupIdx, setHighlightGroupIdx] = useState(0);
+  const [page, setPage] = useState(0);
+  const DIGITS_PER_ROW = 40;
+  const ROWS_PER_PAGE = 12;
 
   // Timer countdown effect
   useEffect(() => {
@@ -76,6 +90,38 @@ function NumbersMemorisationContent() {
       return () => clearInterval(interval);
     }
   }, [timedMode, timeRemaining, showRecall, isPaused]);
+
+  // Recall timer countdown effect
+  useEffect(() => {
+    if (
+      timedMode &&
+      showRecall &&
+      recallTimeRemaining !== null &&
+      recallTimeRemaining > 0 &&
+      !showScore &&
+      !isPaused
+    ) {
+      const interval = setInterval(() => {
+        setRecallTimeRemaining((prev) => {
+          if (prev <= 1) {
+            handleFinishRecall();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showRecall, recallTimeRemaining, showScore, isPaused]);
+
+  // Start recall timer when recall mode begins
+  useEffect(() => {
+    if (showRecall && timedMode && recallTimeRemaining === null) {
+      setRecallTimeRemaining(recallTime);
+      // Initialize user input array
+      setUserInput(Array(digits.length).fill(""));
+    }
+  }, [showRecall, timedMode, recallTime, digits.length]);
 
   // Start timer when timed mode is enabled
   useEffect(() => {
@@ -148,14 +194,6 @@ function NumbersMemorisationContent() {
     }
     fetchJourneys();
   }, [journeyIds]);
-
-  // --- Begin moved logic inside component ---
-  // State for digits, highlight, and page
-  const [digits, setDigits] = useState("");
-  const [highlightGroupIdx, setHighlightGroupIdx] = useState(0);
-  const [page, setPage] = useState(0);
-  const DIGITS_PER_ROW = 40;
-  const ROWS_PER_PAGE = 12;
 
   // Parse highlight grouping
   const highlightGroups = highlightGrouping
@@ -405,6 +443,81 @@ function NumbersMemorisationContent() {
   }
   // --- End moved logic inside component ---
 
+  // Calculate score based on user input
+  function calculateScore() {
+    const totalRows = Math.ceil(digits.length / DIGITS_PER_ROW);
+    let totalScore = 0;
+
+    // Find the last index with user input
+    let lastInputIdx = -1;
+    for (let i = userInput.length - 1; i >= 0; i--) {
+      if (userInput[i] !== "") {
+        lastInputIdx = i;
+        break;
+      }
+    }
+
+    for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
+      const rowStart = rowIdx * DIGITS_PER_ROW;
+      const rowEnd = Math.min((rowIdx + 1) * DIGITS_PER_ROW, digits.length);
+      const isLastRow = rowIdx === totalRows - 1;
+
+      // Check if this row has any input up to lastInputIdx
+      if (lastInputIdx < rowStart) {
+        // No input in this row or beyond
+        break;
+      }
+
+      // Count mistakes in this row
+      let mistakes = 0;
+      let digitsToCheck = rowEnd - rowStart;
+
+      // For the last row with input, only count up to last digit entered
+      if (lastInputIdx >= rowStart && lastInputIdx < rowEnd) {
+        digitsToCheck = lastInputIdx - rowStart + 1;
+      }
+
+      for (let i = 0; i < digitsToCheck; i++) {
+        const globalIdx = rowStart + i;
+        const expected = digits[globalIdx];
+        const actual = userInput[globalIdx] || "";
+
+        if (actual === "" || actual !== expected) {
+          mistakes++;
+        }
+      }
+
+      // Calculate score for this row
+      let rowScore = 0;
+      if (digitsToCheck === DIGITS_PER_ROW) {
+        // Full row
+        if (mistakes === 0) {
+          rowScore = 40;
+        } else if (mistakes === 1) {
+          rowScore = 20;
+        }
+      } else {
+        // Partial row (last row with input)
+        if (mistakes === 0) {
+          rowScore = digitsToCheck;
+        } else if (mistakes === 1) {
+          rowScore = Math.floor(digitsToCheck / 2);
+        }
+      }
+
+      totalScore += rowScore;
+    }
+
+    return totalScore;
+  }
+
+  function handleFinishRecall() {
+    const finalScore = calculateScore();
+    setScore(finalScore);
+    setShowScore(true);
+    setIsPaused(false);
+  }
+
   function getLocationAndObjectURLs() {
     // Find the current journey and point for the highlighted group
     if (!journeyData || journeyData.length === 0)
@@ -454,18 +567,38 @@ function NumbersMemorisationContent() {
         rel="stylesheet"
       />
       <div className="p-6 text-gray-900 dark:text-gray-100">
+        <div className="mb-6 text-center" style={{ minHeight: "140px" }}>
+          {showScore && score !== null && (
+            <div className="inline-block px-12 py-6 bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-lg shadow-lg">
+              <div className="text-sm font-semibold text-green-700 dark:text-green-300 mb-2">
+                SCORE
+              </div>
+              <div className="text-6xl font-bold text-green-800 dark:text-green-100">
+                {score}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl sm:text-3xl text-gray-900 dark:text-gray-100">
             {disciplineLabel}
           </h1>
           <div className="flex items-center gap-4">
-            {timedMode && timeRemaining !== null && (
+            {timedMode && !showScore && (
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  ⏱️ {Math.floor(timeRemaining / 60)}:
-                  {String(timeRemaining % 60).padStart(2, "0")}
+                  ⏱️{" "}
+                  {showRecall && recallTimeRemaining !== null
+                    ? `${Math.floor(recallTimeRemaining / 60)}:${String(
+                        recallTimeRemaining % 60
+                      ).padStart(2, "0")}`
+                    : timeRemaining !== null
+                    ? `${Math.floor(timeRemaining / 60)}:${String(
+                        timeRemaining % 60
+                      ).padStart(2, "0")}`
+                    : "0:00"}
                 </span>
-                {!showRecall && (
+                {!showScore && (
                   <button
                     onClick={() => setIsPaused((prev) => !prev)}
                     className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -684,37 +817,87 @@ function NumbersMemorisationContent() {
               <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
                 Recall Mode
               </h2>
-              <p className="text-center mb-4 text-gray-700 dark:text-gray-300">
-                Enter the digits you memorized:
+              <p className="text-center mb-4 text-gray-700 dark:text-gray-300 text-sm">
+                Enter the digits (Row {safePage + 1}):
               </p>
-              {(() => {
-                const groupDigits = getDigitsForGroup();
-                return (
-                  <div className="flex flex-wrap gap-2 justify-center mb-4">
-                    {groupDigits.split("").map((_, idx) => (
+              <div className="flex flex-wrap gap-1 justify-center mb-4">
+                {rows[0] &&
+                  rows[0].map((_, i) => {
+                    const globalIdx = startRow * DIGITS_PER_ROW + i;
+                    const correctDigit = digits[globalIdx];
+                    const userDigit = userInput[globalIdx] || "";
+                    const isCorrect = showScore && userDigit === correctDigit;
+                    const isIncorrect =
+                      showScore &&
+                      userDigit !== "" &&
+                      userDigit !== correctDigit;
+                    const isHovered = hoveredInput === globalIdx;
+                    const shouldShowCorrect =
+                      showScore && !isCorrect && isHovered;
+                    // New: Use a distinct green with stripes/gradient for correct but not recalled
+                    let inputBackground = undefined;
+                    if (shouldShowCorrect) {
+                      // Green stripes/gradient for correct but not recalled
+                      inputBackground =
+                        "repeating-linear-gradient(135deg, #34d399 0px, #34d399 8px, #e0ffe0 8px, #e0ffe0 16px)";
+                    } else if (isCorrect) {
+                      inputBackground = "#d1fae5"; // solid green
+                    } else if (isIncorrect) {
+                      inputBackground = "#fee2e2"; // red
+                    }
+                    return (
                       <input
-                        key={idx}
+                        key={i}
                         type="text"
                         maxLength="1"
-                        className="w-10 h-12 text-center text-xl font-mono border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        style={{ fontFamily: "'Roboto Mono', monospace" }}
+                        value={
+                          shouldShowCorrect
+                            ? correctDigit
+                            : userInput[globalIdx] || ""
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, "");
+                          setUserInput((prev) => {
+                            const newInput = [...prev];
+                            newInput[globalIdx] = val;
+                            return newInput;
+                          });
+                          // Auto-focus next input
+                          if (val && i < rows[0].length - 1) {
+                            const nextInput = e.target.nextElementSibling;
+                            if (nextInput) nextInput.focus();
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Backspace" &&
+                            !userInput[globalIdx] &&
+                            i > 0
+                          ) {
+                            const prevInput = e.target.previousElementSibling;
+                            if (prevInput) prevInput.focus();
+                          }
+                        }}
+                        onMouseEnter={() => setHoveredInput(globalIdx)}
+                        onMouseLeave={() => setHoveredInput(null)}
+                        readOnly={showScore}
+                        className="w-8 h-10 text-center text-lg font-mono border-2 border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100"
+                        style={{
+                          fontFamily: "'Roboto Mono', monospace",
+                          background: inputBackground,
+                        }}
                       />
-                    ))}
-                  </div>
-                );
-              })()}
-              <button
-                onClick={() => {
-                  setHighlightGroupIdx((idx) =>
-                    Math.min((highlightRanges.length || 1) - 1, idx + 1)
-                  );
-                  setShowRecall(false);
-                  setTimeRemaining(memorisationTime);
-                }}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Next Group
-              </button>
+                    );
+                  })}
+              </div>
+              {!showScore && (
+                <button
+                  onClick={handleFinishRecall}
+                  className="mt-2 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Finish
+                </button>
+              )}
             </div>
           ) : (
             <div
@@ -780,55 +963,111 @@ function NumbersMemorisationContent() {
 
         {/* DESKTOP: Full grid or Recall boxes */}
         {showRecall ? (
-          <div className="hidden sm:flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-8 mb-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-              Recall Mode
-            </h2>
-            <p className="text-center mb-6 text-gray-700 dark:text-gray-300">
-              Enter the digits you memorized for group {highlightGroupIdx + 1}:
-            </p>
-            {(() => {
-              const groupDigits = getDigitsForGroup();
+          <div
+            className="hidden sm:flex flex-col justify-start bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
+            style={{
+              width: "98vw",
+              maxWidth: "none",
+              margin: "0 -24px 24px -24px",
+            }}
+          >
+            {rows.map((row, idx) => {
+              const globalRowIdx = startRow + idx;
               return (
                 <div
-                  className="flex flex-wrap gap-2 justify-center mb-6"
-                  style={{ maxWidth: "800px" }}
+                  key={idx}
+                  className="flex items-center mb-3 flex-nowrap"
+                  style={{ fontSize: digitFontSize }}
                 >
-                  {groupDigits.split("").map((_, idx) => (
-                    <input
-                      key={idx}
-                      type="text"
-                      maxLength="1"
-                      className="w-12 h-14 text-center text-2xl font-mono border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      style={{ fontFamily: "'Roboto Mono', monospace" }}
-                    />
-                  ))}
+                  <span className="min-w-[48px] text-red-700 dark:text-red-400 italic text-[16px] mr-4 text-right">
+                    {globalRowIdx + 1}
+                  </span>
+                  <span className="flex gap-1 relative">
+                    {row.map((_, i) => {
+                      const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
+                      const correctDigit = digits[globalIdx];
+                      const userDigit = userInput[globalIdx] || "";
+                      const isCorrect = showScore && userDigit === correctDigit;
+                      const isIncorrect =
+                        showScore &&
+                        userDigit !== "" &&
+                        userDigit !== correctDigit;
+                      const isHovered = hoveredInput === globalIdx;
+                      const shouldShowCorrect =
+                        showScore && !isCorrect && isHovered;
+                      // New: Use a distinct green with stripes/gradient for correct but not recalled
+                      let inputBackground = undefined;
+                      if (shouldShowCorrect) {
+                        // Green stripes/gradient for correct but not recalled
+                        inputBackground =
+                          "repeating-linear-gradient(135deg, #34d399 0px, #34d399 8px, #e0ffe0 8px, #e0ffe0 16px)";
+                      } else if (isCorrect) {
+                        inputBackground = "#d1fae5"; // solid green
+                      } else if (isIncorrect) {
+                        inputBackground = "#fee2e2"; // red
+                      }
+                      return (
+                        <input
+                          key={i}
+                          type="text"
+                          maxLength="1"
+                          value={
+                            shouldShowCorrect
+                              ? correctDigit
+                              : userInput[globalIdx] || ""
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, "");
+                            setUserInput((prev) => {
+                              const newInput = [...prev];
+                              newInput[globalIdx] = val;
+                              return newInput;
+                            });
+                            // Auto-focus next input
+                            if (val && i < row.length - 1) {
+                              const nextInput = e.target.nextElementSibling;
+                              if (nextInput) nextInput.focus();
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (
+                              e.key === "Backspace" &&
+                              !userInput[globalIdx] &&
+                              i > 0
+                            ) {
+                              const prevInput = e.target.previousElementSibling;
+                              if (prevInput) prevInput.focus();
+                            }
+                          }}
+                          onMouseEnter={() => setHoveredInput(globalIdx)}
+                          onMouseLeave={() => setHoveredInput(null)}
+                          readOnly={showScore}
+                          className="text-center border-2 border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100"
+                          style={{
+                            width: digitWidth,
+                            height: Math.max(digitWidth * 1.2, 28),
+                            fontSize: digitFontSize,
+                            fontFamily: "'Roboto Mono', monospace",
+                            padding: 0,
+                            background: inputBackground,
+                          }}
+                        />
+                      );
+                    })}
+                  </span>
                 </div>
               );
-            })()}
-            <div className="flex gap-4">
-              <button
-                onClick={() => {
-                  setShowRecall(false);
-                  setTimeRemaining(memorisationTime);
-                }}
-                className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Back to Memorisation
-              </button>
-              <button
-                onClick={() => {
-                  setHighlightGroupIdx((idx) =>
-                    Math.min((highlightRanges.length || 1) - 1, idx + 1)
-                  );
-                  setShowRecall(false);
-                  setTimeRemaining(memorisationTime);
-                }}
-                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Next Group
-              </button>
-            </div>
+            })}
+            {!showScore && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={handleFinishRecall}
+                  className="px-8 py-3 bg-green-500 text-white text-lg font-bold rounded hover:bg-green-600"
+                >
+                  Finish
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div
