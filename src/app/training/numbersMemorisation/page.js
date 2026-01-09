@@ -836,8 +836,12 @@ function NumbersMemorisationContent() {
                     const shouldShowCorrect =
                       showScore && !isCorrect && (isHovered || isTouched);
                     // Check if this input is in the current highlight group
-                    const [groupStart, groupEnd] = highlightRanges[highlightGroupIdx] || [];
-                    const isHighlighted = highlightRanges.length > 0 && globalIdx >= groupStart && globalIdx < groupEnd;
+                    const [groupStart, groupEnd] =
+                      highlightRanges[highlightGroupIdx] || [];
+                    const isHighlighted =
+                      highlightRanges.length > 0 &&
+                      globalIdx >= groupStart &&
+                      globalIdx < groupEnd;
                     // New: Use a distinct green with stripes/gradient for correct but not recalled
                     let inputBackground = undefined;
                     if (shouldShowCorrect) {
@@ -924,9 +928,12 @@ function NumbersMemorisationContent() {
                         style={{
                           fontFamily: "'Roboto Mono', monospace",
                           background: inputBackground,
-                          transition: "background 0.3s ease, box-shadow 0.3s ease",
+                          transition:
+                            "background 0.3s ease, box-shadow 0.3s ease",
                           borderColor: isHighlighted ? "#ffd700" : undefined,
-                          boxShadow: isHighlighted ? "0 0 0 3px #ffe066" : undefined,
+                          boxShadow: isHighlighted
+                            ? "0 0 0 3px #ffe066"
+                            : undefined,
                         }}
                       />
                     );
@@ -1067,8 +1074,12 @@ function NumbersMemorisationContent() {
                       const shouldShowCorrect =
                         showScore && !isCorrect && isHovered;
                       // Check if this input is in the current highlight group
-                      const [groupStart, groupEnd] = highlightRanges[highlightGroupIdx] || [];
-                      const isHighlighted = highlightRanges.length > 0 && globalIdx >= groupStart && globalIdx < groupEnd;
+                      const [groupStart, groupEnd] =
+                        highlightRanges[highlightGroupIdx] || [];
+                      const isHighlighted =
+                        highlightRanges.length > 0 &&
+                        globalIdx >= groupStart &&
+                        globalIdx < groupEnd;
                       // New: Use a distinct green with stripes/gradient for correct but not recalled
                       let inputBackground = undefined;
                       if (shouldShowCorrect) {
@@ -1157,9 +1168,12 @@ function NumbersMemorisationContent() {
                             fontFamily: "'Roboto Mono', monospace",
                             padding: 0,
                             background: inputBackground,
-                            transition: "background 0.3s ease, box-shadow 0.3s ease",
+                            transition:
+                              "background 0.3s ease, box-shadow 0.3s ease",
                             borderColor: isHighlighted ? "#ffd700" : undefined,
-                            boxShadow: isHighlighted ? "0 0 0 3px #ffe066" : undefined,
+                            boxShadow: isHighlighted
+                              ? "0 0 0 3px #ffe066"
+                              : undefined,
                           }}
                         />
                       );
