@@ -9,10 +9,13 @@ const defaultSettings = {
   memorisationTime: 60,
   recallTime: 240,
   journeys: [],
-  highlightGrouping: "",
+  imagePattern: "",
+  locationPattern: "",
   imageSets: [],
   journeyHints: true,
   timedMode: false,
+  navigateBy: "image",
+  focusBoxShows: "image",
 };
 
 export default function NumberTrainingSettings() {
@@ -85,7 +88,10 @@ export default function NumberTrainingSettings() {
   }
 
   useEffect(() => {
-    const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
+    const storedImagePattern = localStorage.getItem("imagePattern");
+    const storedLocationPattern = localStorage.getItem("locationPattern");
+    const storedNavigateBy = localStorage.getItem("navigateBy");
+    const storedFocusBoxShows = localStorage.getItem("focusBoxShows");
     const storedMode = localStorage.getItem("mode");
     const storedTimedMode = localStorage.getItem("timedMode");
     const preset = modeOptions.find((opt) => opt.value === storedMode);
@@ -100,9 +106,12 @@ export default function NumberTrainingSettings() {
     }
     setSettings((prev) => ({
       ...prev,
-      ...(storedHighlightGrouping
-        ? { highlightGrouping: storedHighlightGrouping }
+      ...(storedImagePattern ? { imagePattern: storedImagePattern } : {}),
+      ...(storedLocationPattern
+        ? { locationPattern: storedLocationPattern }
         : {}),
+      ...(storedNavigateBy ? { navigateBy: storedNavigateBy } : {}),
+      ...(storedFocusBoxShows ? { focusBoxShows: storedFocusBoxShows } : {}),
       ...(storedMode ? { mode: storedMode } : {}),
       ...(storedTimedMode !== null
         ? { timedMode: storedTimedMode === "true" }
@@ -149,25 +158,25 @@ export default function NumberTrainingSettings() {
     }
   }, [options, selectedOption]);
 
-  function parseHighlightGrouping(str) {
+  function parsePattern(str) {
     if (!str) return [];
     return str
       .split("-")
       .map((s) => parseInt(s, 10))
       .filter((n) => !isNaN(n) && n > 0);
   }
-  const highlightGroups = parseHighlightGrouping(settings.highlightGrouping);
+  const imageGroups = parsePattern(settings.imagePattern);
 
   useEffect(() => {
-    setAllowedPrefixes(Array(highlightGroups.length).fill(""));
-  }, [settings.highlightGrouping]);
+    setAllowedPrefixes(Array(imageGroups.length).fill(""));
+  }, [settings.imagePattern]);
 
   const restoredRef = useRef(false);
   useEffect(() => {
     if (
       !modeLoaded ||
       allImageSets.length === 0 ||
-      highlightGroups.length === 0 ||
+      imageGroups.length === 0 ||
       restoredRef.current
     )
       return;
@@ -180,10 +189,10 @@ export default function NumberTrainingSettings() {
     }
     if (
       Array.isArray(parsedImageSets) &&
-      parsedImageSets.length === highlightGroups.length &&
+      parsedImageSets.length === imageGroups.length &&
       parsedImageSets.every((id, idx) => {
         if (!id) return true;
-        const sets = setsForGroupLength(highlightGroups[idx]);
+        const sets = setsForGroupLength(imageGroups[idx]);
         return sets.some((set) => set._id === id);
       })
     ) {
@@ -198,12 +207,12 @@ export default function NumberTrainingSettings() {
     }
     if (
       Array.isArray(parsedPrefixes) &&
-      parsedPrefixes.length === highlightGroups.length
+      parsedPrefixes.length === imageGroups.length
     ) {
       setAllowedPrefixes(parsedPrefixes);
     }
     restoredRef.current = true;
-  }, [modeLoaded, allImageSets, highlightGroups.length]);
+  }, [modeLoaded, allImageSets, imageGroups.length]);
 
   function handlePrefixChange(idx, val) {
     setAllowedPrefixes((prev) => {
@@ -387,7 +396,7 @@ export default function NumberTrainingSettings() {
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+    <div className="w-[90%] mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
       <Link
         href="/training"
         className="inline-block mb-4 text-blue-600 dark:text-blue-300 hover:underline"
@@ -399,279 +408,356 @@ export default function NumberTrainingSettings() {
         Numbers Training Settings
       </h2>
       <form>
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Mode
-        </label>
-        <select
-          name="mode"
-          value={settings.mode}
-          onChange={handleModeChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          {modeOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Journey Option
-        </label>
-
-        {loadingJourneys ? (
-          <div className="mb-4 text-gray-700 dark:text-gray-300">
-            Loading journey options...
-          </div>
-        ) : (
-          <div className="mb-4">
-            <div className="flex items-center mb-2">
-              <select
-                className="px-3 py-1 mr-2 rounded border bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                value={selectedOption}
-                onChange={(e) => handleSelectOption(Number(e.target.value))}
-                disabled={options.length === 0}
-              >
-                {options.map((_, idx) => (
-                  <option key={idx} value={idx}>
-                    Option {idx + 1}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200 rounded"
-                onClick={handleAddOption}
-              >
-                + Add Option
-              </button>
-              {options.length > 1 && (
-                <button
-                  type="button"
-                  className="ml-2 px-2 py-1 bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 rounded"
-                  onClick={() => handleRemoveOption(selectedOption)}
-                >
-                  Remove Option
-                </button>
-              )}
-            </div>
-            {options.length === 0 ? (
-              <div className="mb-2 text-gray-500 dark:text-gray-400">
-                No options for this discipline
-              </div>
-            ) : (
-              <ul>
-                {options[selectedOption].length === 0 && (
-                  <div className="mb-2 text-gray-500 dark:text-gray-400">
-                    No journeys selected
-                  </div>
-                )}
-                {options[selectedOption].map((j, idx) => (
-                  <li key={j.id} className="flex items-center mb-1">
-                    <span className="flex-1 text-gray-900 dark:text-gray-100">
-                      {j.name}
-                    </span>
-                    <button
-                      type="button"
-                      className="ml-2 text-red-600 dark:text-red-400"
-                      onClick={() => handleRemoveJourney(idx)}
-                      title="Remove"
-                    >
-                      ✕
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-1 text-gray-600 dark:text-gray-300"
-                      onClick={() => handleReorderJourney(idx, idx - 1)}
-                      disabled={idx === 0}
-                      title="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-1 text-gray-600 dark:text-gray-300"
-                      onClick={() => handleReorderJourney(idx, idx + 1)}
-                      disabled={idx === options[selectedOption].length - 1}
-                      title="Move down"
-                    >
-                      ▼
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <select
-              className="mt-2 px-2 py-1 border rounded text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
-              onChange={handleAddJourney}
-              value=""
-            >
-              <option value="">Add journey...</option>
-              {userJourneys
-                .filter(
-                  (j) =>
-                    !options[selectedOption]?.some((sel) => sel.id === j.id)
-                )
-                .map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        )}
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
-          <input
-            type="checkbox"
-            className="mr-2"
-            checked={settings.journeyHints}
-            onChange={(e) => {
-              setSettings((prev) => ({
-                ...prev,
-                journeyHints: e.target.checked,
-              }));
-              const mode = settings.mode || defaultSettings.mode;
-              localStorage.setItem(`journeyHints_${mode}`, e.target.checked);
-            }}
-          />
-          Show journey hints
-        </label>
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Number of digits
-        </label>
-        <input
-          type="number"
-          name="digits"
-          value={settings.digits}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-          disabled={!isCustom}
-        />
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
-          <input
-            type="checkbox"
-            className="mr-2"
-            checked={settings.timedMode}
-            onChange={(e) => {
-              setSettings((prev) => ({
-                ...prev,
-                timedMode: e.target.checked,
-              }));
-              localStorage.setItem("timedMode", e.target.checked);
-            }}
-          />
-          Timed Memorisation + Recall
-        </label>
-
-        {settings.timedMode && (
-          <>
-            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
-              Memorisation time (seconds)
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Number of digits
             </label>
             <input
               type="number"
-              name="memorisationTime"
-              value={settings.memorisationTime}
+              name="digits"
+              value={settings.digits}
               onChange={handleChange}
               className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
               disabled={!isCustom}
             />
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Recall time (seconds)
+              Discipline
             </label>
-            <input
-              type="number"
-              name="recallTime"
-              value={settings.recallTime}
-              onChange={handleChange}
+            <select
+              name="mode"
+              value={settings.mode}
+              onChange={handleModeChange}
               className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              disabled={!isCustom}
-            />
-          </>
-        )}
+            >
+              {modeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Highlight grouping (e.g. 4 or 3-2-3)
-        </label>
-        <input
-          type="text"
-          name="highlightGrouping"
-          value={settings.highlightGrouping}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-          placeholder="e.g. 4 or 3-2-3"
-        />
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={settings.timedMode}
+                onChange={(e) => {
+                  setSettings((prev) => ({
+                    ...prev,
+                    timedMode: e.target.checked,
+                  }));
+                  localStorage.setItem("timedMode", e.target.checked);
+                }}
+              />
+              Timed Memorisation + Recall
+            </label>
 
-        <label className="block mb-2 font-semibold mt-4 text-gray-900 dark:text-gray-100">
-          Image set(s)
-        </label>
-        {highlightGroups.length === 0 ? (
-          <div className="mb-4 text-gray-500 dark:text-gray-400">
-            Enter a highlight grouping to select image sets.
-          </div>
-        ) : (
-          <div className="mb-4">
-            {highlightGroups.map((len, idx) => {
-              const sets = setsForGroupLength(len);
-              return (
-                <div key={idx} className="mb-4">
-                  <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
-                    Group {idx + 1} ({len} digit{len > 1 ? "s" : ""})
-                  </label>
+            {settings.timedMode && (
+              <>
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+                  Memorisation time (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="memorisationTime"
+                  value={settings.memorisationTime}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                  disabled={!isCustom}
+                />
+
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Recall time (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="recallTime"
+                  value={settings.recallTime}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                  disabled={!isCustom}
+                />
+              </>
+            )}
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Journey Option
+            </label>
+
+            {loadingJourneys ? (
+              <div className="mb-4 text-gray-700 dark:text-gray-300">
+                Loading journey options...
+              </div>
+            ) : (
+              <div className="mb-4">
+                <div className="flex items-center mb-2">
                   <select
-                    className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                    value={settings.imageSets[idx] || ""}
-                    onChange={(e) => handleImageSetChange(idx, e.target.value)}
+                    className="px-3 py-1 mr-2 rounded border bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                    value={selectedOption}
+                    onChange={(e) => handleSelectOption(Number(e.target.value))}
+                    disabled={options.length === 0}
                   >
-                    <option value="">Select image set...</option>
-                    {sets.map((set) => (
-                      <option key={set._id} value={set._id}>
-                        {set.name}
+                    {options.map((_, idx) => (
+                      <option key={idx} value={idx}>
+                        Option {idx + 1}
                       </option>
                     ))}
                   </select>
-                  {sets.length === 0 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      No image sets found for {len} digits.
-                    </div>
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200 rounded"
+                    onClick={handleAddOption}
+                  >
+                    + Add Option
+                  </button>
+                  {options.length > 1 && (
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 rounded"
+                      onClick={() => handleRemoveOption(selectedOption)}
+                    >
+                      Remove Option
+                    </button>
                   )}
-
-                  <div className="mt-2">
-                    <label className="block text-xs font-semibold mb-1 text-gray-900 dark:text-gray-100">
-                      Allowed prefixes (optional)
-                    </label>
-                    <input
-                      type="text"
-                      className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                      placeholder="e.g. 1,2,3 or 12,13"
-                      value={allowedPrefixes[idx] || ""}
-                      onChange={(e) => handlePrefixChange(idx, e.target.value)}
-                    />
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Comma-separated. Leave blank for no restriction.
-                    </div>
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                {options.length === 0 ? (
+                  <div className="mb-2 text-gray-500 dark:text-gray-400">
+                    No options for this discipline
+                  </div>
+                ) : (
+                  <ul>
+                    {options[selectedOption].length === 0 && (
+                      <div className="mb-2 text-gray-500 dark:text-gray-400">
+                        No journeys selected
+                      </div>
+                    )}
+                    {options[selectedOption].map((j, idx) => (
+                      <li key={j.id} className="flex items-center mb-1">
+                        <span className="flex-1 text-gray-900 dark:text-gray-100">
+                          {j.name}
+                        </span>
+                        <button
+                          type="button"
+                          className="ml-2 text-red-600 dark:text-red-400"
+                          onClick={() => handleRemoveJourney(idx)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-600 dark:text-gray-300"
+                          onClick={() => handleReorderJourney(idx, idx - 1)}
+                          disabled={idx === 0}
+                          title="Move up"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-600 dark:text-gray-300"
+                          onClick={() => handleReorderJourney(idx, idx + 1)}
+                          disabled={idx === options[selectedOption].length - 1}
+                          title="Move down"
+                        >
+                          ▼
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <select
+                  className="mt-2 px-2 py-1 border rounded text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
+                  onChange={handleAddJourney}
+                  value=""
+                >
+                  <option value="">Add journey...</option>
+                  {userJourneys
+                    .filter(
+                      (j) =>
+                        !options[selectedOption]?.some((sel) => sel.id === j.id)
+                    )
+                    .map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
 
-        <div className="flex gap-4">
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={settings.journeyHints}
+                onChange={(e) => {
+                  setSettings((prev) => ({
+                    ...prev,
+                    journeyHints: e.target.checked,
+                  }));
+                  const mode = settings.mode || defaultSettings.mode;
+                  localStorage.setItem(
+                    `journeyHints_${mode}`,
+                    e.target.checked
+                  );
+                }}
+              />
+              Show journey hints
+            </label>
+          </div>
+
+          <div>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Image Pattern
+            </label>
+            <input
+              type="text"
+              name="imagePattern"
+              value={settings.imagePattern}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              placeholder="e.g. 3 or 3-2"
+            />
+            <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
+              How many digits per image (e.g., 2 for 2-digit images from the
+              same image set, or e.g. 2-2-2 if you are using PAO and have three
+              different 2-digit image sets, or e.g. 3-2-3 if you have an
+              alternating pattern).
+            </div>
+
+            <label className="block mb-2 font-semibold mt-4 text-gray-900 dark:text-gray-100">
+              Image set(s)
+            </label>
+            {imageGroups.length === 0 ? (
+              <div className="mb-4 text-gray-500 dark:text-gray-400">
+                Enter an image size pattern to select image sets.
+              </div>
+            ) : (
+              <div className="mb-4">
+                {imageGroups.map((len, idx) => {
+                  const sets = setsForGroupLength(len);
+                  return (
+                    <div key={idx} className="mb-4">
+                      <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
+                        Group {idx + 1} ({len} digit{len > 1 ? "s" : ""})
+                      </label>
+                      <select
+                        className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                        value={settings.imageSets[idx] || ""}
+                        onChange={(e) =>
+                          handleImageSetChange(idx, e.target.value)
+                        }
+                      >
+                        <option value="">Select image set...</option>
+                        {sets.map((set) => (
+                          <option key={set._id} value={set._id}>
+                            {set.name}
+                          </option>
+                        ))}
+                      </select>
+                      {sets.length === 0 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          No image sets found for {len} digits.
+                        </div>
+                      )}
+
+                      <div className="mt-2">
+                        <label className="block text-xs font-semibold mb-1 text-gray-900 dark:text-gray-100">
+                          Allowed prefixes (optional)
+                        </label>
+                        <input
+                          type="text"
+                          className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                          placeholder="e.g. 1,2,3 or 12,13"
+                          value={allowedPrefixes[idx] || ""}
+                          onChange={(e) =>
+                            handlePrefixChange(idx, e.target.value)
+                          }
+                        />
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Comma-separated. Leave blank for no restriction.
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Location Pattern
+            </label>
+            <input
+              type="text"
+              name="locationPattern"
+              value={settings.locationPattern}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              placeholder="e.g. 6 or 3-2"
+            />
+            <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
+              How many digits per location (e.g., 6 for 6 digits at each
+              location).
+            </div>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Navigate By
+            </label>
+            <select
+              name="navigateBy"
+              value={settings.navigateBy}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="image">Image</option>
+              <option value="location">Location</option>
+            </select>
+            <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
+              Each click/keypress advances to the next image or next location.
+            </div>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Focus Box Shows
+            </label>
+            <select
+              name="focusBoxShows"
+              value={settings.focusBoxShows}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="image">Current Image</option>
+              <option value="location-separated">
+                Current Location (with separations)
+              </option>
+              <option value="location-noseparated">
+                Current Location (no separations)
+              </option>
+            </select>
+            <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
+              What the focus box displays at the top of the screen.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-4 mt-6">
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
             onClick={() => {
-              if (settings.highlightGrouping) {
+              if (settings.imagePattern) {
+                localStorage.setItem("imagePattern", settings.imagePattern);
+              }
+              if (settings.locationPattern) {
                 localStorage.setItem(
-                  "highlightGrouping",
-                  settings.highlightGrouping
+                  "locationPattern",
+                  settings.locationPattern
                 );
               }
+              localStorage.setItem("navigateBy", settings.navigateBy);
+              localStorage.setItem("focusBoxShows", settings.focusBoxShows);
               localStorage.setItem(
                 "imageSets",
                 JSON.stringify(settings.imageSets || [])
@@ -683,8 +769,12 @@ export default function NumberTrainingSettings() {
               router.push(
                 `/training/numbersMemorisation?amount=${settings.digits}&mode=${
                   settings.mode
-                }&highlightGrouping=${
-                  settings.highlightGrouping || "3"
+                }&imagePattern=${encodeURIComponent(
+                  settings.imagePattern || "3"
+                )}&locationPattern=${encodeURIComponent(
+                  settings.locationPattern || "3"
+                )}&navigateBy=${settings.navigateBy}&focusBoxShows=${
+                  settings.focusBoxShows
                 }&imageSets=${(settings.imageSets || []).join(
                   ","
                 )}&journeyIds=${(settings.journeys || []).join(
@@ -707,10 +797,13 @@ export default function NumberTrainingSettings() {
             type="button"
             className="bg-green-500 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-900 text-white font-bold py-2 px-4 rounded"
             onClick={() => {
-              if (settings.highlightGrouping) {
+              if (settings.imagePattern) {
+                localStorage.setItem("imagePattern", settings.imagePattern);
+              }
+              if (settings.locationPattern) {
                 localStorage.setItem(
-                  "highlightGrouping",
-                  settings.highlightGrouping
+                  "locationPattern",
+                  settings.locationPattern
                 );
               }
               localStorage.setItem(

@@ -22,13 +22,23 @@ function NumbersMemorisationContent() {
 
   const amount = searchParams.get("amount") || 0;
   const mode = searchParams.get("mode") || "5N";
-  const highlightGrouping = searchParams.get("highlightGrouping") || "";
+  const imagePattern = searchParams.get("imagePattern") || "";
+  const locationPattern = searchParams.get("locationPattern") || "";
+  const navigateBy = searchParams.get("navigateBy") || "image";
+  const focusBoxShows = searchParams.get("focusBoxShows") || "image";
   const imageSets = searchParams.get("imageSets") || "";
   const journeyIds = searchParams.get("journeyIds") || "";
   const allowedPrefixes = searchParams.get("allowedPrefixes") || "";
   const journeyHints = searchParams.get("journeyHints") || "1";
   const timedModeParam = searchParams.get("timedMode") || "0";
   const memorisationTimeParam = searchParams.get("memorisationTime") || "60";
+  const locationCycleMode =
+    searchParams.get("locationCycleMode") || "per-highlight";
+  const locationCycleValue = Number(
+    searchParams.get("locationCycleValue") || "1"
+  );
+  const focusBoxMode = searchParams.get("focusBoxMode") || "highlight-only";
+  const focusBoxPattern = searchParams.get("focusBoxPattern") || "";
 
   const timedMode = timedModeParam === "1";
   const memorisationTime = Number(memorisationTimeParam);
@@ -233,9 +243,12 @@ function NumbersMemorisationContent() {
     fetchJourneys();
   }, [journeyIds]);
 
-  // Parse highlight grouping
-  const highlightGroups = highlightGrouping
-    ? highlightGrouping.split("-").map(Number).filter(Boolean)
+  // Parse patterns
+  const imageGroups = imagePattern
+    ? imagePattern.split("-").map(Number).filter(Boolean)
+    : [];
+  const locationGroups = locationPattern
+    ? locationPattern.split("-").map(Number).filter(Boolean)
     : [];
 
   // Utility: generate a string of random digits of given length
@@ -247,7 +260,8 @@ function NumbersMemorisationContent() {
     return result;
   }
 
-  function getHighlightRanges(groups) {
+  // Generate ranges for a pattern (e.g., [3, 2] => [[0,3], [3,5], [5,8], [8,10], ...])
+  function getRanges(groups) {
     const ranges = [];
     let idx = 0;
     while (idx < digits.length) {
@@ -261,8 +275,51 @@ function NumbersMemorisationContent() {
     }
     return ranges;
   }
-  const highlightRanges =
-    highlightGroups.length > 0 ? getHighlightRanges(highlightGroups) : [];
+
+  const imageRanges = imageGroups.length > 0 ? getRanges(imageGroups) : [];
+  const locationRanges =
+    locationGroups.length > 0 ? getRanges(locationGroups) : [];
+
+  // Navigation ranges: what we navigate through (either images or locations)
+  const navRanges = navigateBy === "location" ? locationRanges : imageRanges;
+
+  // Find which location a given image index belongs to
+  function getLocationIdxForImageIdx(imageIdx) {
+    if (imageRanges.length === 0 || locationRanges.length === 0) return 0;
+
+    const [imageStart] = imageRanges[imageIdx] || [0];
+
+    // Find which location range contains this image's start
+    for (let i = 0; i < locationRanges.length; i++) {
+      const [locStart, locEnd] = locationRanges[i];
+      if (imageStart >= locStart && imageStart < locEnd) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  // Find which image index corresponds to a navigation index
+  function getImageIdxForNavIdx(navIdx) {
+    if (navigateBy === "image") {
+      return navIdx;
+    } else {
+      // navigateBy === "location"
+      // Return the first image in this location
+      if (locationRanges.length === 0 || imageRanges.length === 0) return 0;
+
+      const [locStart] = locationRanges[navIdx] || [0];
+
+      // Find first image that starts at or after locStart
+      for (let i = 0; i < imageRanges.length; i++) {
+        const [imgStart] = imageRanges[i];
+        if (imgStart >= locStart) {
+          return i;
+        }
+      }
+      return 0;
+    }
+  }
 
   // Keyboard navigation for highlight group
   useEffect(() => {
@@ -274,13 +331,11 @@ function NumbersMemorisationContent() {
         setHighlightGroupIdx(0);
         return;
       }
-      // Arrow navigation for highlight group
-      if (highlightRanges.length === 0) return;
+      // Arrow navigation (uses nav ranges - either images or locations)
+      if (navRanges.length === 0) return;
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        setHighlightGroupIdx((idx) =>
-          Math.min(idx + 1, highlightRanges.length - 1)
-        );
+        setHighlightGroupIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         setHighlightGroupIdx((idx) => Math.max(idx - 1, 0));
@@ -288,9 +343,9 @@ function NumbersMemorisationContent() {
         e.preventDefault();
         // Move to the group containing the digit DIGITS_PER_ROW below the current group's start
         setHighlightGroupIdx((idx) => {
-          if (highlightRanges.length === 0) return idx;
-          const [curStart] = highlightRanges[idx] || [0];
-          const targetIdx = highlightRanges.findIndex(
+          if (navRanges.length === 0) return idx;
+          const [curStart] = navRanges[idx] || [0];
+          const targetIdx = navRanges.findIndex(
             ([start, end]) =>
               curStart + DIGITS_PER_ROW >= start &&
               curStart + DIGITS_PER_ROW < end
@@ -301,9 +356,9 @@ function NumbersMemorisationContent() {
         e.preventDefault();
         // Move to the group containing the digit DIGITS_PER_ROW above the current group's start
         setHighlightGroupIdx((idx) => {
-          if (highlightRanges.length === 0) return idx;
-          const [curStart] = highlightRanges[idx] || [0];
-          const targetIdx = highlightRanges.findIndex(
+          if (navRanges.length === 0) return idx;
+          const [curStart] = navRanges[idx] || [0];
+          const targetIdx = navRanges.findIndex(
             ([start, end]) =>
               curStart - DIGITS_PER_ROW >= start &&
               curStart - DIGITS_PER_ROW < end
@@ -315,16 +370,16 @@ function NumbersMemorisationContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightRanges.length]);
+  }, [navRanges.length]);
 
   // Sync page with highlight group so that navigating highlight moves to the correct page
   // Use a ref to prevent interference with manual page changes
   const [lastManualPage, setLastManualPage] = useState(null);
 
   useEffect(() => {
-    if (highlightRanges.length === 0) return;
-    // Find the page that contains the start of the current highlight group
-    const [groupStart] = highlightRanges[highlightGroupIdx] || [0];
+    if (navRanges.length === 0) return;
+    // Find the page that contains the start of the current navigation group
+    const [groupStart] = navRanges[highlightGroupIdx] || [0];
     const groupPage = Math.floor(groupStart / (DIGITS_PER_ROW * ROWS_PER_PAGE));
     // Only sync if this wasn't a manual page change
     if (groupPage !== page && lastManualPage === null) {
@@ -333,12 +388,12 @@ function NumbersMemorisationContent() {
     if (lastManualPage !== null) {
       setLastManualPage(null);
     }
-  }, [highlightGroupIdx, highlightRanges, page, lastManualPage]);
+  }, [highlightGroupIdx, navRanges, page, lastManualPage]);
 
-  // Reset highlight index if digits or grouping changes
+  // Reset highlight index if digits or patterns change
   useEffect(() => {
     setHighlightGroupIdx(0);
-  }, [digits, highlightGrouping]);
+  }, [digits, imagePattern, locationPattern, navigateBy]);
 
   // Discipline label lookup
   const modeOptions = [
@@ -355,12 +410,12 @@ function NumbersMemorisationContent() {
   // Generate digits with allowed prefixes enforced per group, but only once unless user regenerates
   useEffect(() => {
     if (digits) return; // Only generate if not already set
-    if (amount > 0 && highlightGroups.length > 0) {
+    if (amount > 0 && imageGroups.length > 0) {
       let result = "";
       let totalDigits = Number(amount);
       let groupIdx = 0;
       while (result.length < totalDigits) {
-        const groupLen = highlightGroups[groupIdx % highlightGroups.length];
+        const groupLen = imageGroups[groupIdx % imageGroups.length];
         const allowed =
           allowedPrefixesArr[groupIdx % allowedPrefixesArr.length] || [];
         let group = "";
@@ -383,7 +438,7 @@ function NumbersMemorisationContent() {
     } else if (amount > 0) {
       setDigits(generateRandomDigits(Number(amount)));
     }
-  }, [amount, highlightGrouping, allowedPrefixesArr, digits]);
+  }, [amount, imagePattern, allowedPrefixesArr, digits]);
 
   if (!amount || amount <= 0) {
     return <div>No amount specified.</div>;
@@ -409,13 +464,6 @@ function NumbersMemorisationContent() {
     rows.push(rowDigits);
   }
 
-  // Helper: is digit at global index highlighted?
-  function isDigitHighlighted(globalIdx) {
-    if (highlightRanges.length === 0) return false;
-    const [start, end] = highlightRanges[highlightGroupIdx] || [];
-    return globalIdx >= start && globalIdx < end;
-  }
-
   // Calculate digit font size and spacing based on container width and number of digits per row
   // Target: 40 digits per row, fit within ~90vw (max 1200px)
   const containerMaxWidth = 1200;
@@ -427,29 +475,82 @@ function NumbersMemorisationContent() {
   const digitFontSize = Math.max(Math.floor(digitWidth * 0.9), 16); // min 16px
   const digitGap = Math.max(Math.floor(digitWidth * 0.15), 2); // min 2px
 
-  // For complex groupings, all subgroups in a cycle use the same location
-  function getLocationIdxForGroupIdx(groupIdx) {
-    if (highlightGroups.length === 0) return 0;
-    let total = 0;
-    let locIdx = 0;
-    while (total <= groupIdx) {
-      total += highlightGroups.length;
-      if (total > groupIdx) break;
-      locIdx++;
-    }
-    return locIdx;
+  // Helper: is digit at global index highlighted?
+  function isDigitHighlighted(globalIdx) {
+    if (navRanges.length === 0) return false;
+    const [start, end] = navRanges[highlightGroupIdx] || [];
+    return globalIdx >= start && globalIdx < end;
   }
-  function getDigitsForGroup() {
-    if (highlightRanges.length === 0) return "";
-    const [start, end] = highlightRanges[highlightGroupIdx] || [];
+
+  // Get digits for current navigation group
+  function getDigitsForCurrentNav() {
+    if (navRanges.length === 0) return "";
+    const [start, end] = navRanges[highlightGroupIdx] || [];
     return digits.slice(start, end);
   }
+
+  // Get digits for focus box based on settings
+  function getDigitsForFocusBox() {
+    if (focusBoxShows === "image") {
+      // Show current image only
+      const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+      if (imageRanges.length === 0) return "";
+      const [start, end] = imageRanges[imageIdx] || [];
+      return digits.slice(start, end);
+    } else if (focusBoxShows === "location-separated") {
+      // Show current location with image pattern separators
+      const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+      const locIdx = getLocationIdxForImageIdx(imageIdx);
+      if (locationRanges.length === 0) return "";
+      const [start, end] = locationRanges[locIdx] || [];
+
+      // Format with image pattern separators
+      const locationDigits = digits.slice(start, end);
+      if (imageGroups.length > 0) {
+        let formatted = "";
+        let idx = 0;
+        while (idx < locationDigits.length) {
+          for (
+            let g = 0;
+            g < imageGroups.length && idx < locationDigits.length;
+            g++
+          ) {
+            const len = imageGroups[g];
+            if (formatted) formatted += " ";
+            formatted += locationDigits.slice(
+              idx,
+              Math.min(idx + len, locationDigits.length)
+            );
+            idx += len;
+          }
+        }
+        return formatted;
+      }
+      return locationDigits;
+    } else {
+      // location-noseparated: Show current location without separators
+      const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+      const locIdx = getLocationIdxForImageIdx(imageIdx);
+      if (locationRanges.length === 0) return "";
+      const [start, end] = locationRanges[locIdx] || [];
+      return digits.slice(start, end);
+    }
+  }
+
+  // Get image text for current navigation position
   function getImageTextForGroup() {
-    if (imageSetData.length === 0 || highlightGroups.length === 0) return "";
-    const groupInCycle = highlightGroupIdx % highlightGroups.length;
+    if (imageSetData.length === 0 || imageGroups.length === 0) return "";
+
+    // Get the current image index
+    const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+    const groupInCycle = imageIdx % imageGroups.length;
     const set = imageSetData[groupInCycle];
     if (!set || !Array.isArray(set.images)) return "";
-    const digitsStr = getDigitsForGroup();
+
+    // Get digits for this image
+    const [start, end] = imageRanges[imageIdx] || [];
+    const digitsStr = digits.slice(start, end);
+
     let found = set.images.find((img) => img.name === digitsStr);
     if (!found) {
       return digitsStr;
@@ -460,12 +561,16 @@ function NumbersMemorisationContent() {
     }
     return text;
   }
+
+  // Get location and object for current navigation position
   function getLocationAndObject() {
-    // Use journeyData and their points
-    // For now, use the first journey (or cycle if multiple)
     if (!journeyData || journeyData.length === 0)
       return { location: "", object: "" };
-    const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
+
+    // Get current image and its location
+    const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+    const locIdx = getLocationIdxForImageIdx(imageIdx);
+
     // Which journey to use (cycle if more than one)
     const journeyIdx = locIdx % journeyData.length;
     const journey = journeyData[journeyIdx];
@@ -475,6 +580,7 @@ function NumbersMemorisationContent() {
       journey.points.length === 0
     )
       return { location: "", object: "" };
+
     // Which point to use (cycle if more than points available)
     const pointIdx = locIdx % journey.points.length;
     const point = journey.points[pointIdx];
@@ -564,7 +670,11 @@ function NumbersMemorisationContent() {
     // Find the current journey and point for the highlighted group
     if (!journeyData || journeyData.length === 0)
       return { locationUrl: null, compImageUrl: null, memoPicUrl: null };
-    const locIdx = getLocationIdxForGroupIdx(highlightGroupIdx);
+
+    // Get current image and its location
+    const imageIdx = getImageIdxForNavIdx(highlightGroupIdx);
+    const locIdx = getLocationIdxForImageIdx(imageIdx);
+
     const journeyIdx = locIdx % journeyData.length;
     const journey = journeyData[journeyIdx];
     if (
@@ -580,11 +690,13 @@ function NumbersMemorisationContent() {
     let compImageUrl = null;
     let debugDigitsStr = null;
     let debugFound = null;
-    if (imageSetData.length > 0 && highlightGroups.length > 0) {
-      const groupInCycle = highlightGroupIdx % highlightGroups.length;
+    if (imageSetData.length > 0 && imageGroups.length > 0) {
+      const groupInCycle = imageIdx % imageGroups.length;
       const set = imageSetData[groupInCycle];
       if (set && Array.isArray(set.images)) {
-        const digitsStr = getDigitsForGroup();
+        // Get digits for this image
+        const [start, end] = imageRanges[imageIdx] || [];
+        const digitsStr = digits.slice(start, end);
         debugDigitsStr = digitsStr;
         const found = set.images.find((img) => img.name === digitsStr);
         debugFound = found;
@@ -861,9 +973,9 @@ function NumbersMemorisationContent() {
                       showScore && !isCorrect && (isHovered || isTouched);
                     // Check if this input is in the current highlight group
                     const [groupStart, groupEnd] =
-                      highlightRanges[highlightGroupIdx] || [];
+                      navRanges[highlightGroupIdx] || [];
                     const isHighlighted =
-                      highlightRanges.length > 0 &&
+                      navRanges.length > 0 &&
                       globalIdx >= groupStart &&
                       globalIdx < groupEnd;
                     // New: Use a distinct green with stripes/gradient for correct but not recalled
@@ -877,10 +989,10 @@ function NumbersMemorisationContent() {
                     } else if (isIncorrect) {
                       inputBackground = "#fee2e2"; // red
                     }
-                    // Find which highlight group this digit belongs to
+                    // Find which image group this digit belongs to
                     let groupIdxForDigit = -1;
-                    for (let g = 0; g < highlightRanges.length; g++) {
-                      const [start, end] = highlightRanges[g];
+                    for (let g = 0; g < imageRanges.length; g++) {
+                      const [start, end] = imageRanges[g];
                       if (globalIdx >= start && globalIdx < end) {
                         groupIdxForDigit = g;
                         break;
@@ -909,10 +1021,10 @@ function NumbersMemorisationContent() {
                             const nextInput = e.target.nextElementSibling;
                             if (nextInput) {
                               nextInput.focus();
-                              // Check if next input belongs to a different group
+                              // Check if next input belongs to a different navigation group
                               const nextGlobalIdx = globalIdx + 1;
-                              for (let g = 0; g < highlightRanges.length; g++) {
-                                const [start, end] = highlightRanges[g];
+                              for (let g = 0; g < navRanges.length; g++) {
+                                const [start, end] = navRanges[g];
                                 if (
                                   nextGlobalIdx >= start &&
                                   nextGlobalIdx < end &&
@@ -1029,7 +1141,7 @@ function NumbersMemorisationContent() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {getDigitsForGroup()}
+                {getDigitsForFocusBox()}
               </span>
               <div className="flex items-center justify-center mt-4">
                 <button
@@ -1043,17 +1155,15 @@ function NumbersMemorisationContent() {
                   Previous
                 </button>
                 <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
-                  {highlightGroupIdx + 1} / {highlightRanges.length || 1}
+                  {highlightGroupIdx + 1} / {navRanges.length || 1}
                 </span>
                 <button
                   onClick={() =>
                     setHighlightGroupIdx((idx) =>
-                      Math.min((highlightRanges.length || 1) - 1, idx + 1)
+                      Math.min((navRanges.length || 1) - 1, idx + 1)
                     )
                   }
-                  disabled={
-                    highlightGroupIdx === (highlightRanges.length || 1) - 1
-                  }
+                  disabled={highlightGroupIdx === (navRanges.length || 1) - 1}
                   className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
                   aria-label="Next group"
                 >
@@ -1089,7 +1199,7 @@ function NumbersMemorisationContent() {
                 whiteSpace: "nowrap",
               }}
             >
-              {getDigitsForGroup()}
+              {getDigitsForFocusBox()}
             </span>
           </div>
         )}
@@ -1130,9 +1240,9 @@ function NumbersMemorisationContent() {
                         showScore && !isCorrect && isHovered;
                       // Check if this input is in the current highlight group
                       const [groupStart, groupEnd] =
-                        highlightRanges[highlightGroupIdx] || [];
+                        navRanges[highlightGroupIdx] || [];
                       const isHighlighted =
-                        highlightRanges.length > 0 &&
+                        navRanges.length > 0 &&
                         globalIdx >= groupStart &&
                         globalIdx < groupEnd;
                       // New: Use a distinct green with stripes/gradient for correct but not recalled
@@ -1148,8 +1258,8 @@ function NumbersMemorisationContent() {
                       }
                       // Find which highlight group this digit belongs to
                       let groupIdxForDigit = -1;
-                      for (let g = 0; g < highlightRanges.length; g++) {
-                        const [start, end] = highlightRanges[g];
+                      for (let g = 0; g < imageRanges.length; g++) {
+                        const [start, end] = imageRanges[g];
                         if (globalIdx >= start && globalIdx < end) {
                           groupIdxForDigit = g;
                           break;
@@ -1185,12 +1295,8 @@ function NumbersMemorisationContent() {
                                 nextInput.focus();
                                 // Check if next input belongs to a different group
                                 const nextGlobalIdx = globalIdx + 1;
-                                for (
-                                  let g = 0;
-                                  g < highlightRanges.length;
-                                  g++
-                                ) {
-                                  const [start, end] = highlightRanges[g];
+                                for (let g = 0; g < imageRanges.length; g++) {
+                                  const [start, end] = imageRanges[g];
                                   if (
                                     nextGlobalIdx >= start &&
                                     nextGlobalIdx < end &&
@@ -1272,9 +1378,9 @@ function NumbersMemorisationContent() {
                   <span className="flex gap-1 relative">
                     {/* Highlight rectangle for group if any part of group is in this row */}
                     {(() => {
-                      if (highlightRanges.length === 0) return null;
+                      if (navRanges.length === 0) return null;
                       const [groupStart, groupEnd] =
-                        highlightRanges[highlightGroupIdx] || [];
+                        navRanges[highlightGroupIdx] || [];
                       // Compute the range of global indices for this row
                       const rowStartIdx = globalRowIdx * DIGITS_PER_ROW;
                       const rowEndIdx = rowStartIdx + row.length;
@@ -1312,8 +1418,8 @@ function NumbersMemorisationContent() {
                       const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
                       // Find which highlight group this digit belongs to
                       let groupIdxForDigit = -1;
-                      for (let g = 0; g < highlightRanges.length; g++) {
-                        const [start, end] = highlightRanges[g];
+                      for (let g = 0; g < imageRanges.length; g++) {
+                        const [start, end] = imageRanges[g];
                         if (globalIdx >= start && globalIdx < end) {
                           groupIdxForDigit = g;
                           break;
@@ -1366,9 +1472,9 @@ function NumbersMemorisationContent() {
                 setPage(newPage);
                 setLastManualPage(newPage);
                 // Move highlight to first group on the new page
-                if (highlightRanges.length > 0) {
+                if (imageRanges.length > 0) {
                   const pageStartIdx = newPage * DIGITS_PER_ROW * ROWS_PER_PAGE;
-                  const firstGroupOnPage = highlightRanges.findIndex(
+                  const firstGroupOnPage = imageRanges.findIndex(
                     ([start]) => start >= pageStartIdx
                   );
                   if (firstGroupOnPage !== -1) {
@@ -1390,9 +1496,9 @@ function NumbersMemorisationContent() {
                 setPage(newPage);
                 setLastManualPage(newPage);
                 // Move highlight to first group on the new page
-                if (highlightRanges.length > 0) {
+                if (imageRanges.length > 0) {
                   const pageStartIdx = newPage * DIGITS_PER_ROW * ROWS_PER_PAGE;
-                  const firstGroupOnPage = highlightRanges.findIndex(
+                  const firstGroupOnPage = imageRanges.findIndex(
                     ([start]) => start >= pageStartIdx
                   );
                   if (firstGroupOnPage !== -1) {
