@@ -17,6 +17,9 @@ const defaultSettings = {
   navigateBy: "image",
   focusBoxShows: "image",
   endOnNextClick: false,
+  memoCountdown: 20,
+  recallCountdownMode: "0",
+  recallCountdown: 20,
 };
 
 export default function NumberTrainingSettings() {
@@ -96,6 +99,11 @@ export default function NumberTrainingSettings() {
     const storedMode = localStorage.getItem("mode");
     const storedTimedMode = localStorage.getItem("timedMode");
     const storedEndOnNextClick = localStorage.getItem("endOnNextClick");
+    const storedMemoCountdown = localStorage.getItem("memoCountdown");
+    const storedRecallCountdownMode = localStorage.getItem(
+      "recallCountdownMode"
+    );
+    const storedRecallCountdown = localStorage.getItem("recallCountdown");
     const preset = modeOptions.find((opt) => opt.value === storedMode);
     let customValues = {};
     if (storedMode === "XN") {
@@ -120,6 +128,15 @@ export default function NumberTrainingSettings() {
         : {}),
       ...(storedEndOnNextClick !== null
         ? { endOnNextClick: storedEndOnNextClick === "true" }
+        : {}),
+      ...(storedMemoCountdown !== null
+        ? { memoCountdown: Number(storedMemoCountdown) }
+        : {}),
+      ...(storedRecallCountdownMode !== null
+        ? { recallCountdownMode: storedRecallCountdownMode }
+        : {}),
+      ...(storedRecallCountdown !== null
+        ? { recallCountdown: Number(storedRecallCountdown) }
         : {}),
       ...(storedMode && storedMode !== "XN" && preset
         ? {
@@ -345,6 +362,12 @@ export default function NumberTrainingSettings() {
       if (name === "recallTime")
         localStorage.setItem("customRecallTime", value);
     }
+    // Save countdown settings
+    if (name === "memoCountdown") localStorage.setItem("memoCountdown", value);
+    if (name === "recallCountdownMode")
+      localStorage.setItem("recallCountdownMode", value);
+    if (name === "recallCountdown")
+      localStorage.setItem("recallCountdown", value);
   };
 
   const isCustom = settings.mode === "XN";
@@ -484,6 +507,60 @@ export default function NumberTrainingSettings() {
                   className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                   disabled={!isCustom}
                 />
+              </>
+            )}
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+              Memorisation countdown (seconds)
+            </label>
+            <input
+              type="number"
+              name="memoCountdown"
+              value={settings.memoCountdown ?? 20}
+              onChange={handleChange}
+              min="0"
+              max="10000"
+              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            />
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Countdown before memorisation starts (0-10,000 seconds, default
+              20)
+            </div>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Recall countdown mode
+            </label>
+            <select
+              name="recallCountdownMode"
+              value={settings.recallCountdownMode ?? "0"}
+              onChange={handleChange}
+              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="0">Fixed time</option>
+              <option value="remaining">Remaining memorisation time</option>
+            </select>
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              Choose between fixed countdown or time remaining from memorisation
+            </div>
+
+            {(settings.recallCountdownMode ?? "0") === "0" && (
+              <>
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Recall countdown (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="recallCountdown"
+                  value={settings.recallCountdown ?? 20}
+                  onChange={handleChange}
+                  min="0"
+                  max="10000"
+                  className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  Fixed countdown before recall starts (0-10,000 seconds,
+                  default 20)
+                </div>
               </>
             )}
 
@@ -812,7 +889,11 @@ export default function NumberTrainingSettings() {
                   settings.recallTime
                 }&endOnNextClick=${
                   settings.endOnNextClick ? "1" : "0"
-                }`
+                }&memoCountdown=${
+                  settings.memoCountdown ?? 20
+                }&recallCountdownMode=${
+                  settings.recallCountdownMode ?? "0"
+                }&recallCountdown=${settings.recallCountdown ?? 20}`
               );
             }}
           >
