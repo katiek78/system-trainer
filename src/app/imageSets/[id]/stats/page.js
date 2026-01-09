@@ -243,7 +243,7 @@ export default function ImageSetStatsPage() {
                   {overallStats.totalAttempts}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Attempts
+                  Total Drills
                 </div>
               </div>
             </div>

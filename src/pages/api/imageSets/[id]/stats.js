@@ -183,15 +183,12 @@ export default async function handler(req, res) {
           drilledImages.length
         : 0;
 
-    // Calculate total attempts from DrillAttempt records
+    // Calculate total drill sessions from DrillAttempt records
     const drillAttempts = await DrillAttempt.find({
       imageSetId: id,
     }).lean();
 
-    const totalAttempts = drillAttempts.reduce(
-      (sum, attempt) => sum + (attempt.itemsAttempted || 0),
-      0
-    );
+    const totalAttempts = drillAttempts.length;
 
     const statsData = {
       _id: imageSet._id.toString(),
