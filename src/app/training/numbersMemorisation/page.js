@@ -27,6 +27,15 @@ function NumbersMemorisationContent() {
   const journeyIds = searchParams.get("journeyIds") || "";
   const allowedPrefixes = searchParams.get("allowedPrefixes") || "";
   const journeyHints = searchParams.get("journeyHints") || "1";
+  const timedModeParam = searchParams.get("timedMode") || "0";
+  const memorisationTimeParam = searchParams.get("memorisationTime") || "60";
+
+  const timedMode = timedModeParam === "1";
+  const memorisationTime = Number(memorisationTimeParam);
+
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [showRecall, setShowRecall] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const showJourneyHints =
     journeyHints === "1" || journeyHints === 1 || journeyHints === true;
@@ -45,6 +54,39 @@ function NumbersMemorisationContent() {
         )
     : [];
   // Now allowedPrefixesArr[i] is an array of allowed prefixes for group i, or [] for no restriction
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (
+      timedMode &&
+      timeRemaining !== null &&
+      timeRemaining > 0 &&
+      !showRecall &&
+      !isPaused
+    ) {
+      const interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setShowRecall(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timedMode, timeRemaining, showRecall, isPaused]);
+
+  // Start timer when timed mode is enabled
+  useEffect(() => {
+    if (timedMode && timeRemaining === null) {
+      setTimeRemaining(memorisationTime);
+      setShowRecall(false);
+    } else if (!timedMode) {
+      setTimeRemaining(null);
+      setShowRecall(false);
+    }
+  }, [timedMode, memorisationTime]);
 
   // Keyboard shortcut for 'd' to show details alert
   useEffect(() => {
@@ -416,13 +458,31 @@ function NumbersMemorisationContent() {
           <h1 className="text-2xl sm:text-3xl text-gray-900 dark:text-gray-100">
             {disciplineLabel}
           </h1>
-          <button
-            className="ml-4 px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-400 dark:hover:bg-gray-600"
-            onClick={handleExitToSettings}
-            aria-label="Exit to Settings Page"
-          >
-            Exit to settings
-          </button>
+          <div className="flex items-center gap-4">
+            {timedMode && timeRemaining !== null && (
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  ⏱️ {Math.floor(timeRemaining / 60)}:
+                  {String(timeRemaining % 60).padStart(2, "0")}
+                </span>
+                {!showRecall && (
+                  <button
+                    onClick={() => setIsPaused((prev) => !prev)}
+                    className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    {isPaused ? "Resume" : "Pause"}
+                  </button>
+                )}
+              </div>
+            )}
+            <button
+              className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-400 dark:hover:bg-gray-600"
+              onClick={handleExitToSettings}
+              aria-label="Exit to Settings Page"
+            >
+              Exit to settings
+            </button>
+          </div>
         </div>
 
         {/* HINT BAR: Only show if journey hints are enabled */}
@@ -607,175 +667,279 @@ function NumbersMemorisationContent() {
 
         {/* MOBILE: Only show focused digits, with navigation, fixed height */}
         <div className="block sm:hidden">
-          <div
-            className="flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-4 mb-6"
-            style={{
-              minHeight: "220px",
-              height: "220px",
-              maxHeight: "260px",
-              width: "320px",
-              maxWidth: "90vw",
-              marginLeft: "auto",
-              marginRight: "auto",
-              boxSizing: "border-box",
-            }}
-          >
-            <span
-              className="text-4xl font-mono tracking-widest text-gray-900 dark:text-gray-100 select-all mb-6"
+          {showRecall ? (
+            <div
+              className="flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-4 mb-6"
               style={{
-                minHeight: "2.5em",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                minHeight: "220px",
+                height: "auto",
+                width: "320px",
+                maxWidth: "90vw",
+                marginLeft: "auto",
+                marginRight: "auto",
+                boxSizing: "border-box",
+                padding: "20px",
               }}
             >
-              {getDigitsForGroup()}
-            </span>
-            <div className="flex items-center justify-center mt-4">
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+                Recall Mode
+              </h2>
+              <p className="text-center mb-4 text-gray-700 dark:text-gray-300">
+                Enter the digits you memorized:
+              </p>
+              {(() => {
+                const groupDigits = getDigitsForGroup();
+                return (
+                  <div className="flex flex-wrap gap-2 justify-center mb-4">
+                    {groupDigits.split("").map((_, idx) => (
+                      <input
+                        key={idx}
+                        type="text"
+                        maxLength="1"
+                        className="w-10 h-12 text-center text-xl font-mono border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        style={{ fontFamily: "'Roboto Mono', monospace" }}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
               <button
-                onClick={() =>
-                  setHighlightGroupIdx((idx) => Math.max(0, idx - 1))
-                }
-                disabled={highlightGroupIdx === 0}
-                className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-                aria-label="Previous group"
-              >
-                Previous
-              </button>
-              <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
-                {highlightGroupIdx + 1} / {highlightRanges.length || 1}
-              </span>
-              <button
-                onClick={() =>
+                onClick={() => {
                   setHighlightGroupIdx((idx) =>
                     Math.min((highlightRanges.length || 1) - 1, idx + 1)
-                  )
-                }
-                disabled={
-                  highlightGroupIdx === (highlightRanges.length || 1) - 1
-                }
-                className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-                aria-label="Next group"
+                  );
+                  setShowRecall(false);
+                  setTimeRemaining(memorisationTime);
+                }}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                Next
+                Next Group
+              </button>
+            </div>
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-4 mb-6"
+              style={{
+                minHeight: "220px",
+                height: "220px",
+                maxHeight: "260px",
+                width: "320px",
+                maxWidth: "90vw",
+                marginLeft: "auto",
+                marginRight: "auto",
+                boxSizing: "border-box",
+              }}
+            >
+              <span
+                className="text-4xl font-mono tracking-widest text-gray-900 dark:text-gray-100 select-all mb-6"
+                style={{
+                  minHeight: "2.5em",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {getDigitsForGroup()}
+              </span>
+              <div className="flex items-center justify-center mt-4">
+                <button
+                  onClick={() =>
+                    setHighlightGroupIdx((idx) => Math.max(0, idx - 1))
+                  }
+                  disabled={highlightGroupIdx === 0}
+                  className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+                  aria-label="Previous group"
+                >
+                  Previous
+                </button>
+                <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
+                  {highlightGroupIdx + 1} / {highlightRanges.length || 1}
+                </span>
+                <button
+                  onClick={() =>
+                    setHighlightGroupIdx((idx) =>
+                      Math.min((highlightRanges.length || 1) - 1, idx + 1)
+                    )
+                  }
+                  disabled={
+                    highlightGroupIdx === (highlightRanges.length || 1) - 1
+                  }
+                  className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+                  aria-label="Next group"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* DESKTOP: Full grid or Recall boxes */}
+        {showRecall ? (
+          <div className="hidden sm:flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-8 mb-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+              Recall Mode
+            </h2>
+            <p className="text-center mb-6 text-gray-700 dark:text-gray-300">
+              Enter the digits you memorized for group {highlightGroupIdx + 1}:
+            </p>
+            {(() => {
+              const groupDigits = getDigitsForGroup();
+              return (
+                <div
+                  className="flex flex-wrap gap-2 justify-center mb-6"
+                  style={{ maxWidth: "800px" }}
+                >
+                  {groupDigits.split("").map((_, idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      maxLength="1"
+                      className="w-12 h-14 text-center text-2xl font-mono border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      style={{ fontFamily: "'Roboto Mono', monospace" }}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowRecall(false);
+                  setTimeRemaining(memorisationTime);
+                }}
+                className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Back to Memorisation
+              </button>
+              <button
+                onClick={() => {
+                  setHighlightGroupIdx((idx) =>
+                    Math.min((highlightRanges.length || 1) - 1, idx + 1)
+                  );
+                  setShowRecall(false);
+                  setTimeRemaining(memorisationTime);
+                }}
+                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Next Group
               </button>
             </div>
           </div>
-        </div>
-
-        {/* DESKTOP: Full grid */}
-        <div
-          className="hidden sm:flex flex-col justify-start bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
-          style={{
-            width: "98vw",
-            maxWidth: "none",
-            margin: "0 -24px 24px -24px",
-          }}
-        >
-          {rows.map((row, idx) => {
-            const globalRowIdx = startRow + idx;
-            return (
-              <div
-                key={idx}
-                className="flex items-center mb-3 flex-nowrap"
-                style={{ fontSize: digitFontSize }}
-              >
-                <span className="min-w-[48px] text-red-700 dark:text-red-400 italic text-[16px] mr-4 text-right">
-                  {globalRowIdx + 1}
-                </span>
-                <span className="flex gap-1 relative">
-                  {/* Highlight rectangle for group if any part of group is in this row */}
-                  {(() => {
-                    if (highlightRanges.length === 0) return null;
-                    const [groupStart, groupEnd] =
-                      highlightRanges[highlightGroupIdx] || [];
-                    // Compute the range of global indices for this row
-                    const rowStartIdx = globalRowIdx * DIGITS_PER_ROW;
-                    const rowEndIdx = rowStartIdx + row.length;
-                    // If the highlight group overlaps this row, render a highlight rectangle
-                    const highlightStart = Math.max(groupStart, rowStartIdx);
-                    const highlightEnd = Math.min(groupEnd, rowEndIdx);
-                    if (highlightStart < highlightEnd) {
-                      // Compute left offset and width in px
-                      const left =
-                        (highlightStart - rowStartIdx) *
-                        (digitWidth + digitGap);
-                      const width =
-                        (highlightEnd - highlightStart) *
-                          (digitWidth + digitGap) -
-                        digitGap;
-                      return (
-                        <div
-                          style={{
-                            position: "absolute",
-                            left,
-                            top: 0,
-                            height: "100%",
-                            width,
-                            background: "#ffe066",
-                            borderRadius: 6,
-                            boxShadow: "0 0 0 2px #ffd700 inset",
-                            zIndex: 0,
-                          }}
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
-                  {row.map((digit, i) => {
-                    const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
-                    // Find which highlight group this digit belongs to
-                    let groupIdxForDigit = -1;
-                    for (let g = 0; g < highlightRanges.length; g++) {
-                      const [start, end] = highlightRanges[g];
-                      if (globalIdx >= start && globalIdx < end) {
-                        groupIdxForDigit = g;
-                        break;
+        ) : (
+          <div
+            className="hidden sm:flex flex-col justify-start bg-white dark:bg-slate-800 rounded-lg shadow-md px-8 py-3 mb-6 font-mono min-h-[400px]"
+            style={{
+              width: "98vw",
+              maxWidth: "none",
+              margin: "0 -24px 24px -24px",
+            }}
+          >
+            {rows.map((row, idx) => {
+              const globalRowIdx = startRow + idx;
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center mb-3 flex-nowrap"
+                  style={{ fontSize: digitFontSize }}
+                >
+                  <span className="min-w-[48px] text-red-700 dark:text-red-400 italic text-[16px] mr-4 text-right">
+                    {globalRowIdx + 1}
+                  </span>
+                  <span className="flex gap-1 relative">
+                    {/* Highlight rectangle for group if any part of group is in this row */}
+                    {(() => {
+                      if (highlightRanges.length === 0) return null;
+                      const [groupStart, groupEnd] =
+                        highlightRanges[highlightGroupIdx] || [];
+                      // Compute the range of global indices for this row
+                      const rowStartIdx = globalRowIdx * DIGITS_PER_ROW;
+                      const rowEndIdx = rowStartIdx + row.length;
+                      // If the highlight group overlaps this row, render a highlight rectangle
+                      const highlightStart = Math.max(groupStart, rowStartIdx);
+                      const highlightEnd = Math.min(groupEnd, rowEndIdx);
+                      if (highlightStart < highlightEnd) {
+                        // Compute left offset and width in px
+                        const left =
+                          (highlightStart - rowStartIdx) *
+                          (digitWidth + digitGap);
+                        const width =
+                          (highlightEnd - highlightStart) *
+                            (digitWidth + digitGap) -
+                          digitGap;
+                        return (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left,
+                              top: 0,
+                              height: "100%",
+                              width,
+                              background: "#ffe066",
+                              borderRadius: 6,
+                              boxShadow: "0 0 0 2px #ffd700 inset",
+                              zIndex: 0,
+                            }}
+                          />
+                        );
                       }
-                    }
-                    return (
-                      <span
-                        key={i}
-                        style={{
-                          display: "inline-block",
-                          minWidth: digitWidth,
-                          textAlign: "center",
-                          color:
-                            groupIdxForDigit === highlightGroupIdx
-                              ? "#222"
-                              : undefined,
-                          position: "relative",
-                          zIndex: 1,
-                          cursor:
-                            groupIdxForDigit !== -1 ? "pointer" : undefined,
-                          outline: "none",
-                        }}
-                        onClick={() => {
-                          if (groupIdxForDigit !== -1)
-                            setHighlightGroupIdx(groupIdxForDigit);
-                        }}
-                        tabIndex={groupIdxForDigit !== -1 ? 0 : -1}
-                        aria-label={
-                          groupIdxForDigit !== -1
-                            ? `Select group ${groupIdxForDigit + 1}`
-                            : undefined
+                      return null;
+                    })()}
+                    {row.map((digit, i) => {
+                      const globalIdx = globalRowIdx * DIGITS_PER_ROW + i;
+                      // Find which highlight group this digit belongs to
+                      let groupIdxForDigit = -1;
+                      for (let g = 0; g < highlightRanges.length; g++) {
+                        const [start, end] = highlightRanges[g];
+                        if (globalIdx >= start && globalIdx < end) {
+                          groupIdxForDigit = g;
+                          break;
                         }
-                      >
-                        {digit}
-                      </span>
-                    );
-                  })}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                      }
+                      return (
+                        <span
+                          key={i}
+                          style={{
+                            display: "inline-block",
+                            minWidth: digitWidth,
+                            textAlign: "center",
+                            color:
+                              groupIdxForDigit === highlightGroupIdx
+                                ? "#222"
+                                : undefined,
+                            position: "relative",
+                            zIndex: 1,
+                            cursor:
+                              groupIdxForDigit !== -1 ? "pointer" : undefined,
+                            outline: "none",
+                          }}
+                          onClick={() => {
+                            if (groupIdxForDigit !== -1)
+                              setHighlightGroupIdx(groupIdxForDigit);
+                          }}
+                          tabIndex={groupIdxForDigit !== -1 ? 0 : -1}
+                          aria-label={
+                            groupIdxForDigit !== -1
+                              ? `Select group ${groupIdxForDigit + 1}`
+                              : undefined
+                          }
+                        >
+                          {digit}
+                        </span>
+                      );
+                    })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-        {totalPages > 1 && (
+        {totalPages > 1 && !showRecall && (
           <div className="mt-4 text-center">
             <button
               onClick={() => {

@@ -12,6 +12,7 @@ const defaultSettings = {
   highlightGrouping: "",
   imageSets: [],
   journeyHints: true,
+  timedMode: false,
 };
 
 export default function NumberTrainingSettings() {
@@ -86,6 +87,7 @@ export default function NumberTrainingSettings() {
   useEffect(() => {
     const storedHighlightGrouping = localStorage.getItem("highlightGrouping");
     const storedMode = localStorage.getItem("mode");
+    const storedTimedMode = localStorage.getItem("timedMode");
     const preset = modeOptions.find((opt) => opt.value === storedMode);
     let customValues = {};
     if (storedMode === "XN") {
@@ -102,6 +104,9 @@ export default function NumberTrainingSettings() {
         ? { highlightGrouping: storedHighlightGrouping }
         : {}),
       ...(storedMode ? { mode: storedMode } : {}),
+      ...(storedTimedMode !== null
+        ? { timedMode: storedTimedMode === "true" }
+        : {}),
       ...(storedMode && storedMode !== "XN" && preset
         ? {
             digits: preset.digits,
@@ -545,29 +550,49 @@ export default function NumberTrainingSettings() {
           disabled={!isCustom}
         />
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Memorisation time (seconds)
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+          <input
+            type="checkbox"
+            className="mr-2"
+            checked={settings.timedMode}
+            onChange={(e) => {
+              setSettings((prev) => ({
+                ...prev,
+                timedMode: e.target.checked,
+              }));
+              localStorage.setItem("timedMode", e.target.checked);
+            }}
+          />
+          Timed Memorisation + Recall
         </label>
-        <input
-          type="number"
-          name="memorisationTime"
-          value={settings.memorisationTime}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-          disabled={!isCustom}
-        />
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Recall time (seconds)
-        </label>
-        <input
-          type="number"
-          name="recallTime"
-          value={settings.recallTime}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-          disabled={!isCustom}
-        />
+        {settings.timedMode && (
+          <>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+              Memorisation time (seconds)
+            </label>
+            <input
+              type="number"
+              name="memorisationTime"
+              value={settings.memorisationTime}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              disabled={!isCustom}
+            />
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Recall time (seconds)
+            </label>
+            <input
+              type="number"
+              name="recallTime"
+              value={settings.recallTime}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              disabled={!isCustom}
+            />
+          </>
+        )}
 
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Highlight grouping (e.g. 4 or 3-2-3)
@@ -666,7 +691,11 @@ export default function NumberTrainingSettings() {
                   ","
                 )}&allowedPrefixes=${allowedPrefixes
                   .map((p) => encodeURIComponent(p))
-                  .join("|")}&journeyHints=${settings.journeyHints ? "1" : "0"}`
+                  .join("|")}&journeyHints=${
+                  settings.journeyHints ? "1" : "0"
+                }&timedMode=${
+                  settings.timedMode ? "1" : "0"
+                }&memorisationTime=${settings.memorisationTime}`
               );
             }}
           >
