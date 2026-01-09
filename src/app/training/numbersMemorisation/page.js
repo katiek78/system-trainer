@@ -126,19 +126,34 @@ function NumbersMemorisationContent() {
     }
   }, [showRecall, recallTimeRemaining, showScore, isPaused]);
 
-  // Start recall timer when recall mode begins
+  // Initialize user input when recall mode begins
+  useEffect(() => {
+    if (showRecall && userInput.length === 0) {
+      setUserInput(Array(digits.length).fill(""));
+    }
+  }, [showRecall, digits.length, userInput.length]);
+
+  // Start recall timer when recall mode begins (timed mode only)
   useEffect(() => {
     if (showRecall && timedMode && recallTimeRemaining === null) {
       setRecallTimeRemaining(recallTime);
-      // Initialize user input array
-      setUserInput(Array(digits.length).fill(""));
-      // Auto-focus first input after a short delay
-      setTimeout(() => {
-        const firstInput = document.querySelector('input[type="text"]');
-        if (firstInput) firstInput.focus();
-      }, 100);
     }
-  }, [showRecall, timedMode, recallTime, digits.length]);
+  }, [showRecall, timedMode, recallTime]);
+
+  // Auto-focus first input when recall mode starts
+  useEffect(() => {
+    if (showRecall && !showScore) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const firstInput = document.querySelector('input[type="text"]');
+          if (firstInput) {
+            firstInput.focus();
+          }
+        }, 50);
+      });
+    }
+  }, [showRecall, showScore]);
 
   // Start timer when timed mode is enabled
   useEffect(() => {
@@ -151,16 +166,22 @@ function NumbersMemorisationContent() {
     }
   }, [timedMode, memorisationTime]);
 
-  // Keyboard shortcut for 'd' to show details alert
+  // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e) {
+      // 'd' to show/hide details modal
       if (e.key === "d" && !e.repeat) {
         setShowDetailsModal((prev) => !prev);
+      }
+      // Enter to start recall mode (only during memorization)
+      if (e.key === "Enter" && !showRecall && !showScore) {
+        e.preventDefault();
+        setShowRecall(true);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [showRecall, showScore]);
 
   // Fetch image set data for selected IDs
   const [imageSetData, setImageSetData] = useState([]);
@@ -671,13 +692,11 @@ function NumbersMemorisationContent() {
               >
                 {(() => {
                   const { location, object } = getLocationAndObject();
-                  const imageText = getImageTextForGroup();
-                  if (!location && !object && !imageText) return null;
+                  if (!location && !object) return null;
                   return (
                     <span>
                       <b>{location}</b>
                       {object ? ` - ${object}` : ""}
-                      {imageText ? `: ${imageText}` : ""}
                     </span>
                   );
                 })()}
@@ -712,6 +731,11 @@ function NumbersMemorisationContent() {
                       <b>{location}</b>
                       {object ? ` - ${object}` : ""}
                       {imageText ? `: ${imageText}` : ""}
+                    </div>
+                  )}
+                  {showJourneyHints && imageText && (
+                    <div className="mb-2 p-2 bg-blue-100 dark:bg-blue-800 text-blue-900 dark:text-blue-100 rounded text-base">
+                      {imageText}
                     </div>
                   )}
                   <div
@@ -867,6 +891,7 @@ function NumbersMemorisationContent() {
                         key={i}
                         type="text"
                         maxLength="1"
+                        autoFocus={i === 0 && !showScore}
                         value={
                           shouldShowCorrect
                             ? correctDigit
@@ -1039,6 +1064,36 @@ function NumbersMemorisationContent() {
           )}
         </div>
 
+        {/* DESKTOP: Focus box showing current highlighted digits */}
+        {!showRecall && (
+          <div
+            className="hidden sm:flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg shadow-md px-4 mb-6"
+            style={{
+              minHeight: "180px",
+              height: "180px",
+              maxWidth: "600px",
+              marginLeft: "auto",
+              marginRight: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <span
+              className="text-5xl font-mono tracking-widest text-gray-900 dark:text-gray-100 select-all"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {getDigitsForGroup()}
+            </span>
+          </div>
+        )}
+
         {/* DESKTOP: Full grid or Recall boxes */}
         {showRecall ? (
           <div
@@ -1105,6 +1160,7 @@ function NumbersMemorisationContent() {
                           key={i}
                           type="text"
                           maxLength="1"
+                          autoFocus={idx === 0 && i === 0 && !showScore}
                           value={
                             shouldShowCorrect
                               ? correctDigit
