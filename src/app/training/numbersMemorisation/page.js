@@ -43,6 +43,18 @@ function NumbersMemorisationContent() {
   const [score, setScore] = useState(null);
   const [showScore, setShowScore] = useState(false);
   const [hoveredInput, setHoveredInput] = useState(null);
+  const [touchedInput, setTouchedInput] = useState(null);
+  const [isClient, setIsClient] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1000);
+
+  // Set client-side window width after mount to avoid hydration errors
+  useEffect(() => {
+    setIsClient(true);
+    setWindowWidth(window.innerWidth);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const showJourneyHints =
     journeyHints === "1" || journeyHints === 1 || journeyHints === true;
@@ -120,6 +132,11 @@ function NumbersMemorisationContent() {
       setRecallTimeRemaining(recallTime);
       // Initialize user input array
       setUserInput(Array(digits.length).fill(""));
+      // Auto-focus first input after a short delay
+      setTimeout(() => {
+        const firstInput = document.querySelector('input[type="text"]');
+        if (firstInput) firstInput.focus();
+      }, 100);
     }
   }, [showRecall, timedMode, recallTime, digits.length]);
 
@@ -231,6 +248,7 @@ function NumbersMemorisationContent() {
     function handleKeyDown(e) {
       // Spacebar returns to start of first page and first highlight group
       if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
         setPage(0);
         setHighlightGroupIdx(0);
         return;
@@ -238,12 +256,15 @@ function NumbersMemorisationContent() {
       // Arrow navigation for highlight group
       if (highlightRanges.length === 0) return;
       if (e.key === "ArrowRight") {
+        e.preventDefault();
         setHighlightGroupIdx((idx) =>
           Math.min(idx + 1, highlightRanges.length - 1)
         );
       } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
         setHighlightGroupIdx((idx) => Math.max(idx - 1, 0));
       } else if (e.key === "ArrowDown") {
+        e.preventDefault();
         // Move to the group containing the digit DIGITS_PER_ROW below the current group's start
         setHighlightGroupIdx((idx) => {
           if (highlightRanges.length === 0) return idx;
@@ -256,6 +277,7 @@ function NumbersMemorisationContent() {
           return targetIdx !== -1 ? targetIdx : idx;
         });
       } else if (e.key === "ArrowUp") {
+        e.preventDefault();
         // Move to the group containing the digit DIGITS_PER_ROW above the current group's start
         setHighlightGroupIdx((idx) => {
           if (highlightRanges.length === 0) return idx;
@@ -377,10 +399,9 @@ function NumbersMemorisationContent() {
   // Target: 40 digits per row, fit within ~90vw (max 1200px)
   const containerMaxWidth = 1200;
   const containerPadding = 64; // left+right
-  const availableWidth =
-    typeof window !== "undefined"
-      ? Math.min(window.innerWidth * 0.9, containerMaxWidth) - containerPadding
-      : 1000;
+  const availableWidth = isClient
+    ? Math.min(windowWidth * 0.9, containerMaxWidth) - containerPadding
+    : 1000;
   const digitWidth = Math.max(Math.floor(availableWidth / 40), 18); // min 18px
   const digitFontSize = Math.max(Math.floor(digitWidth * 0.9), 16); // min 16px
   const digitGap = Math.max(Math.floor(digitWidth * 0.15), 2); // min 2px
@@ -638,35 +659,14 @@ function NumbersMemorisationContent() {
                   wordBreak: "break-word",
                   whiteSpace: "normal",
                   paddingTop: "0.5rem",
-                  height:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "6rem"
-                      : "2.5rem",
-                  minHeight:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "6rem"
-                      : "2.5rem",
-                  maxHeight:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "6rem"
-                      : "2.5rem",
-                  lineHeight:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "1.3"
-                      : "2.5rem",
-                  overflow:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "auto"
-                      : "hidden",
-                  textOverflow:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "clip"
-                      : "ellipsis",
+                  height: windowWidth < 640 ? "6rem" : "2.5rem",
+                  minHeight: windowWidth < 640 ? "6rem" : "2.5rem",
+                  maxHeight: windowWidth < 640 ? "6rem" : "2.5rem",
+                  lineHeight: windowWidth < 640 ? "1.3" : "2.5rem",
+                  overflow: windowWidth < 640 ? "auto" : "hidden",
+                  textOverflow: windowWidth < 640 ? "clip" : "ellipsis",
                   width: "100%",
-                  margin:
-                    typeof window !== "undefined" && window.innerWidth < 640
-                      ? "0 auto"
-                      : undefined,
+                  margin: windowWidth < 640 ? "0 auto" : undefined,
                 }}
               >
                 {(() => {
@@ -832,8 +832,12 @@ function NumbersMemorisationContent() {
                       userDigit !== "" &&
                       userDigit !== correctDigit;
                     const isHovered = hoveredInput === globalIdx;
+                    const isTouched = touchedInput === globalIdx;
                     const shouldShowCorrect =
-                      showScore && !isCorrect && isHovered;
+                      showScore && !isCorrect && (isHovered || isTouched);
+                    // Check if this input is in the current highlight group
+                    const [groupStart, groupEnd] = highlightRanges[highlightGroupIdx] || [];
+                    const isHighlighted = highlightRanges.length > 0 && globalIdx >= groupStart && globalIdx < groupEnd;
                     // New: Use a distinct green with stripes/gradient for correct but not recalled
                     let inputBackground = undefined;
                     if (shouldShowCorrect) {
@@ -844,6 +848,15 @@ function NumbersMemorisationContent() {
                       inputBackground = "#d1fae5"; // solid green
                     } else if (isIncorrect) {
                       inputBackground = "#fee2e2"; // red
+                    }
+                    // Find which highlight group this digit belongs to
+                    let groupIdxForDigit = -1;
+                    for (let g = 0; g < highlightRanges.length; g++) {
+                      const [start, end] = highlightRanges[g];
+                      if (globalIdx >= start && globalIdx < end) {
+                        groupIdxForDigit = g;
+                        break;
+                      }
                     }
                     return (
                       <input
@@ -862,10 +875,36 @@ function NumbersMemorisationContent() {
                             newInput[globalIdx] = val;
                             return newInput;
                           });
-                          // Auto-focus next input
+                          // Auto-focus next input and update highlight if needed
                           if (val && i < rows[0].length - 1) {
                             const nextInput = e.target.nextElementSibling;
-                            if (nextInput) nextInput.focus();
+                            if (nextInput) {
+                              nextInput.focus();
+                              // Check if next input belongs to a different group
+                              const nextGlobalIdx = globalIdx + 1;
+                              for (let g = 0; g < highlightRanges.length; g++) {
+                                const [start, end] = highlightRanges[g];
+                                if (
+                                  nextGlobalIdx >= start &&
+                                  nextGlobalIdx < end &&
+                                  g !== highlightGroupIdx
+                                ) {
+                                  setHighlightGroupIdx(g);
+                                  break;
+                                }
+                              }
+                            }
+                          }
+                        }}
+                        onClick={() => {
+                          // Update highlight group
+                          if (groupIdxForDigit !== -1) {
+                            setHighlightGroupIdx(groupIdxForDigit);
+                          }
+                          // Show correct digit on touch for incorrect/blank
+                          if (showScore && !isCorrect) {
+                            setTouchedInput(globalIdx);
+                            setTimeout(() => setTouchedInput(null), 1000);
                           }
                         }}
                         onKeyDown={(e) => {
@@ -881,10 +920,13 @@ function NumbersMemorisationContent() {
                         onMouseEnter={() => setHoveredInput(globalIdx)}
                         onMouseLeave={() => setHoveredInput(null)}
                         readOnly={showScore}
-                        className="w-8 h-10 text-center text-lg font-mono border-2 border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100"
+                        className="w-8 h-10 text-center text-lg font-mono border-2 rounded text-gray-900 dark:text-gray-100"
                         style={{
                           fontFamily: "'Roboto Mono', monospace",
                           background: inputBackground,
+                          transition: "background 0.3s ease, box-shadow 0.3s ease",
+                          borderColor: isHighlighted ? "#ffd700" : undefined,
+                          boxShadow: isHighlighted ? "0 0 0 3px #ffe066" : undefined,
                         }}
                       />
                     );
@@ -897,6 +939,35 @@ function NumbersMemorisationContent() {
                 >
                   Finish
                 </button>
+              )}
+              {showScore && totalPages > 1 && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => {
+                      const newPage = Math.max(0, safePage - 1);
+                      setPage(newPage);
+                      setLastManualPage(newPage);
+                    }}
+                    disabled={safePage === 0}
+                    className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+                  >
+                    Previous Row
+                  </button>
+                  <span className="mx-3 text-gray-900 dark:text-gray-100 text-sm">
+                    Row {safePage + 1} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const newPage = Math.min(totalPages - 1, safePage + 1);
+                      setPage(newPage);
+                      setLastManualPage(newPage);
+                    }}
+                    disabled={safePage === totalPages - 1}
+                    className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+                  >
+                    Next Row
+                  </button>
+                </div>
               )}
             </div>
           ) : (
@@ -995,6 +1066,9 @@ function NumbersMemorisationContent() {
                       const isHovered = hoveredInput === globalIdx;
                       const shouldShowCorrect =
                         showScore && !isCorrect && isHovered;
+                      // Check if this input is in the current highlight group
+                      const [groupStart, groupEnd] = highlightRanges[highlightGroupIdx] || [];
+                      const isHighlighted = highlightRanges.length > 0 && globalIdx >= groupStart && globalIdx < groupEnd;
                       // New: Use a distinct green with stripes/gradient for correct but not recalled
                       let inputBackground = undefined;
                       if (shouldShowCorrect) {
@@ -1006,6 +1080,15 @@ function NumbersMemorisationContent() {
                       } else if (isIncorrect) {
                         inputBackground = "#fee2e2"; // red
                       }
+                      // Find which highlight group this digit belongs to
+                      let groupIdxForDigit = -1;
+                      for (let g = 0; g < highlightRanges.length; g++) {
+                        const [start, end] = highlightRanges[g];
+                        if (globalIdx >= start && globalIdx < end) {
+                          groupIdxForDigit = g;
+                          break;
+                        }
+                      }
                       return (
                         <input
                           key={i}
@@ -1016,6 +1099,11 @@ function NumbersMemorisationContent() {
                               ? correctDigit
                               : userInput[globalIdx] || ""
                           }
+                          onClick={() => {
+                            if (groupIdxForDigit !== -1) {
+                              setHighlightGroupIdx(groupIdxForDigit);
+                            }
+                          }}
                           onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9]/g, "");
                             setUserInput((prev) => {
@@ -1023,10 +1111,29 @@ function NumbersMemorisationContent() {
                               newInput[globalIdx] = val;
                               return newInput;
                             });
-                            // Auto-focus next input
+                            // Auto-focus next input and update highlight if needed
                             if (val && i < row.length - 1) {
                               const nextInput = e.target.nextElementSibling;
-                              if (nextInput) nextInput.focus();
+                              if (nextInput) {
+                                nextInput.focus();
+                                // Check if next input belongs to a different group
+                                const nextGlobalIdx = globalIdx + 1;
+                                for (
+                                  let g = 0;
+                                  g < highlightRanges.length;
+                                  g++
+                                ) {
+                                  const [start, end] = highlightRanges[g];
+                                  if (
+                                    nextGlobalIdx >= start &&
+                                    nextGlobalIdx < end &&
+                                    g !== highlightGroupIdx
+                                  ) {
+                                    setHighlightGroupIdx(g);
+                                    break;
+                                  }
+                                }
+                              }
                             }
                           }}
                           onKeyDown={(e) => {
@@ -1042,7 +1149,7 @@ function NumbersMemorisationContent() {
                           onMouseEnter={() => setHoveredInput(globalIdx)}
                           onMouseLeave={() => setHoveredInput(null)}
                           readOnly={showScore}
-                          className="text-center border-2 border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100"
+                          className="text-center border-2 rounded text-gray-900 dark:text-gray-100"
                           style={{
                             width: digitWidth,
                             height: Math.max(digitWidth * 1.2, 28),
@@ -1050,6 +1157,9 @@ function NumbersMemorisationContent() {
                             fontFamily: "'Roboto Mono', monospace",
                             padding: 0,
                             background: inputBackground,
+                            transition: "background 0.3s ease, box-shadow 0.3s ease",
+                            borderColor: isHighlighted ? "#ffd700" : undefined,
+                            boxShadow: isHighlighted ? "0 0 0 3px #ffe066" : undefined,
                           }}
                         />
                       );
@@ -1178,7 +1288,7 @@ function NumbersMemorisationContent() {
           </div>
         )}
 
-        {totalPages > 1 && !showRecall && (
+        {totalPages > 1 && (
           <div className="mt-4 text-center">
             <button
               onClick={() => {
