@@ -16,6 +16,7 @@ const defaultSettings = {
   timedMode: false,
   navigateBy: "image",
   focusBoxShows: "image",
+  endOnNextClick: false,
 };
 
 export default function NumberTrainingSettings() {
@@ -94,6 +95,7 @@ export default function NumberTrainingSettings() {
     const storedFocusBoxShows = localStorage.getItem("focusBoxShows");
     const storedMode = localStorage.getItem("mode");
     const storedTimedMode = localStorage.getItem("timedMode");
+    const storedEndOnNextClick = localStorage.getItem("endOnNextClick");
     const preset = modeOptions.find((opt) => opt.value === storedMode);
     let customValues = {};
     if (storedMode === "XN") {
@@ -115,6 +117,9 @@ export default function NumberTrainingSettings() {
       ...(storedMode ? { mode: storedMode } : {}),
       ...(storedTimedMode !== null
         ? { timedMode: storedTimedMode === "true" }
+        : {}),
+      ...(storedEndOnNextClick !== null
+        ? { endOnNextClick: storedEndOnNextClick === "true" }
         : {}),
       ...(storedMode && storedMode !== "XN" && preset
         ? {
@@ -607,6 +612,24 @@ export default function NumberTrainingSettings() {
               />
               Show journey hints
             </label>
+
+            {isCustom && (
+              <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={settings.endOnNextClick}
+                  onChange={(e) => {
+                    setSettings((prev) => ({
+                      ...prev,
+                      endOnNextClick: e.target.checked,
+                    }));
+                    localStorage.setItem("endOnNextClick", e.target.checked);
+                  }}
+                />
+                End memorisation when clicking 'Next' on last group
+              </label>
+            )}
           </div>
 
           <div>
@@ -787,6 +810,8 @@ export default function NumberTrainingSettings() {
                   settings.timedMode ? "1" : "0"
                 }&memorisationTime=${settings.memorisationTime}&recallTime=${
                   settings.recallTime
+                }&endOnNextClick=${
+                  settings.endOnNextClick ? "1" : "0"
                 }`
               );
             }}

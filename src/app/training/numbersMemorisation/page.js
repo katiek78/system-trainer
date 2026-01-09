@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 function NumbersMemorisationContent() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,6 +33,7 @@ function NumbersMemorisationContent() {
   const journeyHints = searchParams.get("journeyHints") || "1";
   const timedModeParam = searchParams.get("timedMode") || "0";
   const memorisationTimeParam = searchParams.get("memorisationTime") || "60";
+  const endOnNextClickParam = searchParams.get("endOnNextClick") || "0";
   const locationCycleMode =
     searchParams.get("locationCycleMode") || "per-highlight";
   const locationCycleValue = Number(
@@ -44,6 +46,12 @@ function NumbersMemorisationContent() {
   const memorisationTime = Number(memorisationTimeParam);
   const recallTimeParam = searchParams.get("recallTime") || "240";
   const recallTime = Number(recallTimeParam);
+
+  // For ML Numbers (MN mode), always end on next click when on last group
+  // For customised (XN mode), use the endOnNextClick setting
+  // For all other modes, never end on next click (only on Enter)
+  const endOnNextClick =
+    mode === "MN" ? true : mode === "XN" && endOnNextClickParam === "1";
 
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [showRecall, setShowRecall] = useState(false);
@@ -186,12 +194,17 @@ function NumbersMemorisationContent() {
       // Enter to start recall mode (only during memorization)
       if (e.key === "Enter" && !showRecall && !showScore) {
         e.preventDefault();
-        setShowRecall(true);
+        // For ML Numbers, start recall immediately; for others, show confirmation
+        if (mode === "MN") {
+          setShowRecall(true);
+        } else {
+          setShowConfirmFinish(true);
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showRecall, showScore]);
+  }, [showRecall, showScore, mode]);
 
   // Fetch image set data for selected IDs
   const [imageSetData, setImageSetData] = useState([]);
@@ -335,7 +348,14 @@ function NumbersMemorisationContent() {
       if (navRanges.length === 0) return;
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        setHighlightGroupIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
+        // If endOnNextClick is enabled and we're on the last group, start recall
+        if (endOnNextClick && highlightGroupIdx === navRanges.length - 1) {
+          setShowRecall(true);
+        } else {
+          setHighlightGroupIdx((idx) =>
+            Math.min(idx + 1, navRanges.length - 1)
+          );
+        }
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         setHighlightGroupIdx((idx) => Math.max(idx - 1, 0));
@@ -370,7 +390,7 @@ function NumbersMemorisationContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navRanges.length]);
+  }, [navRanges.length, endOnNextClick, highlightGroupIdx]);
 
   // Sync page with highlight group so that navigating highlight moves to the correct page
   // Use a ref to prevent interference with manual page changes
@@ -934,6 +954,40 @@ function NumbersMemorisationContent() {
             );
           })()}
 
+        {/* Confirmation modal for finishing memorisation */}
+        {showConfirmFinish && (
+          <SimpleModal
+            open={showConfirmFinish}
+            onClose={() => setShowConfirmFinish(false)}
+          >
+            <div className="p-4">
+              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+                Finish Memorisation?
+              </h3>
+              <p className="mb-4 text-gray-900 dark:text-gray-100">
+                Are you sure you want to finish memorisation and start recall?
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowConfirmFinish(false)}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmFinish(false);
+                    setShowRecall(true);
+                  }}
+                  className="px-4 py-2 bg-blue-500 dark:bg-blue-700 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-800"
+                >
+                  Yes, Start Recall
+                </button>
+              </div>
+            </div>
+          </SimpleModal>
+        )}
+
         {/* MOBILE: Only show focused digits, with navigation, fixed height */}
         <div className="block sm:hidden">
           {showRecall ? (
@@ -1158,12 +1212,25 @@ function NumbersMemorisationContent() {
                   {highlightGroupIdx + 1} / {navRanges.length || 1}
                 </span>
                 <button
-                  onClick={() =>
-                    setHighlightGroupIdx((idx) =>
-                      Math.min((navRanges.length || 1) - 1, idx + 1)
-                    )
+                  onClick={() => {
+                    const newIdx = Math.min(
+                      (navRanges.length || 1) - 1,
+                      highlightGroupIdx + 1
+                    );
+                    // If endOnNextClick is enabled and we're on the last group, start recall
+                    if (
+                      endOnNextClick &&
+                      highlightGroupIdx === (navRanges.length || 1) - 1
+                    ) {
+                      setShowRecall(true);
+                    } else {
+                      setHighlightGroupIdx(newIdx);
+                    }
+                  }}
+                  disabled={
+                    highlightGroupIdx === (navRanges.length || 1) - 1 &&
+                    !endOnNextClick
                   }
-                  disabled={highlightGroupIdx === (navRanges.length || 1) - 1}
                   className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
                   aria-label="Next group"
                 >
@@ -1485,7 +1552,7 @@ function NumbersMemorisationContent() {
               disabled={safePage === 0}
               className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
-              Previous
+              Previous Page
             </button>
             <span className="mx-3 text-gray-900 dark:text-gray-100">
               Page {safePage + 1} of {totalPages}
@@ -1509,7 +1576,7 @@ function NumbersMemorisationContent() {
               disabled={safePage === totalPages - 1}
               className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
             >
-              Next
+              Next Page
             </button>
           </div>
         )}
