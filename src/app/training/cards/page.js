@@ -18,6 +18,10 @@ function CardsContent() {
   const cardGrouping = searchParams.get("cardGrouping") || 1;
   const imageSet = searchParams.get("imageSet") || "";
   const cardGroupsPerLocation = searchParams.get("cardGroupsPerLocation") || 1;
+  const timedMode = searchParams.get("timedMode") || "0";
+  const memoCountdown = searchParams.get("memoCountdown") || "20";
+  const recallCountdownMode = searchParams.get("recallCountdownMode") || "0";
+  const recallCountdown = searchParams.get("recallCountdown") || "20";
 
   const [journeyData, setJourneyData] = useState([]);
   const [imageSetData, setImageSetData] = useState([]);
@@ -112,6 +116,13 @@ function CardsContent() {
       journey={journeyData}
       imageSet={imageSetData}
       onFinish={() => {}}
+      mode={mode}
+      timedMode={timedMode}
+      memorisationTime={Number(memorisationTime)}
+      recallTime={Number(recallTime)}
+      memoCountdown={Number(memoCountdown)}
+      recallCountdownMode={recallCountdownMode}
+      recallCountdown={Number(recallCountdown)}
     />
   );
 }

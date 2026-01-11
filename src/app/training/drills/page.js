@@ -94,12 +94,14 @@ function DrillsContent() {
   const [showResults, setShowResults] = useState(false);
   const [imageSetData, setImageSetData] = useState(null);
   const [repeatSlowItems, setRepeatSlowItems] = useState(false);
+  const [repeatMissedItems, setRepeatMissedItems] = useState(false);
   const [targetTimeSeconds, setTargetTimeSeconds] = useState(2.0);
   const [currentRound, setCurrentRound] = useState(1);
   const [allRoundsHistory, setAllRoundsHistory] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
   const [recentAttempts, setRecentAttempts] = useState([]);
   const [subsetDescription, setSubsetDescription] = useState("");
+  const [itemsWithHints, setItemsWithHints] = useState(new Set());
 
   useEffect(() => {
     if (!imageSet) return;
@@ -185,9 +187,13 @@ function DrillsContent() {
   const advanceTimeTest = () => {
     const now = Date.now();
     const elapsed = itemStartTime ? now - itemStartTime : 0;
+    const currentItem = timeTestItems[currentItemIdx];
+    const currentItemKey = getItemKey(currentItem);
+    const hintWasUsed = itemsWithHints.has(currentItemKey);
+
     const newTimings = [
       ...timings,
-      { item: timeTestItems[currentItemIdx], ms: elapsed },
+      { item: currentItem, ms: elapsed, hintUsed: hintWasUsed },
     ];
     setTimings(newTimings);
     setShowHint(false);
@@ -202,26 +208,52 @@ function DrillsContent() {
       ];
       setAllRoundsHistory(updatedHistory);
 
-      if (repeatSlowItems) {
+      if (repeatSlowItems || repeatMissedItems) {
         const targetMs = targetTimeSeconds * 1000;
-        const slowItems = newTimings
-          .filter((t) => t.ms > targetMs)
-          .map((t) => t.item);
+        const itemsToRepeat = new Set();
 
-        if (slowItems.length > 0) {
-          // Shuffle slow items for next round
-          const shuffled = [...slowItems];
+        // Collect slow items if option is enabled
+        if (repeatSlowItems) {
+          newTimings
+            .filter((t) => t.ms > targetMs)
+            .forEach((t) => {
+              itemsToRepeat.add(getItemKey(t.item));
+            });
+        }
+
+        // Collect missed items (ones that needed hints) if option is enabled
+        if (repeatMissedItems) {
+          newTimings
+            .filter((t) => t.hintUsed)
+            .forEach((t) => {
+              itemsToRepeat.add(getItemKey(t.item));
+            });
+        }
+
+        if (itemsToRepeat.size > 0) {
+          // Get the actual item objects (deduplicated)
+          const itemsMap = new Map();
+          newTimings.forEach((t) => {
+            const key = getItemKey(t.item);
+            if (itemsToRepeat.has(key) && !itemsMap.has(key)) {
+              itemsMap.set(key, t.item);
+            }
+          });
+
+          // Convert to array and shuffle
+          const shuffled = Array.from(itemsMap.values());
           for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
           }
 
-          // Start next round
+          // Start next round and reset hint tracking
           setTimeTestItems(shuffled);
           setCurrentItemIdx(0);
           setTimings([]);
           setCurrentRound(currentRound + 1);
           setItemStartTime(Date.now());
+          setItemsWithHints(new Set());
           return;
         }
       }
@@ -244,8 +276,8 @@ function DrillsContent() {
 
     // Ask user if they want to save drill times to images
     const saveToImages = confirm(
-      "Save drill times to individual images?\n\n" +
-        "This will update the average drill time for each image in this set."
+      "Save drill times and recent attempts to individual images?\n\n" +
+        "This will update the average drill time and track whether each item was known (no hint) or not known (hint needed)."
     );
 
     // Calculate total time and items attempted
@@ -270,14 +302,38 @@ function DrillsContent() {
         body: JSON.stringify(payload),
       });
 
-      // Update individual image drill times if user confirmed
+      // Update individual image drill times and recent attempts if user confirmed
       if (saveToImages) {
+        // Update drill times
         await fetch("/api/imageSets/updateDrillTimes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageSetId: imageSet,
             drillTimings: allTimings,
+          }),
+        });
+
+        // Update recent attempts (known/not known based on hint usage)
+        // For each unique item, use only the LAST attempt from the drill
+        const itemAttemptsMap = new Map();
+        allTimings.forEach((timing) => {
+          const key = getItemKey(timing.item);
+          // Always overwrite with the latest attempt for this item
+          itemAttemptsMap.set(key, {
+            item: timing.item,
+            known: !timing.hintUsed, // known = true if no hint was used
+          });
+        });
+
+        const drillAttempts = Array.from(itemAttemptsMap.values());
+
+        await fetch("/api/imageSets/updateDrillAttempts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageSetId: imageSet,
+            drillAttempts: drillAttempts,
           }),
         });
       }
@@ -304,11 +360,16 @@ function DrillsContent() {
       if (e.key === "h" || e.key === "H") {
         e.preventDefault();
         setShowHint(true);
+        // Track that hint was used for current item
+        if (timeTestItems[currentItemIdx]) {
+          const itemKey = getItemKey(timeTestItems[currentItemIdx]);
+          setItemsWithHints((prev) => new Set([...prev, itemKey]));
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [timeTestActive]);
+  }, [timeTestActive, currentItemIdx, timeTestItems]);
 
   const fetchUserImageSets = async () => {
     setModalLoading(true);
@@ -852,6 +913,17 @@ function DrillsContent() {
                         />
                       </div>
                     )}
+                    <label className="flex items-center gap-2 mt-3">
+                      <input
+                        type="checkbox"
+                        checked={repeatMissedItems}
+                        onChange={(e) => setRepeatMissedItems(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-semibold">
+                        Repeat missed items (items where hint was needed)
+                      </span>
+                    </label>
                   </div>
                   <button
                     className="mt-4 btn bg-green-700 hover:bg-green-800 text-white font-bold py-1 px-4 rounded"
@@ -1094,6 +1166,7 @@ function DrillsContent() {
                       setTimeTestActive(true);
                       setShowTimeTestInstructions(false);
                       setItemStartTime(Date.now());
+                      setItemsWithHints(new Set());
                     }}
                   >
                     Start
@@ -1104,7 +1177,7 @@ function DrillsContent() {
               {timeTestActive && timeTestItems.length > 0 && (
                 <div className="mt-6 p-4 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-mono text-xl flex flex-col items-center">
                   <div className="mb-2 text-base text-gray-700 dark:text-gray-200">
-                    {repeatSlowItems && (
+                    {(repeatSlowItems || repeatMissedItems) && (
                       <div className="font-bold mb-1">Round {currentRound}</div>
                     )}
                     Item {currentItemIdx + 1} of {timeTestItems.length}
@@ -1124,7 +1197,18 @@ function DrillsContent() {
                     </button>
                     <button
                       className="btn bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded"
-                      onClick={() => setShowHint(true)}
+                      onClick={() => {
+                        setShowHint(true);
+                        // Track that hint was used for current item
+                        if (timeTestItems[currentItemIdx]) {
+                          const itemKey = getItemKey(
+                            timeTestItems[currentItemIdx]
+                          );
+                          setItemsWithHints(
+                            (prev) => new Set([...prev, itemKey])
+                          );
+                        }
+                      }}
                     >
                       Hint
                     </button>
@@ -1139,6 +1223,7 @@ function DrillsContent() {
                         setShowTimeTestInstructions(false);
                         setCurrentRound(1);
                         setAllRoundsHistory([]);
+                        setItemsWithHints(new Set());
                       }}
                     >
                       Exit Test
@@ -1161,14 +1246,26 @@ function DrillsContent() {
               {showResults && allRoundsHistory.length > 0 && (
                 <div className="mt-6 p-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded font-mono text-base">
                   <div className="mb-3 font-bold text-lg">Drill Results</div>
-                  {repeatSlowItems && allRoundsHistory.length > 1 && (
-                    <div className="mb-4 p-3 bg-green-200 dark:bg-green-800 rounded">
-                      <div className="font-bold mb-1">Summary</div>
-                      <div>Completed {allRoundsHistory.length} rounds</div>
-                      <div>Started with {originalItems.length} items</div>
-                      <div>All items now under {targetTimeSeconds}s!</div>
-                    </div>
-                  )}
+                  {(repeatSlowItems || repeatMissedItems) &&
+                    allRoundsHistory.length > 1 && (
+                      <div className="mb-4 p-3 bg-green-200 dark:bg-green-800 rounded">
+                        <div className="font-bold mb-1">Summary</div>
+                        <div>Completed {allRoundsHistory.length} rounds</div>
+                        <div>Started with {originalItems.length} items</div>
+                        {repeatSlowItems && repeatMissedItems && (
+                          <div>
+                            All items now under {targetTimeSeconds}s and no
+                            hints needed!
+                          </div>
+                        )}
+                        {repeatSlowItems && !repeatMissedItems && (
+                          <div>All items now under {targetTimeSeconds}s!</div>
+                        )}
+                        {!repeatSlowItems && repeatMissedItems && (
+                          <div>All items mastered without hints!</div>
+                        )}
+                      </div>
+                    )}
                   {allRoundsHistory.map((roundData, roundIdx) => (
                     <div key={roundIdx} className="mb-4">
                       {allRoundsHistory.length > 1 && (
@@ -1196,12 +1293,15 @@ function DrillsContent() {
                                 const overTarget =
                                   repeatSlowItems &&
                                   t.ms > targetTimeSeconds * 1000;
+                                const hadHint = t.hintUsed;
                                 return (
                                   <tr
                                     key={i}
                                     className={
-                                      overTarget
+                                      hadHint
                                         ? "bg-red-200 dark:bg-red-800"
+                                        : overTarget
+                                        ? "bg-orange-200 dark:bg-orange-800"
                                         : ""
                                     }
                                   >
@@ -1210,7 +1310,11 @@ function DrillsContent() {
                                     </td>
                                     <td className="px-2 py-1 border-b border-gray-300 dark:border-gray-700">
                                       {(t.ms / 1000).toFixed(2)}
-                                      {overTarget && " ⚠️"}
+                                      {hadHint
+                                        ? " ❌"
+                                        : overTarget
+                                        ? " ⏱️"
+                                        : ""}
                                     </td>
                                   </tr>
                                 );
@@ -1229,6 +1333,7 @@ function DrillsContent() {
                       setCurrentItemIdx(0);
                       setCurrentRound(1);
                       setAllRoundsHistory([]);
+                      setItemsWithHints(new Set());
                     }}
                   >
                     Close

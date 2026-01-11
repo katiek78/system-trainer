@@ -331,7 +331,7 @@ export default function ImageSetStatsPage() {
                     className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
                     onClick={() => handleSort("confidence")}
                   >
-                    Flashcard confidence <SortIcon field="confidence" />
+                    Confidence <SortIcon field="confidence" />
                   </th>
                   <th
                     className="px-2 py-2 border-b border-gray-400 dark:border-gray-600 text-right cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"

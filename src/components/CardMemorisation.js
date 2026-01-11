@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import RedToBlackMappingTable from "./RedToBlackMappingTable";
 import SimpleModal from "./SimpleModal";
 import EmbedStreetView from "./EmbedStreetView";
@@ -54,9 +54,35 @@ export default function CardMemorisation({
   imageSet = [],
   onFinish,
   cardGroupsPerLocation: cardGroupsPerLocationProp,
+  mode = "SC",
+  timedMode: timedModeParam = "0",
+  memorisationTime: memorisationTimeProp = 60,
+  recallTime: recallTimeProp = 240,
+  memoCountdown: memoCountdownProp = 20,
+  recallCountdownMode: recallCountdownModeProp = "0",
+  recallCountdown: recallCountdownProp = 20,
 }) {
   const router = useRouter();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  // Timer and countdown state
+  const timedMode = timedModeParam === "1" || timedModeParam === 1;
+  const memorisationTime = Number(memorisationTimeProp);
+  const recallTime = Number(recallTimeProp);
+  const memoCountdown = Number(memoCountdownProp);
+  const recallCountdownMode = recallCountdownModeProp;
+  const recallCountdownFixed = Number(recallCountdownProp);
+
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [showRecall, setShowRecall] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recallTimeRemaining, setRecallTimeRemaining] = useState(null);
+  const [memoCountdownRemaining, setMemoCountdownRemaining] = useState(null);
+  const [recallCountdownRemaining, setRecallCountdownRemaining] = useState(null);
+  const [memoStartTime, setMemoStartTime] = useState(null);
+  const [memoEndTime, setMemoEndTime] = useState(null);
+  const recallCountdownInitialized = useRef(false);
+
   // router already declared at the top
   // Card groups per location: from prop, localStorage, or default 1
   const [groupsPerLocation, setGroupsPerLocation] = useState(1);
@@ -312,12 +338,194 @@ export default function CardMemorisation({
   // Calculate groups per row for up/down navigation
   const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
 
+  // Memo countdown effect (runs before memorization starts)
+  useEffect(() => {
+    if (
+      memoCountdownRemaining !== null &&
+      memoCountdownRemaining > 0 &&
+      !isPaused &&
+      timeRemaining === null
+    ) {
+      const interval = setInterval(() => {
+        setMemoCountdownRemaining((prev) => {
+          if (prev <= 1) {
+            // Start memorization
+            setMemoStartTime(Date.now());
+            if (timedMode) {
+              setTimeRemaining(memorisationTime);
+            }
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [memoCountdownRemaining, isPaused, timedMode, memorisationTime, timeRemaining]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (
+      timedMode &&
+      timeRemaining !== null &&
+      timeRemaining > 0 &&
+      !showRecall &&
+      !isPaused
+    ) {
+      const interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setMemoEndTime(Date.now());
+            setShowDetailsModal(false);
+            setShowRecall(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timedMode, timeRemaining, showRecall, isPaused]);
+
+  // Recall timer countdown effect
+  useEffect(() => {
+    if (
+      showRecall &&
+      timedMode &&
+      recallTimeRemaining !== null &&
+      recallTimeRemaining > 0 &&
+      !isPaused &&
+      recallCountdownRemaining === null
+    ) {
+      const interval = setInterval(() => {
+        setRecallTimeRemaining((prev) => {
+          if (prev <= 1) {
+            // Recall time finished
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [
+    showRecall,
+    recallTimeRemaining,
+    isPaused,
+    recallCountdownRemaining,
+    timedMode,
+  ]);
+
+  // Recall countdown effect (runs before recall inputs are shown)
+  useEffect(() => {
+    if (
+      recallCountdownRemaining !== null &&
+      recallCountdownRemaining > 0 &&
+      !isPaused &&
+      showRecall
+    ) {
+      const interval = setInterval(() => {
+        setRecallCountdownRemaining((prev) => {
+          if (prev <= 1) {
+            // Countdown finished, show recall inputs
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [recallCountdownRemaining, isPaused, showRecall]);
+
+  // Initialize recall countdown when recall mode starts
+  useEffect(() => {
+    if (showRecall && !recallCountdownInitialized.current) {
+      // Calculate recall countdown time
+      let countdownTime = 0;
+      if (recallCountdownMode === "remaining") {
+        // Use remaining memorization time
+        if (memoStartTime && memoEndTime) {
+          const elapsedMemo = (memoEndTime - memoStartTime) / 1000; // in seconds
+          const remainingMemo = Math.max(0, memorisationTime - elapsedMemo);
+          countdownTime = Math.ceil(remainingMemo);
+        } else if (memoStartTime) {
+          // Manual finish - calculate elapsed time
+          const elapsedMemo = (Date.now() - memoStartTime) / 1000;
+          const remainingMemo = Math.max(0, memorisationTime - elapsedMemo);
+          countdownTime = Math.ceil(remainingMemo);
+        }
+      } else {
+        // Use fixed countdown time
+        countdownTime = recallCountdownFixed;
+      }
+
+      if (countdownTime > 0) {
+        setRecallCountdownRemaining(countdownTime);
+        recallCountdownInitialized.current = true;
+      } else {
+        // No countdown, proceed directly
+        setRecallCountdownRemaining(null);
+        recallCountdownInitialized.current = true;
+      }
+    }
+  }, [
+    showRecall,
+    recallCountdownMode,
+    recallCountdownFixed,
+    memoStartTime,
+    memoEndTime,
+    memorisationTime,
+  ]);
+
+  // Start recall timer when recall mode begins (timed mode only)
+  useEffect(() => {
+    if (showRecall && timedMode && recallTimeRemaining === null && recallCountdownRemaining === null) {
+      setRecallTimeRemaining(recallTime);
+    }
+  }, [showRecall, timedMode, recallTime, recallCountdownRemaining, recallTimeRemaining]);
+
+  // Start timer when timed mode is enabled
+  useEffect(() => {
+    if (timedMode && timeRemaining === null && memoCountdownRemaining === null) {
+      // Start with memo countdown if configured
+      if (memoCountdown > 0) {
+        setMemoCountdownRemaining(memoCountdown);
+      } else {
+        setMemoStartTime(Date.now());
+        setTimeRemaining(memorisationTime);
+      }
+      setShowRecall(false);
+    } else if (!timedMode && memoCountdownRemaining === null && timeRemaining === null) {
+      // Non-timed mode - still show memo countdown
+      if (memoCountdown > 0) {
+        setMemoCountdownRemaining(memoCountdown);
+      } else {
+        setMemoStartTime(Date.now());
+      }
+      setTimeRemaining(null);
+      setShowRecall(false);
+    }
+  }, [timedMode, memorisationTime, memoCountdown, timeRemaining, memoCountdownRemaining]);
+
   // Keyboard navigation (arrows for group, PgUp/PgDn for deck)
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === "d" && !e.repeat) {
+      // Don't handle keys during countdowns
+      if (memoCountdownRemaining !== null || (showRecall && recallCountdownRemaining !== null)) {
+        return;
+      }
+
+      if (e.key === "d" && !e.repeat && !showRecall) {
         setShowDetailsModal((prev) => !prev);
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "Enter" && !showRecall && memoCountdownRemaining === null) {
+        // Enter to start recall mode
+        e.preventDefault();
+        if (!memoEndTime && memoStartTime) {
+          setMemoEndTime(Date.now());
+        }
+        setShowDetailsModal(false);
+        setShowRecall(true);
+      } else if (e.key === "ArrowRight" && !showRecall) {
         if (highlightIdx === totalGroups - 1) {
           // At end of group, go to next journey for variable logic, else next page
           if (
@@ -361,7 +569,7 @@ export default function CardMemorisation({
         } else {
           setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
         }
-      } else if (e.key === "ArrowLeft") {
+      } else if (e.key === "ArrowLeft" && !showRecall) {
         if (highlightIdx === 0) {
           // At first group, go to previous page or previous journey
           if (page > 0) {
@@ -429,13 +637,13 @@ export default function CardMemorisation({
         } else {
           setHighlightIdx((idx) => Math.max(idx - 1, 0));
         }
-      } else if (e.key === "ArrowDown") {
+      } else if (e.key === "ArrowDown" && !showRecall) {
         setHighlightIdx((idx) =>
           Math.min(idx + GROUPS_PER_ROW, totalGroups - 1)
         );
-      } else if (e.key === "ArrowUp") {
+      } else if (e.key === "ArrowUp" && !showRecall) {
         setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
-      } else if (e.key === "PageDown") {
+      } else if (e.key === "PageDown" && !showRecall) {
         if (
           groupsPerLocation === "variable-black" ||
           groupsPerLocation === "variable-red"
@@ -464,7 +672,7 @@ export default function CardMemorisation({
             setHighlightIdx(0);
           }
         }
-      } else if (e.key === "PageUp") {
+      } else if (e.key === "PageUp" && !showRecall) {
         if (page > 0) {
           setPage((p) => p - 1);
           setHighlightIdx(0);
@@ -493,7 +701,7 @@ export default function CardMemorisation({
             setHighlightIdx(totalGroups - 1);
           }
         }
-      } else if (e.key === " " || e.code === "Space") {
+      } else if ((e.key === " " || e.code === "Space") && !showRecall) {
         setPage(0);
         setHighlightIdx(0);
       } else if (
@@ -518,6 +726,11 @@ export default function CardMemorisation({
     groupSize,
     cards,
     totalGroups,
+    showRecall,
+    memoCountdownRemaining,
+    recallCountdownRemaining,
+    memoStartTime,
+    memoEndTime,
   ]);
 
   function handleExitToSettings() {
@@ -527,6 +740,36 @@ export default function CardMemorisation({
   // Responsive hint bar styling (match numbersMemorisation)
   return (
     <div className="max-w-5xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+      {/* Memo Countdown Overlay */}
+      {memoCountdownRemaining !== null && memoCountdownRemaining > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-2xl text-center">
+            <div className="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+              Memorisation starts in
+            </div>
+            <div className="text-8xl font-bold text-blue-600 dark:text-blue-400">
+              {memoCountdownRemaining}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recall Countdown Overlay */}
+      {recallCountdownRemaining !== null &&
+        recallCountdownRemaining > 0 &&
+        showRecall && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-2xl text-center">
+              <div className="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+                Recall starts in
+              </div>
+              <div className="text-8xl font-bold text-green-600 dark:text-green-400">
+                {recallCountdownRemaining}
+              </div>
+            </div>
+          </div>
+        )}
+
       {/* Details Modal: show on 'd' key */}
       {showDetailsModal && (
         <SimpleModal
@@ -665,10 +908,53 @@ export default function CardMemorisation({
       >
         ← Exit to Card Settings
       </button>
-      <h2 className="text-2xl font-bold mb-4">Cards Memorisation</h2>
+      
+      {/* Header with title and timer */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">
+          Cards Memorisation {mode && `(${mode})`}
+        </h2>
+        {timedMode && memoCountdownRemaining === null && (
+          <div className="flex items-center gap-2">
+            {!showRecall && (
+              <>
+                <span className="text-lg font-bold">
+                  ⏱️{" "}
+                  {timeRemaining !== null
+                    ? `${Math.floor(timeRemaining / 60)}:${String(
+                        timeRemaining % 60
+                      ).padStart(2, "0")}`
+                    : "0:00"}
+                </span>
+                <button
+                  onClick={() => setIsPaused((prev) => !prev)}
+                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  {isPaused ? "Resume" : "Pause"}
+                </button>
+              </>
+            )}
+            {showRecall && recallCountdownRemaining === null && (
+              <span className="text-lg font-bold">
+                ⏱️{" "}
+                {recallTimeRemaining !== null
+                  ? `${Math.floor(recallTimeRemaining / 60)}:${String(
+                      recallTimeRemaining % 60
+                    ).padStart(2, "0")}`
+                  : "0:00"}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      
       {/* No card groups per location input here; should be on settings page */}
-      {/* Hint Bar (styled like numbers) */}
-      <div
+      
+      {/* Main content - only show after memo countdown finishes */}
+      {memoCountdownRemaining === null && (
+        <>
+          {/* Hint Bar (styled like numbers) */}
+          <div
         className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
         style={{
           minHeight:
@@ -1022,6 +1308,8 @@ export default function CardMemorisation({
           </button>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

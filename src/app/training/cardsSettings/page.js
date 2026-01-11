@@ -51,6 +51,10 @@ export default function CardTrainingSettings() {
     cardGrouping: "1",
     imageSet: "",
     cardGroupsPerLocation: 1,
+    timedMode: "0",
+    memoCountdown: 20,
+    recallCountdownMode: "0",
+    recallCountdown: 20,
   });
   // Red-to-black mapping state
   const [redToBlackMapping, setRedToBlackMapping] = useState("default");
@@ -64,6 +68,10 @@ export default function CardTrainingSettings() {
     const recallTime = Number(localStorage.getItem("cardRecallTime")) || 240;
     const cardGrouping = localStorage.getItem("cardGrouping") || "1";
     const imageSet = localStorage.getItem("cardImageSet") || "";
+    const timedMode = localStorage.getItem("cardTimedMode") || "0";
+    const memoCountdown = Number(localStorage.getItem("cardMemoCountdown")) || 20;
+    const recallCountdownMode = localStorage.getItem("cardRecallCountdownMode") || "0";
+    const recallCountdown = Number(localStorage.getItem("cardRecallCountdown")) || 20;
     let cardGroupsPerLocation = localStorage.getItem("cardGroupsPerLocation");
     // Support string values for variable options
     if (
@@ -82,6 +90,10 @@ export default function CardTrainingSettings() {
       cardGrouping,
       imageSet,
       cardGroupsPerLocation,
+      timedMode,
+      memoCountdown,
+      recallCountdownMode,
+      recallCountdown,
     });
     setSettingsRestored(true);
   }, []);
@@ -267,6 +279,10 @@ export default function CardTrainingSettings() {
       "cardGroupsPerLocation",
       settings.cardGroupsPerLocation
     );
+    localStorage.setItem("cardTimedMode", settings.timedMode);
+    localStorage.setItem("cardMemoCountdown", settings.memoCountdown);
+    localStorage.setItem("cardRecallCountdownMode", settings.recallCountdownMode);
+    localStorage.setItem("cardRecallCountdown", settings.recallCountdown);
 
     // Only save if there are options
     if (!options || options.length === 0) {
@@ -331,7 +347,7 @@ export default function CardTrainingSettings() {
       }
       localStorage.setItem("cardImageSets", JSON.stringify(imageSetsToStore));
       router.push(
-        `/training/cards?mode=${settings.mode}&decks=${settings.decks}&memorisationTime=${settings.memorisationTime}&recallTime=${settings.recallTime}&journeyOption=${selectedOption}&cardGrouping=${settings.cardGrouping}&imageSet=${settings.imageSet}&cardGroupsPerLocation=${settings.cardGroupsPerLocation}`
+        `/training/cards?mode=${settings.mode}&decks=${settings.decks}&memorisationTime=${settings.memorisationTime}&recallTime=${settings.recallTime}&journeyOption=${selectedOption}&cardGrouping=${settings.cardGrouping}&imageSet=${settings.imageSet}&cardGroupsPerLocation=${settings.cardGroupsPerLocation}&timedMode=${settings.timedMode}&memoCountdown=${settings.memoCountdown}&recallCountdownMode=${settings.recallCountdownMode}&recallCountdown=${settings.recallCountdown}`
       );
     });
   }
@@ -524,6 +540,62 @@ export default function CardTrainingSettings() {
           onChange={handleChange}
           className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
         />
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Timed mode
+        </label>
+        <select
+          name="timedMode"
+          value={settings.timedMode}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        >
+          <option value="0">Off</option>
+          <option value="1">On</option>
+        </select>
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Memo countdown (seconds)
+        </label>
+        <input
+          type="number"
+          name="memoCountdown"
+          min={0}
+          max={60}
+          value={settings.memoCountdown}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        />
+
+        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          Recall countdown mode
+        </label>
+        <select
+          name="recallCountdownMode"
+          value={settings.recallCountdownMode}
+          onChange={handleChange}
+          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+        >
+          <option value="0">Fixed time</option>
+          <option value="remaining">Remaining memo time</option>
+        </select>
+
+        {settings.recallCountdownMode === "0" && (
+          <>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Recall countdown (seconds)
+            </label>
+            <input
+              type="number"
+              name="recallCountdown"
+              min={0}
+              max={60}
+              value={settings.recallCountdown}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            />
+          </>
+        )}
 
         <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
           Card grouping
