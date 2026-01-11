@@ -377,14 +377,21 @@ export default function TrainingSetLearning({ imageSet }) {
           <>
             <div className="flex flex-col justify-center items-center">
               <div className="mt-10 font-mono text-3xl">{imageSet.name}</div>
+              {cardsAvailable && (
+                <div className="mt-2 text-lg font-semibold text-blue-600 dark:text-blue-400">
+                  {filteredData.length} card
+                  {filteredData.length !== 1 ? "s" : ""} in current set
+                </div>
+              )}
 
-              {showOptions && (
+              {showOptions && !isStarted && (
                 <div>
                   <p className="text-xl">Which images do you want to train?</p>
                   <label htmlFor="selSet">Confidence level</label>
                   <select
                     id="selSet"
                     className="w-full rounded-md dark:bg-slate-800"
+                    value={imageGroup}
                     onChange={handleChangeSelect}
                   >
                     <option value="all">All 🌍</option>
@@ -402,6 +409,7 @@ export default function TrainingSetLearning({ imageSet }) {
                       <select
                         id="selDigit1"
                         className="w-full rounded-md dark:bg-slate-800"
+                        value={imageGroupD1}
                         onChange={handleChangeSelectD1}
                       >
                         <option value="all">All</option>
@@ -427,6 +435,7 @@ export default function TrainingSetLearning({ imageSet }) {
                       <select
                         id="selDigit2"
                         className="w-full rounded-md dark:bg-slate-800"
+                        value={imageGroupD2}
                         onChange={handleChangeSelectD2}
                       >
                         <option value="all">All</option>
@@ -456,6 +465,7 @@ export default function TrainingSetLearning({ imageSet }) {
                       <select
                         id="selSuit1"
                         className="w-full rounded-md dark:bg-slate-800"
+                        value={imageGroupS1}
                         onChange={handleChangeSelectS1}
                       >
                         <option value="all">All</option>
@@ -471,6 +481,7 @@ export default function TrainingSetLearning({ imageSet }) {
                       <select
                         id="selSuit2"
                         className="w-full rounded-md dark:bg-slate-800"
+                        value={imageGroupS2}
                         onChange={handleChangeSelectS2}
                       >
                         <option value="all">All</option>
@@ -509,7 +520,7 @@ export default function TrainingSetLearning({ imageSet }) {
                 </div>
               )}
 
-              {!isStarted && cardsAvailable && (
+              {!isStarted && cardsAvailable && showOptions && (
                 <button
                   onClick={handleStartTraining}
                   className="w-40 btn bg-white text-black font-bold mt-3 mx-0.5 py-1 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -518,7 +529,7 @@ export default function TrainingSetLearning({ imageSet }) {
                 </button>
               )}
 
-              {isStarted && cardsAvailable && (
+              {isStarted && cardsAvailable && !showOptions && (
                 <div className="flex flex-col justify-center items-center">
                   <div className="group [perspective:1000px]">
                     <div className="z-3 relative m-2 h-40 w-60 lg:h-80 lg:w-96 rounded-xl shadow-xl ">
