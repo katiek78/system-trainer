@@ -78,10 +78,12 @@ export default function CardMemorisation({
   const [isPaused, setIsPaused] = useState(false);
   const [recallTimeRemaining, setRecallTimeRemaining] = useState(null);
   const [memoCountdownRemaining, setMemoCountdownRemaining] = useState(null);
-  const [recallCountdownRemaining, setRecallCountdownRemaining] = useState(null);
+  const [recallCountdownRemaining, setRecallCountdownRemaining] =
+    useState(null);
   const [memoStartTime, setMemoStartTime] = useState(null);
   const [memoEndTime, setMemoEndTime] = useState(null);
   const recallCountdownInitialized = useRef(false);
+  const memoCountdownInitialized = useRef(false);
 
   // router already declared at the top
   // Card groups per location: from prop, localStorage, or default 1
@@ -361,7 +363,13 @@ export default function CardMemorisation({
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [memoCountdownRemaining, isPaused, timedMode, memorisationTime, timeRemaining]);
+  }, [
+    memoCountdownRemaining,
+    isPaused,
+    timedMode,
+    memorisationTime,
+    timeRemaining,
+  ]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -479,14 +487,33 @@ export default function CardMemorisation({
 
   // Start recall timer when recall mode begins (timed mode only)
   useEffect(() => {
-    if (showRecall && timedMode && recallTimeRemaining === null && recallCountdownRemaining === null) {
+    if (
+      showRecall &&
+      timedMode &&
+      recallTimeRemaining === null &&
+      recallCountdownRemaining === null
+    ) {
       setRecallTimeRemaining(recallTime);
     }
-  }, [showRecall, timedMode, recallTime, recallCountdownRemaining, recallTimeRemaining]);
+  }, [
+    showRecall,
+    timedMode,
+    recallTime,
+    recallCountdownRemaining,
+    recallTimeRemaining,
+  ]);
 
   // Start timer when timed mode is enabled
   useEffect(() => {
-    if (timedMode && timeRemaining === null && memoCountdownRemaining === null) {
+    if (memoCountdownInitialized.current) {
+      return; // Already initialized, don't restart
+    }
+
+    if (
+      timedMode &&
+      timeRemaining === null &&
+      memoCountdownRemaining === null
+    ) {
       // Start with memo countdown if configured
       if (memoCountdown > 0) {
         setMemoCountdownRemaining(memoCountdown);
@@ -495,7 +522,12 @@ export default function CardMemorisation({
         setTimeRemaining(memorisationTime);
       }
       setShowRecall(false);
-    } else if (!timedMode && memoCountdownRemaining === null && timeRemaining === null) {
+      memoCountdownInitialized.current = true;
+    } else if (
+      !timedMode &&
+      memoCountdownRemaining === null &&
+      timeRemaining === null
+    ) {
       // Non-timed mode - still show memo countdown
       if (memoCountdown > 0) {
         setMemoCountdownRemaining(memoCountdown);
@@ -504,20 +536,34 @@ export default function CardMemorisation({
       }
       setTimeRemaining(null);
       setShowRecall(false);
+      memoCountdownInitialized.current = true;
     }
-  }, [timedMode, memorisationTime, memoCountdown, timeRemaining, memoCountdownRemaining]);
+  }, [
+    timedMode,
+    memorisationTime,
+    memoCountdown,
+    timeRemaining,
+    memoCountdownRemaining,
+  ]);
 
   // Keyboard navigation (arrows for group, PgUp/PgDn for deck)
   useEffect(() => {
     function handleKeyDown(e) {
       // Don't handle keys during countdowns
-      if (memoCountdownRemaining !== null || (showRecall && recallCountdownRemaining !== null)) {
+      if (
+        memoCountdownRemaining !== null ||
+        (showRecall && recallCountdownRemaining !== null)
+      ) {
         return;
       }
 
       if (e.key === "d" && !e.repeat && !showRecall) {
         setShowDetailsModal((prev) => !prev);
-      } else if (e.key === "Enter" && !showRecall && memoCountdownRemaining === null) {
+      } else if (
+        e.key === "Enter" &&
+        !showRecall &&
+        memoCountdownRemaining === null
+      ) {
         // Enter to start recall mode
         e.preventDefault();
         if (!memoEndTime && memoStartTime) {
@@ -902,181 +948,160 @@ export default function CardMemorisation({
           </div>
         </SimpleModal>
       )}
-      <button
-        onClick={handleExitToSettings}
-        className="mb-4 text-blue-600 dark:text-blue-300 hover:underline font-medium"
-      >
-        ← Exit to Card Settings
-      </button>
-      
-      {/* Header with title and timer */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">
-          Cards Memorisation {mode && `(${mode})`}
-        </h2>
-        {timedMode && memoCountdownRemaining === null && (
-          <div className="flex items-center gap-2">
-            {!showRecall && (
-              <>
-                <span className="text-lg font-bold">
-                  ⏱️{" "}
-                  {timeRemaining !== null
-                    ? `${Math.floor(timeRemaining / 60)}:${String(
-                        timeRemaining % 60
-                      ).padStart(2, "0")}`
-                    : "0:00"}
-                </span>
-                <button
-                  onClick={() => setIsPaused((prev) => !prev)}
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  {isPaused ? "Resume" : "Pause"}
-                </button>
-              </>
-            )}
-            {showRecall && recallCountdownRemaining === null && (
-              <span className="text-lg font-bold">
-                ⏱️{" "}
-                {recallTimeRemaining !== null
-                  ? `${Math.floor(recallTimeRemaining / 60)}:${String(
-                      recallTimeRemaining % 60
-                    ).padStart(2, "0")}`
-                  : "0:00"}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* No card groups per location input here; should be on settings page */}
-      
+
       {/* Main content - only show after memo countdown finishes */}
       {memoCountdownRemaining === null && (
         <>
+          <button
+            onClick={handleExitToSettings}
+            className="mb-4 text-blue-600 dark:text-blue-300 hover:underline font-medium"
+          >
+            ← Exit to Card Settings
+          </button>
+
+          {/* Header with title and timer */}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">
+              Cards Memorisation {mode && `(${mode})`}
+            </h2>
+            {timedMode && memoCountdownRemaining === null && (
+              <div className="flex items-center gap-2">
+                {!showRecall && (
+                  <>
+                    <span className="text-lg font-bold">
+                      ⏱️{" "}
+                      {timeRemaining !== null
+                        ? `${Math.floor(timeRemaining / 60)}:${String(
+                            timeRemaining % 60
+                          ).padStart(2, "0")}`
+                        : "0:00"}
+                    </span>
+                    <button
+                      onClick={() => setIsPaused((prev) => !prev)}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      {isPaused ? "Resume" : "Pause"}
+                    </button>
+                  </>
+                )}
+                {showRecall && recallCountdownRemaining === null && (
+                  <span className="text-lg font-bold">
+                    ⏱️{" "}
+                    {recallTimeRemaining !== null
+                      ? `${Math.floor(recallTimeRemaining / 60)}:${String(
+                          recallTimeRemaining % 60
+                        ).padStart(2, "0")}`
+                      : "0:00"}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* No card groups per location input here; should be on settings page */}
+
           {/* Hint Bar (styled like numbers) */}
           <div
-        className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
-        style={{
-          minHeight:
-            typeof window !== "undefined" && window.innerWidth < 640
-              ? "6rem"
-              : "2.5rem",
-          height:
-            typeof window !== "undefined" && window.innerWidth < 640
-              ? "6rem"
-              : "2.5rem",
-          paddingTop: 0,
-          paddingBottom: 0,
-          minWidth: "340px",
-          maxWidth: "100%",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
-          <span
-            className="block truncate font-mono"
+            className="mb-4 px-4 bg-gray-100 dark:bg-slate-800 rounded text-[18px] text-gray-800 dark:text-gray-100 w-full flex items-center gap-2"
             style={{
-              textAlign: "left",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-              whiteSpace:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "normal"
-                  : "nowrap",
-              paddingTop: "0.5rem",
-              height:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "6rem"
-                  : "2.5rem",
               minHeight:
                 typeof window !== "undefined" && window.innerWidth < 640
                   ? "6rem"
                   : "2.5rem",
-              maxHeight:
+              height:
                 typeof window !== "undefined" && window.innerWidth < 640
                   ? "6rem"
                   : "2.5rem",
-              lineHeight:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "1.3"
-                  : "2.5rem",
-              overflow:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "auto"
-                  : "hidden",
-              textOverflow:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "clip"
-                  : "ellipsis",
-              width: "100%",
-              margin:
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "0 auto"
-                  : undefined,
+              paddingTop: 0,
+              paddingBottom: 0,
+              minWidth: "340px",
+              maxWidth: "100%",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            <b>{currentPoint && currentPoint.name ? currentPoint.name : "-"}</b>
-            {currentPoint && currentPoint.memoItem
-              ? ` - ${currentPoint.memoItem}`
-              : ""}
-            {imageItemName && (
-              <>
-                {` : ${imageItemName}`}
-                {imagePhonetics && (
-                  <span
-                    style={{
-                      color: "#888",
-                      fontStyle: "italic",
-                      marginLeft: 6,
-                    }}
-                  >
-                    ({imagePhonetics})
-                  </span>
-                )}
-              </>
-            )}
-          </span>
-        </div>
-      </div>
-      {/* Card List (grid, desktop only) */}
-      <div className="grid grid-cols-10 gap-2 mb-6 hidden sm:grid">
-        {cardsOnPage.map((card, idx) => {
-          const groupIdx = Math.floor(idx / groupSize);
-          const isHighlighted = groupIdx === highlightIdx;
-          // Color hearts and diamonds red
-          const isRedSuit = card.suit === "♥" || card.suit === "♦";
-          return (
-            <div
-              key={idx}
-              className={`p-2 border rounded text-center text-lg font-mono transition-all duration-150 ${
-                isHighlighted
-                  ? "bg-yellow-200 dark:bg-yellow-700 border-yellow-500"
-                  : "bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
-              }`}
-            >
-              {card.value}
+            <div className="flex-1 min-w-0" style={{ overflow: "hidden" }}>
               <span
-                className={
-                  isRedSuit ? "ml-1 text-red-600 dark:text-red-400" : "ml-1"
-                }
+                className="block truncate font-mono"
+                style={{
+                  textAlign: "left",
+                  overflowWrap: "break-word",
+                  wordBreak: "break-word",
+                  whiteSpace:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "normal"
+                      : "nowrap",
+                  paddingTop: "0.5rem",
+                  height:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "6rem"
+                      : "2.5rem",
+                  minHeight:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "6rem"
+                      : "2.5rem",
+                  maxHeight:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "6rem"
+                      : "2.5rem",
+                  lineHeight:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "1.3"
+                      : "2.5rem",
+                  overflow:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "auto"
+                      : "hidden",
+                  textOverflow:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "clip"
+                      : "ellipsis",
+                  width: "100%",
+                  margin:
+                    typeof window !== "undefined" && window.innerWidth < 640
+                      ? "0 auto"
+                      : undefined,
+                }}
               >
-                {card.suit}
+                <b>
+                  {currentPoint && currentPoint.name ? currentPoint.name : "-"}
+                </b>
+                {currentPoint && currentPoint.memoItem
+                  ? ` - ${currentPoint.memoItem}`
+                  : ""}
+                {imageItemName && (
+                  <>
+                    {` : ${imageItemName}`}
+                    {imagePhonetics && (
+                      <span
+                        style={{
+                          color: "#888",
+                          fontStyle: "italic",
+                          marginLeft: 6,
+                        }}
+                      >
+                        ({imagePhonetics})
+                      </span>
+                    )}
+                  </>
+                )}
               </span>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Focus box for current group (mobile only) */}
-      <div className="block sm:hidden mb-6">
-        <div className="flex justify-center">
-          <div className="border-2 border-yellow-500 rounded-lg bg-yellow-100 dark:bg-yellow-900 p-4 flex gap-2 items-center min-w-[120px]">
-            {currentGroup.map((card, idx) => {
+          </div>
+          {/* Card List (grid, desktop only) */}
+          <div className="grid grid-cols-10 gap-2 mb-6 hidden sm:grid">
+            {cardsOnPage.map((card, idx) => {
+              const groupIdx = Math.floor(idx / groupSize);
+              const isHighlighted = groupIdx === highlightIdx;
+              // Color hearts and diamonds red
               const isRedSuit = card.suit === "♥" || card.suit === "♦";
               return (
-                <span
+                <div
                   key={idx}
-                  className="text-2xl font-mono flex items-center"
+                  className={`p-2 border rounded text-center text-lg font-mono transition-all duration-150 ${
+                    isHighlighted
+                      ? "bg-yellow-200 dark:bg-yellow-700 border-yellow-500"
+                      : "bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
+                  }`}
                 >
                   {card.value}
                   <span
@@ -1086,228 +1111,254 @@ export default function CardMemorisation({
                   >
                     {card.suit}
                   </span>
-                </span>
+                </div>
               );
             })}
           </div>
-        </div>
-      </div>
-      {/* Paging controls (desktop only, like numbers) */}
-      {totalPages > 1 && (
-        <div className="mt-4 text-center hidden sm:block">
-          <button
-            onClick={() => {
-              if (page > 0) {
-                setPage((p) => p - 1);
-              } else {
-                if (
-                  groupsPerLocation === "variable-black" ||
-                  groupsPerLocation === "variable-red"
-                ) {
-                  setJourneyIdx((idx) => {
-                    const newIdx =
-                      journeysWithPoints.length > 0
-                        ? (idx - 1 + journeysWithPoints.length) %
-                          journeysWithPoints.length
-                        : 0;
-                    // eslint-disable-next-line no-console
-                    console.log(
-                      "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                      newIdx,
-                      journeysWithPoints[newIdx]?.name || "?"
-                    );
-                    return newIdx;
-                  });
-                } else {
-                  setPage(totalPages - 1);
-                  setHighlightIdx(totalGroups - 1);
-                }
-              }
-              setHighlightIdx(0);
-            }}
-            disabled={
-              page === 0 &&
-              (!journeysWithPoints.length ||
-                (groupsPerLocation !== "variable-black" &&
-                  groupsPerLocation !== "variable-red"))
-            }
-            className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="mx-3 text-gray-900 dark:text-gray-100">
-            Page {page + 1} of {totalPages}
-          </span>
-          <button
-            onClick={() => {
-              if (page < totalPages - 1) {
-                setPage((p) => p + 1);
-              } else {
-                if (
-                  groupsPerLocation === "variable-black" ||
-                  groupsPerLocation === "variable-red"
-                ) {
-                  setJourneyIdx((idx) => {
-                    const newIdx =
-                      journeysWithPoints.length > 0
-                        ? (idx + 1) % journeysWithPoints.length
-                        : 0;
-                    // eslint-disable-next-line no-console
-                    console.log(
-                      "[CardMemorisation] Moving to NEXT journey (variable logic):",
-                      newIdx,
-                      journeysWithPoints[newIdx]?.name || "?"
-                    );
-                    return newIdx;
-                  });
-                } else {
-                  setPage(0);
-                  setHighlightIdx(0);
-                }
-              }
-              setHighlightIdx(0);
-            }}
-            disabled={
-              page === totalPages - 1 &&
-              (!journeysWithPoints.length ||
-                (groupsPerLocation !== "variable-black" &&
-                  groupsPerLocation !== "variable-red"))
-            }
-            className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
-      {/* Mobile navigation for groups (show only on mobile) */}
-      <div className="block sm:hidden mt-4">
-        <div className="flex items-center justify-center">
-          <button
-            onClick={() => {
-              if (highlightIdx === 0) {
-                if (page > 0) {
-                  setPage((p) => p - 1);
-                  const prevPageStart = (page - 1) * CARDS_PER_DECK;
-                  const prevPageEnd = Math.min(
-                    prevPageStart + CARDS_PER_DECK,
-                    cards.length
+
+          {/* Focus box for current group (mobile only) */}
+          <div className="block sm:hidden mb-6">
+            <div className="flex justify-center">
+              <div className="border-2 border-yellow-500 rounded-lg bg-yellow-100 dark:bg-yellow-900 p-4 flex gap-2 items-center min-w-[120px]">
+                {currentGroup.map((card, idx) => {
+                  const isRedSuit = card.suit === "♥" || card.suit === "♦";
+                  return (
+                    <span
+                      key={idx}
+                      className="text-2xl font-mono flex items-center"
+                    >
+                      {card.value}
+                      <span
+                        className={
+                          isRedSuit
+                            ? "ml-1 text-red-600 dark:text-red-400"
+                            : "ml-1"
+                        }
+                      >
+                        {card.suit}
+                      </span>
+                    </span>
                   );
-                  const prevCardsOnPage = cards.slice(
-                    prevPageStart,
-                    prevPageEnd
-                  );
-                  const prevTotalGroups = Math.ceil(
-                    prevCardsOnPage.length / groupSize
-                  );
-                  setHighlightIdx(prevTotalGroups - 1);
-                } else {
-                  if (
-                    groupsPerLocation === "variable-black" ||
-                    groupsPerLocation === "variable-red"
-                  ) {
-                    setJourneyIdx((idx) => {
-                      // eslint-disable-next-line no-console
-                      console.log(
-                        "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
-                        idx,
-                        "journeysWithPoints.length:",
-                        journeysWithPoints.length,
-                        "current:",
-                        journeysWithPoints[idx]?.name || "?"
-                      );
-                      const newIdx =
-                        journeysWithPoints.length > 0
-                          ? (idx - 1 + journeysWithPoints.length) %
-                            journeysWithPoints.length
-                          : 0;
-                      // eslint-disable-next-line no-console
-                      console.log(
-                        "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                        newIdx,
-                        journeysWithPoints[newIdx]?.name || "?"
-                      );
-                      return newIdx;
-                    });
+                })}
+              </div>
+            </div>
+          </div>
+          {/* Paging controls (desktop only, like numbers) */}
+          {totalPages > 1 && (
+            <div className="mt-4 text-center hidden sm:block">
+              <button
+                onClick={() => {
+                  if (page > 0) {
+                    setPage((p) => p - 1);
                   } else {
-                    setPage(totalPages - 1);
-                    setHighlightIdx(totalGroups - 1);
+                    if (
+                      groupsPerLocation === "variable-black" ||
+                      groupsPerLocation === "variable-red"
+                    ) {
+                      setJourneyIdx((idx) => {
+                        const newIdx =
+                          journeysWithPoints.length > 0
+                            ? (idx - 1 + journeysWithPoints.length) %
+                              journeysWithPoints.length
+                            : 0;
+                        // eslint-disable-next-line no-console
+                        console.log(
+                          "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                          newIdx,
+                          journeysWithPoints[newIdx]?.name || "?"
+                        );
+                        return newIdx;
+                      });
+                    } else {
+                      setPage(totalPages - 1);
+                      setHighlightIdx(totalGroups - 1);
+                    }
                   }
-                }
-              } else {
-                setHighlightIdx((idx) => Math.max(0, idx - 1));
-              }
-            }}
-            disabled={
-              highlightIdx === 0 &&
-              page === 0 &&
-              (!journeysWithPoints.length ||
-                (groupsPerLocation !== "variable-black" &&
-                  groupsPerLocation !== "variable-red"))
-            }
-            className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
-            {highlightIdx + 1} / {totalGroups || 1}
-          </span>
-          <button
-            onClick={() => {
-              if (highlightIdx === (totalGroups || 1) - 1) {
-                if (page < totalPages - 1) {
-                  setPage((p) => p + 1);
                   setHighlightIdx(0);
-                } else {
-                  if (
-                    groupsPerLocation === "variable-black" ||
-                    groupsPerLocation === "variable-red"
-                  ) {
-                    setJourneyIdx((idx) => {
-                      // eslint-disable-next-line no-console
-                      console.log(
-                        "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
-                        idx,
-                        "journeysWithPoints.length:",
-                        journeysWithPoints.length,
-                        "current:",
-                        journeysWithPoints[idx]?.name || "?"
-                      );
-                      const newIdx =
-                        journeysWithPoints.length > 0
-                          ? (idx + 1) % journeysWithPoints.length
-                          : 0;
-                      // eslint-disable-next-line no-console
-                      console.log(
-                        "[CardMemorisation] Moving to NEXT journey (variable logic):",
-                        newIdx,
-                        journeysWithPoints[newIdx]?.name || "?"
-                      );
-                      return newIdx;
-                    });
-                  } else {
-                    setPage(0);
-                    setHighlightIdx(0);
-                  }
+                }}
+                disabled={
+                  page === 0 &&
+                  (!journeysWithPoints.length ||
+                    (groupsPerLocation !== "variable-black" &&
+                      groupsPerLocation !== "variable-red"))
                 }
-              } else {
-                setHighlightIdx((idx) =>
-                  Math.min((totalGroups || 1) - 1, idx + 1)
-                );
-              }
-            }}
-            disabled={
-              highlightIdx === (totalGroups || 1) - 1 &&
-              page === totalPages - 1 &&
-              (!journeysWithPoints.length ||
-                (groupsPerLocation !== "variable-black" &&
-                  groupsPerLocation !== "variable-red"))
-            }
-            className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+                className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="mx-3 text-gray-900 dark:text-gray-100">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                onClick={() => {
+                  if (page < totalPages - 1) {
+                    setPage((p) => p + 1);
+                  } else {
+                    if (
+                      groupsPerLocation === "variable-black" ||
+                      groupsPerLocation === "variable-red"
+                    ) {
+                      setJourneyIdx((idx) => {
+                        const newIdx =
+                          journeysWithPoints.length > 0
+                            ? (idx + 1) % journeysWithPoints.length
+                            : 0;
+                        // eslint-disable-next-line no-console
+                        console.log(
+                          "[CardMemorisation] Moving to NEXT journey (variable logic):",
+                          newIdx,
+                          journeysWithPoints[newIdx]?.name || "?"
+                        );
+                        return newIdx;
+                      });
+                    } else {
+                      setPage(0);
+                      setHighlightIdx(0);
+                    }
+                  }
+                  setHighlightIdx(0);
+                }}
+                disabled={
+                  page === totalPages - 1 &&
+                  (!journeysWithPoints.length ||
+                    (groupsPerLocation !== "variable-black" &&
+                      groupsPerLocation !== "variable-red"))
+                }
+                className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+          {/* Mobile navigation for groups (show only on mobile) */}
+          <div className="block sm:hidden mt-4">
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => {
+                  if (highlightIdx === 0) {
+                    if (page > 0) {
+                      setPage((p) => p - 1);
+                      const prevPageStart = (page - 1) * CARDS_PER_DECK;
+                      const prevPageEnd = Math.min(
+                        prevPageStart + CARDS_PER_DECK,
+                        cards.length
+                      );
+                      const prevCardsOnPage = cards.slice(
+                        prevPageStart,
+                        prevPageEnd
+                      );
+                      const prevTotalGroups = Math.ceil(
+                        prevCardsOnPage.length / groupSize
+                      );
+                      setHighlightIdx(prevTotalGroups - 1);
+                    } else {
+                      if (
+                        groupsPerLocation === "variable-black" ||
+                        groupsPerLocation === "variable-red"
+                      ) {
+                        setJourneyIdx((idx) => {
+                          // eslint-disable-next-line no-console
+                          console.log(
+                            "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
+                            idx,
+                            "journeysWithPoints.length:",
+                            journeysWithPoints.length,
+                            "current:",
+                            journeysWithPoints[idx]?.name || "?"
+                          );
+                          const newIdx =
+                            journeysWithPoints.length > 0
+                              ? (idx - 1 + journeysWithPoints.length) %
+                                journeysWithPoints.length
+                              : 0;
+                          // eslint-disable-next-line no-console
+                          console.log(
+                            "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
+                            newIdx,
+                            journeysWithPoints[newIdx]?.name || "?"
+                          );
+                          return newIdx;
+                        });
+                      } else {
+                        setPage(totalPages - 1);
+                        setHighlightIdx(totalGroups - 1);
+                      }
+                    }
+                  } else {
+                    setHighlightIdx((idx) => Math.max(0, idx - 1));
+                  }
+                }}
+                disabled={
+                  highlightIdx === 0 &&
+                  page === 0 &&
+                  (!journeysWithPoints.length ||
+                    (groupsPerLocation !== "variable-black" &&
+                      groupsPerLocation !== "variable-red"))
+                }
+                className="mr-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="mx-3 text-sm text-gray-600 dark:text-gray-300">
+                {highlightIdx + 1} / {totalGroups || 1}
+              </span>
+              <button
+                onClick={() => {
+                  if (highlightIdx === (totalGroups || 1) - 1) {
+                    if (page < totalPages - 1) {
+                      setPage((p) => p + 1);
+                      setHighlightIdx(0);
+                    } else {
+                      if (
+                        groupsPerLocation === "variable-black" ||
+                        groupsPerLocation === "variable-red"
+                      ) {
+                        setJourneyIdx((idx) => {
+                          // eslint-disable-next-line no-console
+                          console.log(
+                            "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
+                            idx,
+                            "journeysWithPoints.length:",
+                            journeysWithPoints.length,
+                            "current:",
+                            journeysWithPoints[idx]?.name || "?"
+                          );
+                          const newIdx =
+                            journeysWithPoints.length > 0
+                              ? (idx + 1) % journeysWithPoints.length
+                              : 0;
+                          // eslint-disable-next-line no-console
+                          console.log(
+                            "[CardMemorisation] Moving to NEXT journey (variable logic):",
+                            newIdx,
+                            journeysWithPoints[newIdx]?.name || "?"
+                          );
+                          return newIdx;
+                        });
+                      } else {
+                        setPage(0);
+                        setHighlightIdx(0);
+                      }
+                    }
+                  } else {
+                    setHighlightIdx((idx) =>
+                      Math.min((totalGroups || 1) - 1, idx + 1)
+                    );
+                  }
+                }}
+                disabled={
+                  highlightIdx === (totalGroups || 1) - 1 &&
+                  page === totalPages - 1 &&
+                  (!journeysWithPoints.length ||
+                    (groupsPerLocation !== "variable-black" &&
+                      groupsPerLocation !== "variable-red"))
+                }
+                className="ml-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>

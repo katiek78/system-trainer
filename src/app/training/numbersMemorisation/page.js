@@ -70,6 +70,7 @@ function NumbersMemorisationContent() {
   const [memoStartTime, setMemoStartTime] = useState(null);
   const [memoEndTime, setMemoEndTime] = useState(null);
   const recallCountdownInitialized = useRef(false);
+  const memoCountdownInitialized = useRef(false);
   const [userInput, setUserInput] = useState([]);
   const [score, setScore] = useState(null);
   const [showScore, setShowScore] = useState(false);
@@ -294,6 +295,10 @@ function NumbersMemorisationContent() {
 
   // Start timer when timed mode is enabled
   useEffect(() => {
+    if (memoCountdownInitialized.current) {
+      return; // Already initialized, don't restart
+    }
+
     if (
       timedMode &&
       timeRemaining === null &&
@@ -307,6 +312,7 @@ function NumbersMemorisationContent() {
         setTimeRemaining(memorisationTime);
       }
       setShowRecall(false);
+      memoCountdownInitialized.current = true;
     } else if (
       !timedMode &&
       memoCountdownRemaining === null &&
@@ -318,6 +324,7 @@ function NumbersMemorisationContent() {
       }
       setTimeRemaining(null);
       setShowRecall(false);
+      memoCountdownInitialized.current = true;
     }
   }, [
     timedMode,
