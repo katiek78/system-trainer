@@ -122,12 +122,13 @@ export default function CardMemorisation({
   const CARDS_PER_DECK = 52;
   const totalPages = decks;
   const [page, setPage] = useState(0);
-  const [cardsOnPage, setCardsOnPage] = useState([]);
+  const [cardsOnPage, setCardsOnPage] = useState(() =>
+    shuffle(generateDecks(1))
+  );
 
   useEffect(() => {
     // On every page change, generate a new shuffled deck
-    const deck = generateDecks(1);
-    setCardsOnPage(shuffle(deck));
+    setCardsOnPage(shuffle(generateDecks(1)));
   }, [page]);
 
   // Highlight state (grouping within current deck)
