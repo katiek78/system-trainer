@@ -51,7 +51,7 @@ export default function CardTrainingSettings() {
     cardGrouping: "1",
     imageSet: "",
     cardGroupsPerLocation: 1,
-    timedMode: "0",
+    timedMode: false,
     memoCountdown: 20,
     recallCountdownMode: "0",
     recallCountdown: 20,
@@ -68,10 +68,15 @@ export default function CardTrainingSettings() {
     const recallTime = Number(localStorage.getItem("cardRecallTime")) || 240;
     const cardGrouping = localStorage.getItem("cardGrouping") || "1";
     const imageSet = localStorage.getItem("cardImageSet") || "";
-    const timedMode = localStorage.getItem("cardTimedMode") || "0";
-    const memoCountdown = Number(localStorage.getItem("cardMemoCountdown")) || 20;
-    const recallCountdownMode = localStorage.getItem("cardRecallCountdownMode") || "0";
-    const recallCountdown = Number(localStorage.getItem("cardRecallCountdown")) || 20;
+    const timedMode =
+      localStorage.getItem("cardTimedMode") === "true" ||
+      localStorage.getItem("cardTimedMode") === "1";
+    const memoCountdown =
+      Number(localStorage.getItem("cardMemoCountdown")) || 20;
+    const recallCountdownMode =
+      localStorage.getItem("cardRecallCountdownMode") || "0";
+    const recallCountdown =
+      Number(localStorage.getItem("cardRecallCountdown")) || 20;
     let cardGroupsPerLocation = localStorage.getItem("cardGroupsPerLocation");
     // Support string values for variable options
     if (
@@ -279,9 +284,12 @@ export default function CardTrainingSettings() {
       "cardGroupsPerLocation",
       settings.cardGroupsPerLocation
     );
-    localStorage.setItem("cardTimedMode", settings.timedMode);
+    localStorage.setItem("cardTimedMode", settings.timedMode.toString());
     localStorage.setItem("cardMemoCountdown", settings.memoCountdown);
-    localStorage.setItem("cardRecallCountdownMode", settings.recallCountdownMode);
+    localStorage.setItem(
+      "cardRecallCountdownMode",
+      settings.recallCountdownMode
+    );
     localStorage.setItem("cardRecallCountdown", settings.recallCountdown);
 
     // Only save if there are options
@@ -347,7 +355,19 @@ export default function CardTrainingSettings() {
       }
       localStorage.setItem("cardImageSets", JSON.stringify(imageSetsToStore));
       router.push(
-        `/training/cards?mode=${settings.mode}&decks=${settings.decks}&memorisationTime=${settings.memorisationTime}&recallTime=${settings.recallTime}&journeyOption=${selectedOption}&cardGrouping=${settings.cardGrouping}&imageSet=${settings.imageSet}&cardGroupsPerLocation=${settings.cardGroupsPerLocation}&timedMode=${settings.timedMode}&memoCountdown=${settings.memoCountdown}&recallCountdownMode=${settings.recallCountdownMode}&recallCountdown=${settings.recallCountdown}`
+        `/training/cards?mode=${settings.mode}&decks=${
+          settings.decks
+        }&memorisationTime=${settings.memorisationTime}&recallTime=${
+          settings.recallTime
+        }&journeyOption=${selectedOption}&cardGrouping=${
+          settings.cardGrouping
+        }&imageSet=${settings.imageSet}&cardGroupsPerLocation=${
+          settings.cardGroupsPerLocation
+        }&timedMode=${settings.timedMode ? "1" : "0"}&memoCountdown=${
+          settings.memoCountdown
+        }&recallCountdownMode=${settings.recallCountdownMode}&recallCountdown=${
+          settings.recallCountdown
+        }`
       );
     });
   }
@@ -370,7 +390,7 @@ export default function CardTrainingSettings() {
     : [];
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
+    <div className="w-[90%] mx-auto mt-10 p-6 bg-white dark:bg-slate-800 rounded shadow text-gray-900 dark:text-gray-100">
       <a
         href="/training"
         className="inline-block mb-4 text-blue-600 dark:text-blue-300 hover:underline"
@@ -382,293 +402,308 @@ export default function CardTrainingSettings() {
         Cards Training Settings
       </h2>
       <form>
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Mode
-        </label>
-        <select
-          name="mode"
-          value={settings.mode}
-          onChange={handleModeChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          {cardModes.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Journey Option
-        </label>
-        {loadingJourneys ? (
-          <div className="mb-4 text-gray-700 dark:text-gray-300">
-            Loading journey options...
-          </div>
-        ) : (
-          <div className="mb-4">
-            <div className="flex items-center mb-2">
-              <select
-                className="px-3 py-1 mr-2 rounded border bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                value={selectedOption}
-                onChange={(e) => handleSelectOption(Number(e.target.value))}
-                disabled={options.length === 0}
-              >
-                {options.map((_, idx) => (
-                  <option key={idx} value={idx}>
-                    Option {idx + 1}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200 rounded"
-                onClick={handleAddOption}
-              >
-                + Add Option
-              </button>
-              {options.length > 1 && (
-                <button
-                  type="button"
-                  className="ml-2 px-2 py-1 bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 rounded"
-                  onClick={() => handleRemoveOption(selectedOption)}
-                >
-                  Remove Option
-                </button>
-              )}
-            </div>
-            {options.length === 0 ? (
-              <div className="mb-2 text-gray-500 dark:text-gray-400">
-                No options for this discipline
-              </div>
-            ) : (
-              <ul>
-                {options[selectedOption].length === 0 && (
-                  <div className="mb-2 text-gray-500 dark:text-gray-400">
-                    No journeys selected
-                  </div>
-                )}
-                {options[selectedOption].map((j, idx) => (
-                  <li key={j.id} className="flex items-center mb-1">
-                    <span className="flex-1 text-gray-900 dark:text-gray-100">
-                      {j.name}
-                    </span>
-                    <button
-                      type="button"
-                      className="ml-2 text-red-600 dark:text-red-400"
-                      onClick={() => handleRemoveJourney(idx)}
-                      title="Remove"
-                    >
-                      ✕
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-1 text-gray-600 dark:text-gray-300"
-                      onClick={() => handleReorderJourney(idx, idx - 1)}
-                      disabled={idx === 0}
-                      title="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-1 text-gray-600 dark:text-gray-300"
-                      onClick={() => handleReorderJourney(idx, idx + 1)}
-                      disabled={idx === options[selectedOption].length - 1}
-                      title="Move down"
-                    >
-                      ▼
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <select
-              className="mt-2 px-2 py-1 border rounded text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
-              onChange={handleAddJourney}
-              value=""
-            >
-              <option value="">Add journey...</option>
-              {userJourneys
-                .filter(
-                  (j) =>
-                    !options[selectedOption]?.some((sel) => sel.id === j.id)
-                )
-                .map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        )}
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Number of decks
-        </label>
-        <input
-          type="number"
-          name="decks"
-          min={1}
-          max={52}
-          value={settings.decks}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-          disabled={!isCustom}
-        />
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Memorisation time (seconds)
-        </label>
-        <input
-          type="number"
-          name="memorisationTime"
-          min={10}
-          value={settings.memorisationTime}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        />
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Recall time (seconds)
-        </label>
-        <input
-          type="number"
-          name="recallTime"
-          min={10}
-          value={settings.recallTime}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        />
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Timed mode
-        </label>
-        <select
-          name="timedMode"
-          value={settings.timedMode}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          <option value="0">Off</option>
-          <option value="1">On</option>
-        </select>
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Memo countdown (seconds)
-        </label>
-        <input
-          type="number"
-          name="memoCountdown"
-          min={0}
-          max={60}
-          value={settings.memoCountdown}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        />
-
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Recall countdown mode
-        </label>
-        <select
-          name="recallCountdownMode"
-          value={settings.recallCountdownMode}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          <option value="0">Fixed time</option>
-          <option value="remaining">Remaining memo time</option>
-        </select>
-
-        {settings.recallCountdownMode === "0" && (
-          <>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Recall countdown (seconds)
+              Discipline
+            </label>
+            <select
+              name="mode"
+              value={settings.mode}
+              onChange={handleModeChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              {cardModes.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Number of decks
             </label>
             <input
               type="number"
-              name="recallCountdown"
-              min={0}
-              max={60}
-              value={settings.recallCountdown}
+              name="decks"
+              min={1}
+              max={52}
+              value={settings.decks}
               onChange={handleChange}
               className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              disabled={!isCustom}
             />
-          </>
-        )}
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Card grouping
-        </label>
-        <select
-          name="cardGrouping"
-          value={settings.cardGrouping}
-          onChange={handleChange}
-          className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-        </select>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={settings.timedMode}
+                onChange={(e) => {
+                  setSettings((prev) => ({
+                    ...prev,
+                    timedMode: e.target.checked,
+                  }));
+                  localStorage.setItem("cardTimedMode", e.target.checked);
+                }}
+              />
+              Timed Memorisation + Recall
+            </label>
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Card groups per location
-        </label>
-        <select
-          name="cardGroupsPerLocation"
-          value={settings.cardGroupsPerLocation}
-          onChange={handleChange}
-          className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-          <option value="variable-black">
-            Variable (end on black, cap at 3)
-          </option>
-          <option value="variable-red">Variable (end on red, cap at 3)</option>
-        </select>
-        {(settings.cardGroupsPerLocation === "variable-black" ||
-          settings.cardGroupsPerLocation === "variable-red") && (
-          <>
-            <div className="mb-2 text-sm text-gray-700 dark:text-gray-300">
-              {settings.cardGroupsPerLocation === "variable-black"
-                ? "Each location takes a variable number of card groups. Move to the next location after a black-first pair."
-                : "Each location takes a variable number of card groups. Move to the next location after a red-first pair."}
-            </div>
-            {/* Red-to-black mapping options */}
-            <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-700 rounded">
-              <div className="font-semibold mb-1">
-                Red-First to Black-First Pair Mapping
+            {settings.timedMode && (
+              <>
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
+                  Memorisation time (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="memorisationTime"
+                  min={10}
+                  value={settings.memorisationTime}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Recall time (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="recallTime"
+                  min={10}
+                  value={settings.recallTime}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Memorisation countdown (seconds)
+                </label>
+                <input
+                  type="number"
+                  name="memoCountdown"
+                  min={0}
+                  max={60}
+                  value={settings.memoCountdown}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Recall countdown mode
+                </label>
+                <select
+                  name="recallCountdownMode"
+                  value={settings.recallCountdownMode}
+                  onChange={handleChange}
+                  className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                >
+                  <option value="0">Fixed time</option>
+                  <option value="remaining">Remaining memorisation time</option>
+                </select>
+
+                {settings.recallCountdownMode === "0" && (
+                  <>
+                    <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                      Recall countdown (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      name="recallCountdown"
+                      min={0}
+                      max={60}
+                      value={settings.recallCountdown}
+                      onChange={handleChange}
+                      className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                    />
+                  </>
+                )}
+              </>
+            )}
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Journey Option
+            </label>
+            {loadingJourneys ? (
+              <div className="mb-4 text-gray-700 dark:text-gray-300">
+                Loading journey options...
               </div>
-              <div className="text-xs mb-2 text-gray-600 dark:text-gray-300">
-                When using a 1352 set, only black-first pairs are defined.
-                Please specify how red-first suit pairs should mirror
-                black-first pairs.
+            ) : (
+              <div className="mb-4">
+                <div className="flex items-center mb-2">
+                  <select
+                    className="px-3 py-1 mr-2 rounded border bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                    value={selectedOption}
+                    onChange={(e) => handleSelectOption(Number(e.target.value))}
+                    disabled={options.length === 0}
+                  >
+                    {options.map((_, idx) => (
+                      <option key={idx} value={idx}>
+                        Option {idx + 1}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200 rounded"
+                    onClick={handleAddOption}
+                  >
+                    + Add Option
+                  </button>
+                  {options.length > 1 && (
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 rounded"
+                      onClick={() => handleRemoveOption(selectedOption)}
+                    >
+                      Remove Option
+                    </button>
+                  )}
+                </div>
+                {options.length === 0 ? (
+                  <div className="mb-2 text-gray-500 dark:text-gray-400">
+                    No options for this discipline
+                  </div>
+                ) : (
+                  <ul>
+                    {options[selectedOption].length === 0 && (
+                      <div className="mb-2 text-gray-500 dark:text-gray-400">
+                        No journeys selected
+                      </div>
+                    )}
+                    {options[selectedOption].map((j, idx) => (
+                      <li key={j.id} className="flex items-center mb-1">
+                        <span className="flex-1 text-gray-900 dark:text-gray-100">
+                          {j.name}
+                        </span>
+                        <button
+                          type="button"
+                          className="ml-2 text-red-600 dark:text-red-400"
+                          onClick={() => handleRemoveJourney(idx)}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-600 dark:text-gray-300"
+                          onClick={() => handleReorderJourney(idx, idx - 1)}
+                          disabled={idx === 0}
+                          title="Move up"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-600 dark:text-gray-300"
+                          onClick={() => handleReorderJourney(idx, idx + 1)}
+                          disabled={idx === options[selectedOption].length - 1}
+                          title="Move down"
+                        >
+                          ▼
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <select
+                  className="mt-2 px-2 py-1 border rounded text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
+                  onChange={handleAddJourney}
+                  value=""
+                >
+                  <option value="">Add journey...</option>
+                  {userJourneys
+                    .filter(
+                      (j) =>
+                        !options[selectedOption]?.some((sel) => sel.id === j.id)
+                    )
+                    .map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.name}
+                      </option>
+                    ))}
+                </select>
               </div>
-              {/* Red-first to black-first mapping table */}
-              <RedToBlackMappingTable />
-            </div>
-          </>
-        )}
+            )}
+          </div>
 
-        <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-          Image set
-        </label>
-        <select
-          name="imageSet"
-          value={settings.imageSet}
-          onChange={handleChange}
-          className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-        >
-          <option value="">Select image set...</option>
-          {filteredImageSets.map((set) => (
-            <option key={set.id || set._id} value={set.id || set._id}>
-              {`${set.name}${set.setType ? ` (${set.setType})` : ""}`}
-            </option>
-          ))}
-        </select>
+          <div>
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Cards per Image
+            </label>
+            <select
+              name="cardGrouping"
+              value={settings.cardGrouping}
+              onChange={handleChange}
+              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Images per location
+            </label>
+            <select
+              name="cardGroupsPerLocation"
+              value={settings.cardGroupsPerLocation}
+              onChange={handleChange}
+              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value="variable-black">
+                Variable (end on black, cap at 3)
+              </option>
+              <option value="variable-red">
+                Variable (end on red, cap at 3)
+              </option>
+            </select>
+            {(settings.cardGroupsPerLocation === "variable-black" ||
+              settings.cardGroupsPerLocation === "variable-red") && (
+              <>
+                <div className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                  {settings.cardGroupsPerLocation === "variable-black"
+                    ? "Each location takes a variable number of images. Move to the next location after a black-first pair."
+                    : "Each location takes a variable number of images. Move to the next location after a red-first pair."}
+                </div>
+                {/* Red-to-black mapping options */}
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-700 rounded">
+                  <div className="font-semibold mb-1">
+                    Red-First to Black-First Pair Mapping
+                  </div>
+                  <div className="text-xs mb-2 text-gray-600 dark:text-gray-300">
+                    When using a 1352 set, only black-first pairs are defined.
+                    Please specify how red-first suit pairs should mirror
+                    black-first pairs.
+                  </div>
+                  {/* Red-first to black-first mapping table */}
+                  <RedToBlackMappingTable />
+                </div>
+              </>
+            )}
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Image set
+            </label>
+            <select
+              name="imageSet"
+              value={settings.imageSet}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="">Select image set...</option>
+              {filteredImageSets.map((set) => (
+                <option key={set.id || set._id} value={set.id || set._id}>
+                  {`${set.name}${set.setType ? ` (${set.setType})` : ""}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="flex gap-3">
           <button

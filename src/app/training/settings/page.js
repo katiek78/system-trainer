@@ -439,18 +439,6 @@ export default function NumberTrainingSettings() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Number of digits
-            </label>
-            <input
-              type="number"
-              name="digits"
-              value={settings.digits}
-              onChange={handleChange}
-              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              disabled={!isCustom}
-            />
-
-            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
               Discipline
             </label>
             <select
@@ -465,6 +453,18 @@ export default function NumberTrainingSettings() {
                 </option>
               ))}
             </select>
+
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Number of digits
+            </label>
+            <input
+              type="number"
+              name="digits"
+              value={settings.digits}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+              disabled={!isCustom}
+            />
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
               <input
@@ -507,60 +507,61 @@ export default function NumberTrainingSettings() {
                   className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                   disabled={!isCustom}
                 />
-              </>
-            )}
 
-            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100 mt-4">
-              Memorisation countdown (seconds)
-            </label>
-            <input
-              type="number"
-              name="memoCountdown"
-              value={settings.memoCountdown ?? 20}
-              onChange={handleChange}
-              min="0"
-              max="10000"
-              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-            />
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-              Countdown before memorisation starts (0-10,000 seconds, default
-              20)
-            </div>
-
-            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Recall countdown mode
-            </label>
-            <select
-              name="recallCountdownMode"
-              value={settings.recallCountdownMode ?? "0"}
-              onChange={handleChange}
-              className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-            >
-              <option value="0">Fixed time</option>
-              <option value="remaining">Remaining memorisation time</option>
-            </select>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-              Choose between fixed countdown or time remaining from memorisation
-            </div>
-
-            {(settings.recallCountdownMode ?? "0") === "0" && (
-              <>
                 <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-                  Recall countdown (seconds)
+                  Memorisation countdown (seconds)
                 </label>
                 <input
                   type="number"
-                  name="recallCountdown"
-                  value={settings.recallCountdown ?? 20}
+                  name="memoCountdown"
+                  value={settings.memoCountdown ?? 20}
                   onChange={handleChange}
                   min="0"
                   max="10000"
                   className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 />
                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-                  Fixed countdown before recall starts (0-10,000 seconds,
+                  Countdown before memorisation starts (0-10,000 seconds,
                   default 20)
                 </div>
+
+                <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                  Recall countdown mode
+                </label>
+                <select
+                  name="recallCountdownMode"
+                  value={settings.recallCountdownMode ?? "0"}
+                  onChange={handleChange}
+                  className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                >
+                  <option value="0">Fixed time</option>
+                  <option value="remaining">Remaining memorisation time</option>
+                </select>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  Choose between fixed countdown or time remaining from
+                  memorisation
+                </div>
+
+                {(settings.recallCountdownMode ?? "0") === "0" && (
+                  <>
+                    <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+                      Recall countdown (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      name="recallCountdown"
+                      value={settings.recallCountdown ?? 20}
+                      onChange={handleChange}
+                      min="0"
+                      max="10000"
+                      className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                    />
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                      Fixed countdown before recall starts (0-10,000 seconds,
+                      default 20)
+                    </div>
+                  </>
+                )}
               </>
             )}
 
@@ -711,7 +712,7 @@ export default function NumberTrainingSettings() {
 
           <div>
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Image Pattern
+              Digits per Image
             </label>
             <input
               type="text"
@@ -788,7 +789,7 @@ export default function NumberTrainingSettings() {
             )}
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Location Pattern
+              Images per Location
             </label>
             <input
               type="text"
@@ -796,15 +797,15 @@ export default function NumberTrainingSettings() {
               value={settings.locationPattern}
               onChange={handleChange}
               className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-              placeholder="e.g. 6 or 3-2"
+              placeholder="e.g. 2 or 3-2"
             />
             <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
-              How many digits per location (e.g., 6 for 6 digits at each
-              location).
+              How many images per location (e.g., 2 for 2 images at each
+              location, or 3-2 for alternating pattern of 3 and 2 images).
             </div>
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Navigate By
+              Navigate by
             </label>
             <select
               name="navigateBy"
@@ -820,7 +821,7 @@ export default function NumberTrainingSettings() {
             </div>
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Focus Box Shows
+              Focus Box shows
             </label>
             <select
               name="focusBoxShows"
