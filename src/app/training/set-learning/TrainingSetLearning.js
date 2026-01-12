@@ -146,6 +146,7 @@ export default function TrainingSetLearning({ imageSet }) {
       setMessage(
         "There are no cards of this type! Change the options and try again."
       );
+      setIsStarted(false);
       setShowOptions(true);
     }
     setNeedNewCard(false);

@@ -135,6 +135,9 @@ export default function CardMemorisation({
   const groupSize = Number(grouping) || 1;
   const totalGroups = Math.ceil(cardsOnPage.length / groupSize);
 
+  // Calculate groups per row for up/down navigation
+  const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
+
   // Clamp highlightIdx to valid range when page/cardsOnPage/totalGroups change
   useEffect(() => {
     if (highlightIdx > totalGroups - 1) {
@@ -142,10 +145,220 @@ export default function CardMemorisation({
     }
   }, [page, cardsOnPage.length, totalGroups]);
 
+  // --- Navigate By: read from localStorage only ---
+  const [navigateBy, setNavigateBy] = useState("image");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setNavigateBy(localStorage.getItem("cardNavigateBy") || "image");
+    }
+  }, []);
+
+  // --- Navigation logic for group/location ---
   // Helper to get all points from all journeys
   const allPoints = journey.flatMap((j) =>
     Array.isArray(j.points) ? j.points : []
   );
+
+  let navRanges;
+  if (
+    navigateBy === "location" &&
+    allPoints.length > 0 &&
+    (groupsPerLocation === "variable-black" ||
+      groupsPerLocation === "variable-red")
+  ) {
+    // Use variable system mapping
+    const map = getVariableLocationMap(
+      cardsOnPage,
+      groupSize,
+      allPoints,
+      groupsPerLocation
+    );
+    // Build navRanges: for each location, collect all group indices that map to it
+    navRanges = Array.from({ length: allPoints.length }, (_, locIdx) =>
+      map
+        .map((mappedLocIdx, groupIdx) =>
+          mappedLocIdx === locIdx ? groupIdx : null
+        )
+        .filter((idx) => idx !== null)
+    );
+  } else if (navigateBy === "location" && allPoints.length > 0) {
+    // Non-variable: original logic
+    navRanges = allPoints.map((_, idx) => {
+      return cardsOnPage
+        .map((_, groupIdx) => {
+          const groupNumber = page * totalGroups + groupIdx;
+          const locIdx = groupNumber % allPoints.length;
+          return locIdx === idx ? groupIdx : null;
+        })
+        .filter((idx) => idx !== null);
+    });
+  } else {
+    navRanges = Array.from({ length: totalGroups }, (_, idx) => [idx]);
+  }
+
+  // Helper: get current nav index (for UI)
+  const [navIdx, setNavIdx] = useState(0);
+  useEffect(() => {
+    setNavIdx(0);
+  }, [navigateBy, page]);
+
+  // When navigating by location, highlight the first group in that location only if highlightIdx is not already in that location
+  useEffect(() => {
+    if (
+      navigateBy === "location" &&
+      navRanges[navIdx] &&
+      navRanges[navIdx][0] !== undefined
+    ) {
+      // Only update highlightIdx if it's not already in the current location
+      if (!navRanges[navIdx].includes(highlightIdx)) {
+        setHighlightIdx(navRanges[navIdx][0]);
+      }
+    }
+  }, [navigateBy, navIdx, navRanges]);
+
+  // Helper: is a group in the current location?
+  function isGroupInCurrentLocation(groupIdx) {
+    return (
+      navigateBy === "location" &&
+      navRanges[navIdx] &&
+      navRanges[navIdx].includes(groupIdx)
+    );
+  }
+
+  // When navigating by location, highlight the first group in that location
+  useEffect(() => {
+    if (
+      navigateBy === "location" &&
+      navRanges[navIdx] &&
+      navRanges[navIdx][0] !== undefined
+    ) {
+      setHighlightIdx(navRanges[navIdx][0]);
+    }
+  }, [navigateBy, navIdx, navRanges]);
+
+  // When navigating by image, navIdx === highlightIdx
+  useEffect(() => {
+    if (navigateBy === "image") {
+      setHighlightIdx(navIdx);
+    }
+  }, [navigateBy, navIdx]);
+  // Keyboard navigation (arrows for navIdx, PgUp/PgDn for deck)
+  useEffect(() => {
+    function handleKeyDown(e) {
+      console.log(showRecall, navigateBy);
+      if (
+        memoCountdownRemaining !== null ||
+        (showRecall && recallCountdownRemaining !== null)
+      ) {
+        return;
+      }
+      if (e.key === "d" && !e.repeat && !showRecall) {
+        setShowDetailsModal((prev) => !prev);
+      } else if (
+        e.key === "Enter" &&
+        !showRecall &&
+        memoCountdownRemaining === null
+      ) {
+        e.preventDefault();
+        if (!memoEndTime && memoStartTime) {
+          setMemoEndTime(Date.now());
+        }
+        setShowDetailsModal(false);
+        setShowRecall(true);
+      } else if (!showRecall && navigateBy === "image") {
+        if (e.key === "ArrowRight") {
+          //Navigate forward by image
+          setHighlightIdx((idx) => {
+            const next = Math.min(idx + 1, totalGroups - 1);
+            setNavIdx(next);
+            return next;
+          });
+        } else if (e.key === "ArrowLeft") {
+          //Navigate backward by image
+          setHighlightIdx((idx) => {
+            const prev = Math.max(idx - 1, 0);
+            setNavIdx(prev);
+            return prev;
+          });
+        }
+      } else if (!showRecall && navigateBy === "location") {
+        if (e.key === "ArrowRight") {
+          //navigate forward by location
+          console.log("about to navigate forward by loc", navIdx, navRanges);
+          setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
+        } else if (e.key === "ArrowLeft") {
+          //navigate backward by location
+          setNavIdx((idx) => Math.max(idx - 1, 0));
+        }
+      } else if (e.key === "ArrowDown" && !showRecall) {
+        if (navigateBy === "image") {
+          setHighlightIdx((idx) => {
+            const next = Math.min(idx + GROUPS_PER_ROW, totalGroups - 1);
+            setNavIdx(next);
+            return next;
+          });
+        } else {
+          setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
+        }
+      } else if (e.key === "ArrowUp" && !showRecall) {
+        if (navigateBy === "image") {
+          setHighlightIdx((idx) => {
+            const prev = Math.max(idx - GROUPS_PER_ROW, 0);
+            setNavIdx(prev);
+            return prev;
+          });
+        } else {
+          setNavIdx((idx) => Math.max(idx - 1, 0));
+        }
+      } else if (e.key === "PageDown" && !showRecall) {
+        if (page < totalPages - 1) {
+          setPage((p) => p + 1);
+        } else {
+          setPage(0);
+        }
+      } else if (e.key === "PageUp" && !showRecall) {
+        if (page > 0) {
+          setPage((p) => p - 1);
+        } else {
+          setPage(totalPages - 1);
+        }
+      } else if ((e.key === " " || e.code === "Space") && !showRecall) {
+        setPage(0);
+        setHighlightIdx(0);
+        setNavIdx(0);
+      } else if (
+        e.key === "Enter" &&
+        ((navigateBy === "image" && highlightIdx === totalGroups - 1) ||
+          (navigateBy === "location" && navIdx === navRanges.length - 1)) &&
+        page === totalPages - 1
+      ) {
+        if (onFinish) onFinish();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    navIdx,
+    navRanges.length,
+    onFinish,
+    page,
+    totalPages,
+    showRecall,
+    memoCountdownRemaining,
+    recallCountdownRemaining,
+    memoStartTime,
+    memoEndTime,
+    navigateBy,
+    highlightIdx,
+    totalGroups,
+    GROUPS_PER_ROW,
+  ]);
+
+  // // Helper to get all points from all journeys
+  // const allPoints = journey.flatMap((j) =>
+  //   Array.isArray(j.points) ? j.points : []
+  // );
   // Helper to get all journeys with points
   const journeysWithPoints = journey.filter(
     (j) => Array.isArray(j.points) && j.points.length > 0
@@ -349,14 +562,6 @@ export default function CardMemorisation({
       .join("");
     let groupNameNorm = normalizeName(groupName);
 
-    // Log the original groupName and normalized version before mapping
-    console.log(
-      "[CardMemorisation] Looking up card pair:",
-      groupName,
-      "| Normalized:",
-      groupNameNorm
-    );
-
     // If variable system and group is a red-first pair, use mapping
     if (
       (groupsPerLocation === "variable-black" ||
@@ -393,14 +598,7 @@ export default function CardMemorisation({
           value2 +
           (suitToEmoji[mappedSuit2] || mappedSuit2);
         const mappedGroupNameNorm = normalizeName(mappedGroupName);
-        console.log(mappedGroupNameNorm);
-        // Log the mapped groupName and normalized version
-        console.log(
-          "[CardMemorisation] Mapped to black-first pair:",
-          mappedGroupName,
-          "| Normalized:",
-          mappedGroupNameNorm
-        );
+
         groupName = mappedGroupName;
         groupNameNorm = mappedGroupNameNorm;
       }
@@ -413,18 +611,6 @@ export default function CardMemorisation({
       imageSet[0].images &&
       imageSet[0].images.length > 0
     ) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "[CardMemorisation] groupName:",
-        groupName,
-        "| groupNameNorm:",
-        groupNameNorm
-      );
-      // eslint-disable-next-line no-console
-      console.log(
-        "[CardMemorisation] first imageSet[0].images[0].name:",
-        imageSet[0].images[0].name
-      );
     }
 
     // For multi-group patterns, use the appropriate image set for this pattern group
@@ -475,10 +661,6 @@ export default function CardMemorisation({
   const memoPicUrl =
     currentPoint && currentPoint.memoPic ? currentPoint.memoPic : null;
 
-  // Calculate groups per row for up/down navigation
-  const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
-
-  // Memo countdown effect (runs before memorization starts)
   useEffect(() => {
     if (
       memoCountdownRemaining !== null &&
@@ -668,7 +850,6 @@ export default function CardMemorisation({
       ) {
         return;
       }
-
       if (e.key === "d" && !e.repeat && !showRecall) {
         setShowDetailsModal((prev) => !prev);
       } else if (
@@ -1114,7 +1295,10 @@ export default function CardMemorisation({
               const startIdx = groupIdx * groupSize;
               const endIdx = Math.min(startIdx + groupSize, cardsOnPage.length);
               const groupCards = cardsOnPage.slice(startIdx, endIdx);
-              const isHighlighted = groupIdx === highlightIdx;
+              const isHighlighted =
+                (navigateBy === "location" &&
+                  isGroupInCurrentLocation(groupIdx)) ||
+                (navigateBy !== "location" && groupIdx === highlightIdx);
               // Calculate total width of overlapped cards
               const cardsWidth = 40 + (groupCards.length - 1) * 20;
               return (

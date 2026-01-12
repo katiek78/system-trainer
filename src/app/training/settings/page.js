@@ -210,7 +210,10 @@ export default function NumberTrainingSettings() {
       } catch {}
     }
     // Debug log: show what is being restored for imageSets
-    console.log("[NumbersSettings] Restoring imageSets from localStorage:", parsedImageSets);
+    console.log(
+      "[NumbersSettings] Restoring imageSets from localStorage:",
+      parsedImageSets
+    );
     if (
       Array.isArray(parsedImageSets) &&
       parsedImageSets.length === imageGroups.length &&
@@ -277,8 +280,6 @@ export default function NumberTrainingSettings() {
     setSettings((prev) => {
       const arr = Array.isArray(prev.imageSets) ? [...prev.imageSets] : [];
       arr[idx] = val;
-      // Debug log: show what is being stored for imageSets
-      console.log("[NumbersSettings] Storing imageSets to localStorage:", arr);
       localStorage.setItem("imageSets", JSON.stringify(arr));
       return { ...prev, imageSets: arr };
     });

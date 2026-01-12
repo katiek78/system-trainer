@@ -56,8 +56,17 @@ export default function CardTrainingSettings() {
     memoCountdown: 20,
     recallCountdownMode: "0",
     recallCountdown: 20,
+    navigateBy: "image",
   });
   // Red-to-black mapping state
+  // --- Navigate By Setting ---
+  function handleNavigateByChange(e) {
+    const value = e.target.value;
+    setSettings((prev) => {
+      localStorage.setItem("cardNavigateBy", value);
+      return { ...prev, navigateBy: value };
+    });
+  }
   const [redToBlackMapping, setRedToBlackMapping] = useState("default");
   const [settingsRestored, setSettingsRestored] = useState(false);
   const [allImageSets, setAllImageSets] = useState([]);
@@ -79,6 +88,7 @@ export default function CardTrainingSettings() {
       localStorage.getItem("cardRecallCountdownMode") || "0";
     const recallCountdown =
       Number(localStorage.getItem("cardRecallCountdown")) || 20;
+    const navigateBy = localStorage.getItem("cardNavigateBy") || "image";
     let cardGroupsPerLocation = localStorage.getItem("cardGroupsPerLocation");
     // Support string values for variable options
     if (
@@ -146,9 +156,17 @@ export default function CardTrainingSettings() {
       memoCountdown,
       recallCountdownMode,
       recallCountdown,
+      navigateBy,
     });
     setSettingsRestored(true);
   }, []);
+  function handleNavigateByChange(e) {
+    const value = e.target.value;
+    setSettings((prev) => {
+      localStorage.setItem("cardNavigateBy", value);
+      return { ...prev, navigateBy: value };
+    });
+  }
   const [loadingJourneys, setLoadingJourneys] = useState(true);
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(0);
@@ -301,17 +319,20 @@ export default function CardTrainingSettings() {
   function handleChange(e) {
     const { name, value } = e.target;
     setSettings((prev) => {
-      const newSettings = {
-        ...prev,
-        [name]:
-          name === "cardGrouping" || name === "imageSet"
+      let newSettings = { ...prev };
+      if (name === "cardGrouping" || name === "imageSet") {
+        newSettings[name] = value;
+      } else if (name === "cardGroupsPerLocation") {
+        newSettings[name] =
+          value === "variable-black" || value === "variable-red"
             ? value
-            : name === "cardGroupsPerLocation"
-            ? value === "variable-black" || value === "variable-red"
-              ? value
-              : Number(value)
-            : Number(value),
-      };
+            : Number(value);
+      } else if (name === "navigateBy") {
+        newSettings[name] = value;
+        localStorage.setItem("cardNavigateBy", value);
+      } else {
+        newSettings[name] = Number(value);
+      }
 
       // If cardGrouping changes away from "2", reset cardGroupsPerLocation if it's a variable option
       if (name === "cardGrouping" && value !== "2") {
@@ -422,6 +443,8 @@ export default function CardTrainingSettings() {
     } else {
       localStorage.setItem("cardImageSets", JSON.stringify([]));
     }
+    // Store navigateBy
+    localStorage.setItem("cardNavigateBy", settings.navigateBy);
 
     // Only save if there are options
     if (!options || options.length === 0) {
@@ -832,14 +855,6 @@ export default function CardTrainingSettings() {
                     )
                       ? savedValue
                       : "";
-                    console.log(
-                      `Dropdown group ${idx}: savedValue=`,
-                      savedValue,
-                      "selectedValue=",
-                      selectedValue,
-                      "validSetIds=",
-                      sets.map((s) => s._id)
-                    );
                     return (
                       <div key={idx} className="mb-4">
                         <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
@@ -871,6 +886,23 @@ export default function CardTrainingSettings() {
                   })}
               </div>
             )}
+
+            {/* Navigate By Setting */}
+            <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+              Navigate by:
+            </label>
+            <select
+              name="navigateBy"
+              value={settings.navigateBy}
+              onChange={handleChange}
+              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+            >
+              <option value="image">Image</option>
+              <option value="location">Location</option>
+            </select>
+            <div className="text-xs text-gray-600 dark:text-gray-400 -mt-3 mb-4">
+              Each click/keypress advances to the next image or next location.
+            </div>
           </div>
         </div>
 
