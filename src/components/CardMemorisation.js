@@ -614,16 +614,8 @@ export default function CardMemorisation({
           if (page > 0) {
             setPage((p) => p - 1);
             // Need to set highlightIdx to last group of previous page
-            const prevPageStart = (page - 1) * CARDS_PER_DECK;
-            const prevPageEnd = Math.min(
-              prevPageStart + CARDS_PER_DECK,
-              cards.length
-            );
-            const prevCardsOnPage = cards.slice(prevPageStart, prevPageEnd);
-            const prevTotalGroups = Math.ceil(
-              prevCardsOnPage.length / groupSize
-            );
-            setHighlightIdx(prevTotalGroups - 1);
+            // Since each page is a new deck, just set to last group
+            setHighlightIdx(totalGroups - 1);
           } else {
             // At first page
             if (
@@ -654,14 +646,6 @@ export default function CardMemorisation({
                 );
                 // After journeyIdx is set, set highlightIdx to last group of that journey's first page
                 setTimeout(() => {
-                  // Get the points for the new journey
-                  const points = journeysWithPoints[newIdx]?.points || [];
-                  // Generate a deck for the first page
-                  const deck = generateDecks(decks);
-                  const pageStart = 0;
-                  const pageEnd = Math.min(CARDS_PER_DECK, deck.length);
-                  const cardsOnPage = deck.slice(pageStart, pageEnd);
-                  const totalGroups = Math.ceil(cardsOnPage.length / groupSize);
                   setHighlightIdx(totalGroups - 1);
                   setPage(0);
                 }, 0);
@@ -763,7 +747,6 @@ export default function CardMemorisation({
     groupsPerLocation,
     journeysWithPoints.length,
     groupSize,
-    cards,
     totalGroups,
     showRecall,
     memoCountdownRemaining,
