@@ -862,24 +862,6 @@ export default function CardMemorisation({
               {currentPoint && currentPoint.memoItem
                 ? ` - ${currentPoint.memoItem}`
                 : ""}
-              {imageItemName ? `: ${imageItemName}` : ""}
-              {imagePhonetics && (
-                <span
-                  style={{ color: "#888", fontStyle: "italic", marginLeft: 6 }}
-                >
-                  ({imagePhonetics})
-                </span>
-              )}
-            </div>
-            <div
-              style={{
-                margin: "16px 0",
-                position: "relative",
-                display: "inline-block",
-                width: 320,
-                height: 200,
-              }}
-            >
               {locationUrl ? (
                 isLocationStreetView(locationUrl) ? (
                   <EmbedStreetView
@@ -956,23 +938,31 @@ export default function CardMemorisation({
                 }}
               >
                 {currentGroup.map((card, idx) => {
-                  const isRedSuit = card.suit === "♥" || card.suit === "♦";
+                  // Map card to filename: s01.png, h11.png, etc.
+                  const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
+                  const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
+                  let valueNum = valueMap[card.value] || card.value;
+                  if (!valueNum.match(/^\d+$/)) valueNum = "01";
+                  if (valueNum.length === 1) valueNum = "0" + valueNum;
+                  const suit = suitMap[card.suit] || "s";
+                  const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
                   return (
-                    <span
+                    <img
                       key={idx}
-                      className="text-2xl font-mono flex items-center"
-                    >
-                      {card.value}
-                      <span
-                        className={
-                          isRedSuit
-                            ? "ml-1 text-red-600 dark:text-red-400"
-                            : "ml-1"
-                        }
-                      >
-                        {card.suit}
-                      </span>
-                    </span>
+                      src={filename}
+                      alt={`${card.value}${card.suit}`}
+                      style={{
+                        width: 40,
+                        height: 58,
+                        objectFit: "contain",
+                        marginLeft: idx === 0 ? 0 : -20,
+                        zIndex: idx,
+                        borderRadius: 4,
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                        border: "1px solid #bbb",
+                        background: "#fff",
+                      }}
+                    />
                   );
                 })}
               </div>
@@ -1119,30 +1109,71 @@ export default function CardMemorisation({
               </span>
             </div>
           </div>
-          {/* Card List (grid, desktop only) */}
-          <div className="grid grid-cols-10 gap-2 mb-6 hidden sm:grid">
-            {cardsOnPage.map((card, idx) => {
-              const groupIdx = Math.floor(idx / groupSize);
+          {/* Card List (grid, desktop only) - groups overlapped horizontally */}
+          <div
+            className="flex flex-wrap gap-4 mb-6 hidden sm:flex"
+            style={{ minHeight: 62 }}
+          >
+            {Array.from({ length: totalGroups }).map((_, groupIdx) => {
+              const startIdx = groupIdx * groupSize;
+              const endIdx = Math.min(startIdx + groupSize, cardsOnPage.length);
+              const groupCards = cardsOnPage.slice(startIdx, endIdx);
               const isHighlighted = groupIdx === highlightIdx;
-              // Color hearts and diamonds red
-              const isRedSuit = card.suit === "♥" || card.suit === "♦";
+              // Calculate total width of overlapped cards
+              const cardsWidth = 40 + (groupCards.length - 1) * 20;
               return (
                 <div
-                  key={idx}
-                  className={`p-2 border rounded text-center text-lg font-mono transition-all duration-150 ${
-                    isHighlighted
-                      ? "bg-yellow-200 dark:bg-yellow-700 border-yellow-500"
-                      : "bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
-                  }`}
+                  key={groupIdx}
+                  className="relative flex items-center"
+                  style={{
+                    minWidth: cardsWidth,
+                    height: 62,
+                    marginRight: 16,
+                    marginBottom: 8,
+                  }}
                 >
-                  {card.value}
-                  <span
-                    className={
-                      isRedSuit ? "ml-1 text-red-600 dark:text-red-400" : "ml-1"
-                    }
-                  >
-                    {card.suit}
-                  </span>
+                  {isHighlighted && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: "50%",
+                        top: "50%",
+                        width: cardsWidth,
+                        height: 62,
+                        background: "#fde68a",
+                        borderRadius: 8,
+                        boxShadow: "0 0 0 2px #fbbf24",
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 0,
+                        transition: "background 0.2s, box-shadow 0.2s",
+                      }}
+                    />
+                  )}
+                  {groupCards.map((card, idx) => {
+                    const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
+                    const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
+                    let valueNum = valueMap[card.value] || card.value;
+                    if (!valueNum.match(/^[0-9]+$/)) valueNum = "01";
+                    if (valueNum.length === 1) valueNum = "0" + valueNum;
+                    const suit = suitMap[card.suit] || "s";
+                    const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
+                    return (
+                      <img
+                        key={idx}
+                        src={filename}
+                        alt={`${card.value}${card.suit}`}
+                        style={{
+                          width: 40,
+                          height: 58,
+                          objectFit: "contain",
+                          background: "#fff",
+                          position: "absolute",
+                          left: idx * 20,
+                          zIndex: idx + 1, // ensure above highlight
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               );
             })}
@@ -1153,28 +1184,37 @@ export default function CardMemorisation({
             <div className="flex justify-center">
               <div className="border-2 border-yellow-500 rounded-lg bg-yellow-100 dark:bg-yellow-900 p-4 flex gap-2 items-center min-w-[120px]">
                 {currentGroup.map((card, idx) => {
-                  const isRedSuit = card.suit === "♥" || card.suit === "♦";
+                  const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
+                  const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
+                  let valueNum = valueMap[card.value] || card.value;
+                  if (!valueNum.match(/^\d+$/)) valueNum = "01";
+                  if (valueNum.length === 1) valueNum = "0" + valueNum;
+                  const suit = suitMap[card.suit] || "s";
+                  const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
                   return (
-                    <span
+                    <img
                       key={idx}
-                      className="text-2xl font-mono flex items-center"
-                    >
-                      {card.value}
-                      <span
-                        className={
-                          isRedSuit
-                            ? "ml-1 text-red-600 dark:text-red-400"
-                            : "ml-1"
-                        }
-                      >
-                        {card.suit}
-                      </span>
-                    </span>
+                      src={filename}
+                      alt={`${card.value}${card.suit}`}
+                      style={{
+                        width: 40,
+                        height: 58,
+                        objectFit: "contain",
+                        marginLeft: idx === 0 ? 0 : -20,
+                        zIndex: idx,
+                        borderRadius: 4,
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                        border: "1px solid #bbb",
+                        background: "#fff",
+                      }}
+                    />
                   );
                 })}
               </div>
             </div>
           </div>
+
+          {/* Removed overlapped card images for current group (main memorisation view) as requested */}
           {/* Paging controls (desktop only, like numbers) */}
           {totalPages > 1 && (
             <div className="mt-4 text-center hidden sm:block">
