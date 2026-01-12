@@ -141,17 +141,6 @@ export default function CardMemorisation({
     if (highlightIdx > totalGroups - 1) {
       setHighlightIdx(totalGroups - 1);
     }
-    // eslint-disable-next-line no-console
-    console.log(
-      "[CardMemorisation] DEBUG: highlightIdx:",
-      highlightIdx,
-      "totalGroups:",
-      totalGroups,
-      "page:",
-      page,
-      "cardsOnPage.length:",
-      cardsOnPage.length
-    );
   }, [page, cardsOnPage.length, totalGroups]);
 
   // Helper to get all points from all journeys
@@ -319,9 +308,43 @@ export default function CardMemorisation({
       "♦": "\u2666\uFE0F",
       "♣": "\u2663\uFE0F",
     };
+    // Normalize function to remove variation selectors and spaces
+    function normalizeName(str) {
+      return (str || "")
+        .replace(/\uFE0F/g, "")
+        .replace(/\s/g, "")
+        .normalize("NFC");
+    }
+
     const groupName = currentGroup
       .map((card) => card.value + (suitToEmoji[card.suit] || card.suit))
       .join("");
+    const groupNameNorm = normalizeName(groupName);
+    console.log(imageSet);
+    // Debug: log groupName and first imageSet item
+    if (
+      Array.isArray(imageSet) &&
+      imageSet.length > 0 &&
+      imageSet[0].images &&
+      imageSet[0].images.length > 0
+    ) {
+      // Log the group name and the first image name in the set
+      // eslint-disable-next-line no-console
+      console.log(
+        "[CardMemorisation] groupName:",
+        groupName,
+        "| groupNameNorm:",
+        groupNameNorm
+      );
+      // eslint-disable-next-line no-console
+      console.log(
+        "[CardMemorisation] first imageSet[0].images[0].name:",
+        imageSet[0].images[0].name
+      );
+      // Log the entire imageSet for debugging
+      // eslint-disable-next-line no-console
+      console.log("[CardMemorisation] imageSet (full object):", imageSet);
+    }
 
     // For multi-group patterns, use the appropriate image set for this pattern group
     const imageSetsToSearch = Array.isArray(imageSet) ? imageSet : [];
@@ -341,12 +364,14 @@ export default function CardMemorisation({
 
     for (const set of setsToCheck) {
       if (set.images && Array.isArray(set.images)) {
-        const allNames = set.images.map((img) => img.name);
-        const found = set.images.find((img) => img.name === groupName);
+        // Try exact match first
+        let found = set.images.find(
+          (img) => normalizeName(img.name) === groupNameNorm
+        );
         if (!found) {
-          const groupNameNoVS = groupName.replace(/\uFE0F/g, "");
-          const close = allNames.find(
-            (n) => n && n.replace(/\uFE0F/g, "") === groupNameNoVS
+          // Try fallback: remove all spaces and variation selectors from both
+          found = set.images.find(
+            (img) => normalizeName(img.name) === groupNameNorm
           );
         }
         if (found) {
@@ -358,7 +383,8 @@ export default function CardMemorisation({
         }
       }
     }
-    return { item: "", phonetics: "", compImageUrl: null };
+    // If not found, show groupName as fallback (as before)
+    return { item: groupName, phonetics: "", compImageUrl: null };
   }
   const {
     item: imageItemName,
@@ -610,6 +636,12 @@ export default function CardMemorisation({
           setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
         }
       } else if (e.key === "ArrowLeft" && !showRecall) {
+        // Only allow navigation if NOT at the absolute first group of the first deck
+        const atFirstGroupOfFirstDeck = highlightIdx === 0 && page === 0;
+        if (atFirstGroupOfFirstDeck) {
+          // Do nothing: already at the start, cannot go left
+          return;
+        }
         if (highlightIdx === 0) {
           // At first group, go to previous page or previous journey
           if (page > 0) {
@@ -618,45 +650,9 @@ export default function CardMemorisation({
             // Since each page is a new deck, just set to last group
             setHighlightIdx(totalGroups - 1);
           } else {
-            // At first page
-            if (
-              groupsPerLocation === "variable-black" ||
-              groupsPerLocation === "variable-red"
-            ) {
-              // Variable: move to previous journey, cycle
-              setJourneyIdx((idx) => {
-                // eslint-disable-next-line no-console
-                console.log(
-                  "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
-                  idx,
-                  "journeysWithPoints.length:",
-                  journeysWithPoints.length,
-                  "current:",
-                  journeysWithPoints[idx]?.name || "?"
-                );
-                const newIdx =
-                  journeysWithPoints.length > 0
-                    ? (idx - 1 + journeysWithPoints.length) %
-                      journeysWithPoints.length
-                    : 0;
-                // eslint-disable-next-line no-console
-                console.log(
-                  "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                  newIdx,
-                  journeysWithPoints[newIdx]?.name || "?"
-                );
-                // After journeyIdx is set, set highlightIdx to last group of that journey's first page
-                setTimeout(() => {
-                  setHighlightIdx(totalGroups - 1);
-                  setPage(0);
-                }, 0);
-                return newIdx;
-              });
-            } else {
-              // Non-variable: cycle to last group
-              setPage(totalPages - 1);
-              setHighlightIdx(totalGroups - 1);
-            }
+            // At first page, but not at absolute start (should not happen due to check above)
+            // Defensive: do nothing
+            return;
           }
         } else {
           setHighlightIdx((idx) => Math.max(idx - 1, 0));
@@ -677,12 +673,6 @@ export default function CardMemorisation({
               journeysWithPoints.length > 0
                 ? (idx + 1) % journeysWithPoints.length
                 : 0;
-            // eslint-disable-next-line no-console
-            console.log(
-              "[CardMemorisation] Moving to NEXT journey (variable logic):",
-              newIdx,
-              journeysWithPoints[newIdx]?.name || "?"
-            );
             return newIdx;
           });
           setPage(0);
@@ -712,12 +702,6 @@ export default function CardMemorisation({
                   ? (idx - 1 + journeysWithPoints.length) %
                     journeysWithPoints.length
                   : 0;
-              // eslint-disable-next-line no-console
-              console.log(
-                "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                newIdx,
-                journeysWithPoints[newIdx]?.name || "?"
-              );
               return newIdx;
             });
           } else {
@@ -808,45 +792,43 @@ export default function CardMemorisation({
               </div>
             )}
 
-            {/* Purple info box for group details (cards and their text, if available) */}
+            {/* Purple info box for group details (cards and their image names) */}
             {currentGroup && currentGroup.length > 0 && (
               <div className="mb-2 p-2 bg-purple-100 dark:bg-purple-800 text-purple-900 dark:text-purple-100 rounded text-sm">
-                <div className="flex justify-center gap-2 flex-wrap">
+                {/* Top row: card names with emoji/suit, inline and centered */}
+                <div
+                  className="text-center"
+                  style={{ fontSize: "1rem", fontWeight: 600 }}
+                >
                   {currentGroup.map((card, idx) => {
-                    const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
-                    const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
-                    let valueNum = valueMap[card.value] || card.value;
-                    if (!valueNum.match(/^\d+$/)) valueNum = "01";
-                    if (valueNum.length === 1) valueNum = "0" + valueNum;
-                    const suit = suitMap[card.suit] || "s";
-                    const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
+                    const suitToEmoji = {
+                      "♠": "\u2660\uFE0F",
+                      "♥": "\u2665\uFE0F",
+                      "♦": "\u2666\uFE0F",
+                      "♣": "\u2663\uFE0F",
+                    };
                     return (
-                      <span
-                        key={idx}
-                        className="flex flex-col items-center mx-1"
-                      >
-                        <img
-                          src={filename}
-                          alt={`${card.value}${card.suit}`}
-                          style={{
-                            width: 40,
-                            height: 58,
-                            objectFit: "contain",
-                            background: "#fff",
-                          }}
-                        />
-                        {/* <span className="font-mono text-xs mt-1">
-                          {card.value}
-                          {card.suit}
-                        </span>
-                        {card.text && (
-                          <span className="text-xs text-gray-700 dark:text-gray-200">
-                            {card.text}
-                          </span>
-                        )} */}
+                      <span key={idx}>
+                        {card.value}
+                        {suitToEmoji[card.suit] || card.suit}
                       </span>
                     );
                   })}
+                </div>
+                {/* Second row: image item and phonetics (as in Numbers) */}
+                <div className="text-center" style={{ fontSize: "1rem" }}>
+                  {imageItemName ? imageItemName : "-"}
+                  {imagePhonetics ? (
+                    <span
+                      style={{
+                        color: "#888",
+                        fontStyle: "italic",
+                        marginLeft: 6,
+                      }}
+                    >
+                      ({imagePhonetics})
+                    </span>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -1200,12 +1182,7 @@ export default function CardMemorisation({
                             ? (idx - 1 + journeysWithPoints.length) %
                               journeysWithPoints.length
                             : 0;
-                        // eslint-disable-next-line no-console
-                        console.log(
-                          "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                          newIdx,
-                          journeysWithPoints[newIdx]?.name || "?"
-                        );
+
                         return newIdx;
                       });
                     } else {
@@ -1285,26 +1262,11 @@ export default function CardMemorisation({
                         groupsPerLocation === "variable-red"
                       ) {
                         setJourneyIdx((idx) => {
-                          // eslint-disable-next-line no-console
-                          console.log(
-                            "[CardMemorisation] DEBUG: About to move to PREVIOUS journey. idx:",
-                            idx,
-                            "journeysWithPoints.length:",
-                            journeysWithPoints.length,
-                            "current:",
-                            journeysWithPoints[idx]?.name || "?"
-                          );
                           const newIdx =
                             journeysWithPoints.length > 0
                               ? (idx - 1 + journeysWithPoints.length) %
                                 journeysWithPoints.length
                               : 0;
-                          // eslint-disable-next-line no-console
-                          console.log(
-                            "[CardMemorisation] Moving to PREVIOUS journey (variable logic):",
-                            newIdx,
-                            journeysWithPoints[newIdx]?.name || "?"
-                          );
                           return newIdx;
                         });
                       } else {
@@ -1342,25 +1304,10 @@ export default function CardMemorisation({
                         groupsPerLocation === "variable-red"
                       ) {
                         setJourneyIdx((idx) => {
-                          // eslint-disable-next-line no-console
-                          console.log(
-                            "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
-                            idx,
-                            "journeysWithPoints.length:",
-                            journeysWithPoints.length,
-                            "current:",
-                            journeysWithPoints[idx]?.name || "?"
-                          );
                           const newIdx =
                             journeysWithPoints.length > 0
                               ? (idx + 1) % journeysWithPoints.length
                               : 0;
-                          // eslint-disable-next-line no-console
-                          console.log(
-                            "[CardMemorisation] Moving to NEXT journey (variable logic):",
-                            newIdx,
-                            journeysWithPoints[newIdx]?.name || "?"
-                          );
                           return newIdx;
                         });
                       } else {

@@ -61,13 +61,58 @@ function CardsContent() {
         }
       }
 
-      // Fetch image set data
+
+      // Fetch image set data (always fetch full objects if only IDs are present)
       let imageSets = [];
       if (imageSet && typeof window !== "undefined") {
         const storedImageSets = localStorage.getItem("cardImageSets");
         if (storedImageSets) {
           try {
-            imageSets = JSON.parse(storedImageSets);
+            const parsed = JSON.parse(storedImageSets);
+            // If parsed is an array of strings (IDs), fetch each full object
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+              imageSets = await Promise.all(
+                parsed.map(async (id) => {
+                  try {
+                    const res = await fetch(`/api/imageSets/${id}`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      if (data && data.data) {
+                        return {
+                          id: data.data._id,
+                          name: data.data.name,
+                          count: data.data.images.length,
+                          images: data.data.images,
+                        };
+                      }
+                    }
+                  } catch (err) {
+                    console.error("Error fetching image set:", err);
+                  }
+                  return null;
+                })
+              );
+              imageSets = imageSets.filter(Boolean);
+            } else if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].images) {
+              // Already full objects
+              imageSets = parsed;
+            } else {
+              // Fallback: fetch single imageSet by ID
+              const res = await fetch(`/api/imageSets/${imageSet}`);
+              if (res.ok) {
+                const data = await res.json();
+                if (data && data.data) {
+                  imageSets = [
+                    {
+                      id: data.data._id,
+                      name: data.data.name,
+                      count: data.data.images.length,
+                      images: data.data.images,
+                    },
+                  ];
+                }
+              }
+            }
           } catch (e) {
             // Fallback: fetch from API
             try {
@@ -88,6 +133,26 @@ function CardsContent() {
             } catch (err) {
               console.error("Error fetching image set:", err);
             }
+          }
+        } else {
+          // No localStorage: fetch single imageSet by ID
+          try {
+            const res = await fetch(`/api/imageSets/${imageSet}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.data) {
+                imageSets = [
+                  {
+                    id: data.data._id,
+                    name: data.data.name,
+                    count: data.data.images.length,
+                    images: data.data.images,
+                  },
+                ];
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching image set:", err);
           }
         }
       }
