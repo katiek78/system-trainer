@@ -427,18 +427,20 @@ function NumbersMemorisationContent() {
   const imageGroups = imagePattern
     ? imagePattern.split("-").map(Number).filter(Boolean)
     : [];
-  
+
   // locationPattern now represents number of IMAGES per location, not digits
   // Convert to digits by multiplying each value by the total digits per image cycle
   const locationPatternValues = locationPattern
     ? locationPattern.split("-").map(Number).filter(Boolean)
     : [];
-  const digitsPerImageCycle = imageGroups.length > 0 
-    ? imageGroups.reduce((sum, val) => sum + val, 0)
-    : 0;
-  const locationGroups = locationPatternValues.length > 0 && digitsPerImageCycle > 0
-    ? locationPatternValues.map(numImages => numImages * digitsPerImageCycle)
-    : [];
+  const digitsPerImageCycle =
+    imageGroups.length > 0 ? imageGroups.reduce((sum, val) => sum + val, 0) : 0;
+  const locationGroups =
+    locationPatternValues.length > 0 && digitsPerImageCycle > 0
+      ? locationPatternValues.map(
+          (numImages) => numImages * digitsPerImageCycle
+        )
+      : [];
 
   // Utility: generate a string of random digits of given length
   function generateRandomDigits(length) {

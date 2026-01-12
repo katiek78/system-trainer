@@ -94,6 +94,7 @@ function CardsContent() {
 
       setJourneyData(journeys);
       setImageSetData(imageSets);
+
       setLoading(false);
     }
 

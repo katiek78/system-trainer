@@ -184,6 +184,24 @@ export default function CardMemorisation({
   const end = Math.min(start + groupSize, cardsOnPage.length);
   const currentGroup = cardsOnPage.slice(start, end);
 
+  // Parse grouping pattern (e.g., "1-1-1" or "2" or "3-2")
+  function parseGroupingPattern(grouping) {
+    if (!grouping || typeof grouping !== "string") return [];
+    return grouping
+      .split("-")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }
+  const groupingPattern = parseGroupingPattern(grouping);
+
+  // Determine which pattern group this highlight index belongs to
+  function getPatternGroupIndex(highlightIdx, groupingPattern) {
+    if (groupingPattern.length <= 1) return 0;
+    // For multi-group patterns, cycle through the pattern
+    return highlightIdx % groupingPattern.length;
+  }
+  const patternGroupIdx = getPatternGroupIndex(highlightIdx, groupingPattern);
+
   // Helper: get the mapping from group index to location index for variable logic
   function getVariableLocationMap(cardsOnPage, groupSize, allPoints, mode) {
     // Always use a mapping table for variable mode. The mapping table is user-definable and stored in localStorage.
@@ -295,6 +313,7 @@ export default function CardMemorisation({
   function getImageItemAndPhonetics() {
     if (!imageSet || imageSet.length === 0 || !currentGroup.length)
       return { item: "", phonetics: "", compImageUrl: null };
+
     const suitToEmoji = {
       "♠": "\u2660\uFE0F",
       "♥": "\u2665\uFE0F",
@@ -304,7 +323,24 @@ export default function CardMemorisation({
     const groupName = currentGroup
       .map((card) => card.value + (suitToEmoji[card.suit] || card.suit))
       .join("");
-    for (const set of imageSet) {
+
+    // For multi-group patterns, use the appropriate image set for this pattern group
+    const imageSetsToSearch = Array.isArray(imageSet) ? imageSet : [];
+    let targetImageSet = null;
+    if (
+      groupingPattern.length > 1 &&
+      patternGroupIdx < imageSetsToSearch.length
+    ) {
+      // Use specific image set for this pattern group
+      targetImageSet = imageSetsToSearch[patternGroupIdx];
+    } else if (imageSetsToSearch.length > 0) {
+      // Single image set or fallback to first
+      targetImageSet = imageSetsToSearch[0];
+    }
+
+    const setsToCheck = targetImageSet ? [targetImageSet] : imageSetsToSearch;
+
+    for (const set of setsToCheck) {
       if (set.images && Array.isArray(set.images)) {
         const allNames = set.images.map((img) => img.name);
         const found = set.images.find((img) => img.name === groupName);
@@ -528,12 +564,8 @@ export default function CardMemorisation({
       memoCountdownRemaining === null &&
       timeRemaining === null
     ) {
-      // Non-timed mode - still show memo countdown
-      if (memoCountdown > 0) {
-        setMemoCountdownRemaining(memoCountdown);
-      } else {
-        setMemoStartTime(Date.now());
-      }
+      // Non-timed mode - no countdown, just start directly
+      setMemoStartTime(Date.now());
       setTimeRemaining(null);
       setShowRecall(false);
       memoCountdownInitialized.current = true;

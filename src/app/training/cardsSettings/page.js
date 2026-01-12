@@ -50,6 +50,7 @@ export default function CardTrainingSettings() {
     recallTime: 240,
     cardGrouping: "1",
     imageSet: "",
+    imageSets: [],
     cardGroupsPerLocation: 1,
     timedMode: false,
     memoCountdown: 20,
@@ -59,6 +60,7 @@ export default function CardTrainingSettings() {
   // Red-to-black mapping state
   const [redToBlackMapping, setRedToBlackMapping] = useState("default");
   const [settingsRestored, setSettingsRestored] = useState(false);
+  const [allImageSets, setAllImageSets] = useState([]);
   // Restore settings from localStorage on mount
   useEffect(() => {
     const mode = localStorage.getItem("cardMode") || "SC";
@@ -87,6 +89,32 @@ export default function CardTrainingSettings() {
     } else {
       cardGroupsPerLocation = Number(cardGroupsPerLocation) || 1;
     }
+
+    // Restore imageSets array
+    let imageSets = [];
+    try {
+      const stored = localStorage.getItem("cardImageSets");
+      if (stored) imageSets = JSON.parse(stored);
+    } catch (e) {
+      console.error("Error parsing cardImageSets:", e);
+    }
+
+    // Restore card value and suit arrays
+    let cardValues = [];
+    let cardSuits = [];
+    try {
+      const storedValues = localStorage.getItem("cardAllowedFirstCardValues");
+      if (storedValues) cardValues = JSON.parse(storedValues);
+    } catch (e) {
+      console.error("Error parsing cardAllowedFirstCardValues:", e);
+    }
+    try {
+      const storedSuits = localStorage.getItem("cardAllowedFirstCardSuits");
+      if (storedSuits) cardSuits = JSON.parse(storedSuits);
+    } catch (e) {
+      console.error("Error parsing cardAllowedFirstCardSuits:", e);
+    }
+
     setSettings({
       mode,
       decks,
@@ -94,6 +122,7 @@ export default function CardTrainingSettings() {
       recallTime,
       cardGrouping,
       imageSet,
+      imageSets,
       cardGroupsPerLocation,
       timedMode,
       memoCountdown,
@@ -108,6 +137,64 @@ export default function CardTrainingSettings() {
   const [userJourneys, setUserJourneys] = useState([]);
   const [userImageSets, setUserImageSets] = useState([]);
   const router = useRouter();
+
+  // Parse cardGrouping to get array of card counts per image
+  function parsePattern(str) {
+    if (!str) return [];
+    return str
+      .split("-")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }
+  const cardGroups = parsePattern(settings.cardGrouping);
+
+  // Fetch all image sets
+  useEffect(() => {
+    async function fetchImageSets() {
+      const res = await fetch("/api/imageSets/names");
+      if (res.ok) {
+        const data = await res.json();
+        setAllImageSets(
+          data.map((set) => ({
+            _id: set._id,
+            name: set.name,
+            setType: set.setType,
+          }))
+        );
+      }
+    }
+    fetchImageSets();
+  }, []);
+
+  // Function to get appropriate image sets for a given card group size
+  function setsForGroupLength(len) {
+    // For cards: 1 card = 2d sets, 2 cards = 2c/2cv sets, 3 cards = 3cv sets
+    if (!Array.isArray(allImageSets)) return [];
+
+    if (len === 1) {
+      return allImageSets.filter(
+        (set) =>
+          set.setType === "2d" || set.setType === "3d" || set.setType === "4d"
+      );
+    } else if (len === 2) {
+      return allImageSets.filter(
+        (set) => set.setType === "2c" || set.setType === "2cv"
+      );
+    } else if (len === 3) {
+      return allImageSets.filter((set) => set.setType === "3cv");
+    }
+    return [];
+  }
+
+  // Handle image set change for a specific group
+  function handleImageSetChange(idx, val) {
+    setSettings((prev) => {
+      const arr = Array.isArray(prev.imageSets) ? [...prev.imageSets] : [];
+      arr[idx] = val;
+      localStorage.setItem("cardImageSets", JSON.stringify(arr));
+      return { ...prev, imageSets: arr };
+    });
+  }
 
   // Map mode to discipline label for API
   function getDisciplineLabel(mode) {
@@ -195,17 +282,31 @@ export default function CardTrainingSettings() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setSettings((prev) => ({
-      ...prev,
-      [name]:
-        name === "cardGrouping" || name === "imageSet"
-          ? value
-          : name === "cardGroupsPerLocation"
-          ? value === "variable-black" || value === "variable-red"
+    setSettings((prev) => {
+      const newSettings = {
+        ...prev,
+        [name]:
+          name === "cardGrouping" || name === "imageSet"
             ? value
-            : Number(value)
-          : Number(value),
-    }));
+            : name === "cardGroupsPerLocation"
+            ? value === "variable-black" || value === "variable-red"
+              ? value
+              : Number(value)
+            : Number(value),
+      };
+
+      // If cardGrouping changes away from "2", reset cardGroupsPerLocation if it's a variable option
+      if (name === "cardGrouping" && value !== "2") {
+        if (
+          newSettings.cardGroupsPerLocation === "variable-black" ||
+          newSettings.cardGroupsPerLocation === "variable-red"
+        ) {
+          newSettings.cardGroupsPerLocation = 1;
+        }
+      }
+
+      return newSettings;
+    });
   }
 
   function handleCardGroupsPerLocationBlur(e) {
@@ -631,19 +732,21 @@ export default function CardTrainingSettings() {
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
               Cards per Image
             </label>
-            <select
+            <input
+              type="text"
               name="cardGrouping"
               value={settings.cardGrouping}
               onChange={handleChange}
               className="mb-2 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-            >
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
+              placeholder="e.g. 2 or 1-1-1"
+            />
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+              How many cards per image (e.g., 2 for pairs, or 1-1-1 for PAO with
+              different image sets).
+            </div>
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Images per location
+              Images per Location
             </label>
             <select
               name="cardGroupsPerLocation"
@@ -655,12 +758,16 @@ export default function CardTrainingSettings() {
               <option value={2}>2</option>
               <option value={3}>3</option>
               <option value={4}>4</option>
-              <option value="variable-black">
-                Variable (end on black, cap at 3)
-              </option>
-              <option value="variable-red">
-                Variable (end on red, cap at 3)
-              </option>
+              {settings.cardGrouping === "2" && (
+                <>
+                  <option value="variable-black">
+                    Variable (end on black, cap at 3)
+                  </option>
+                  <option value="variable-red">
+                    Variable (end on red, cap at 3)
+                  </option>
+                </>
+              )}
             </select>
             {(settings.cardGroupsPerLocation === "variable-black" ||
               settings.cardGroupsPerLocation === "variable-red") && (
@@ -687,21 +794,49 @@ export default function CardTrainingSettings() {
             )}
 
             <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
-              Image set
+              Image set{cardGroups.length > 1 ? "(s)" : ""}
             </label>
-            <select
-              name="imageSet"
-              value={settings.imageSet}
-              onChange={handleChange}
-              className="mb-4 p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-            >
-              <option value="">Select image set...</option>
-              {filteredImageSets.map((set) => (
-                <option key={set.id || set._id} value={set.id || set._id}>
-                  {`${set.name}${set.setType ? ` (${set.setType})` : ""}`}
-                </option>
-              ))}
-            </select>
+            {cardGroups.length === 0 ? (
+              <div className="mb-4 text-gray-500 dark:text-gray-400">
+                Enter a cards per image pattern to select image sets.
+              </div>
+            ) : (
+              <div className="mb-4">
+                {cardGroups &&
+                  cardGroups.length > 0 &&
+                  cardGroups.map((len, idx) => {
+                    const sets = setsForGroupLength(len);
+                    return (
+                      <div key={idx} className="mb-4">
+                        <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
+                          Group {idx + 1} ({len} card{len > 1 ? "s" : ""})
+                        </label>
+                        <select
+                          className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                          value={settings.imageSets[idx] || ""}
+                          onChange={(e) =>
+                            handleImageSetChange(idx, e.target.value)
+                          }
+                        >
+                          <option value="">Select image set...</option>
+                          {sets &&
+                            sets.map((set) => (
+                              <option key={set._id} value={set._id}>
+                                {set.name} ({set.setType})
+                              </option>
+                            ))}
+                        </select>
+                        {sets.length === 0 && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            No image sets found for {len} card
+                            {len > 1 ? "s" : ""}.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
 
