@@ -118,21 +118,17 @@ export default function CardMemorisation({
     }
   }, [groupsPerLocation]);
 
-  // Generate and shuffle cards
-  const [cards, setCards] = useState([]);
-  useEffect(() => {
-    const deck = generateDecks(decks);
-    setCards(shuffle(deck));
-  }, [decks]);
-
-  // Paging: one deck per page
+  // Each page is a separately shuffled deck of 52 cards
   const CARDS_PER_DECK = 52;
   const totalPages = decks;
   const [page, setPage] = useState(0);
-  // Only show cards for current deck
-  const pageStart = page * CARDS_PER_DECK;
-  const pageEnd = Math.min(pageStart + CARDS_PER_DECK, cards.length);
-  const cardsOnPage = cards.slice(pageStart, pageEnd);
+  const [cardsOnPage, setCardsOnPage] = useState([]);
+
+  useEffect(() => {
+    // On every page change, generate a new shuffled deck
+    const deck = generateDecks(1);
+    setCardsOnPage(shuffle(deck));
+  }, [page]);
 
   // Highlight state (grouping within current deck)
   const [highlightIdx, setHighlightIdx] = useState(0);
@@ -855,7 +851,7 @@ export default function CardMemorisation({
                             background: "#fff",
                           }}
                         />
-                        <span className="font-mono text-xs mt-1">
+                        {/* <span className="font-mono text-xs mt-1">
                           {card.value}
                           {card.suit}
                         </span>
@@ -863,7 +859,7 @@ export default function CardMemorisation({
                           <span className="text-xs text-gray-700 dark:text-gray-200">
                             {card.text}
                           </span>
-                        )}
+                        )} */}
                       </span>
                     );
                   })}
