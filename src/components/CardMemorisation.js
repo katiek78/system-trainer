@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import RedToBlackMappingTable from "./RedToBlackMappingTable";
 import SimpleModal from "./SimpleModal";
 import EmbedStreetView from "./EmbedStreetView";
 import EmbedImage from "./EmbedImage";
@@ -316,11 +315,97 @@ export default function CardMemorisation({
         .normalize("NFC");
     }
 
-    const groupName = currentGroup
+    // Helper to get mapping table
+    function getRedToBlackMapping() {
+      let mappingTable = null;
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("redToBlackMappingTable");
+        if (stored) {
+          try {
+            mappingTable = JSON.parse(stored);
+          } catch (e) {
+            mappingTable = null;
+          }
+        }
+      }
+      if (!mappingTable) {
+        mappingTable = {
+          dd: "cc",
+          hh: "ss",
+          hd: "sc",
+          dh: "cs",
+          ds: "sd",
+          dc: "cd",
+          hs: "sh",
+          hc: "ch",
+        };
+      }
+      return mappingTable;
+    }
+
+    // Build groupName and normalized version
+    let groupName = currentGroup
       .map((card) => card.value + (suitToEmoji[card.suit] || card.suit))
       .join("");
-    const groupNameNorm = normalizeName(groupName);
-    console.log(imageSet);
+    let groupNameNorm = normalizeName(groupName);
+
+    // Log the original groupName and normalized version before mapping
+    console.log(
+      "[CardMemorisation] Looking up card pair:",
+      groupName,
+      "| Normalized:",
+      groupNameNorm
+    );
+
+    // If variable system and group is a red-first pair, use mapping
+    if (
+      (groupsPerLocation === "variable-black" ||
+        groupsPerLocation === "variable-red") &&
+      currentGroup.length === 2 &&
+      ["♥", "♦"].includes(currentGroup[0].suit)
+    ) {
+      // Get mapping table
+      const mappingTable = getRedToBlackMapping();
+      console.log(mappingTable);
+      // Build pair key using suit letters (h, d, s, c)
+      function suitToLetter(suit) {
+        if (suit === "♥") return "h";
+        if (suit === "♦") return "d";
+        if (suit === "♠") return "s";
+        if (suit === "♣") return "c";
+        return suit;
+      }
+      const pairKey =
+        suitToLetter(currentGroup[0].suit) + suitToLetter(currentGroup[1].suit);
+      const mappedPair = mappingTable[pairKey];
+      console.log("Mapped pair for", pairKey, "is", mappedPair);
+      if (mappedPair) {
+        // Replace suits in groupName with mapped black suits
+        const value1 = currentGroup[0].value;
+        const value2 = currentGroup[1].value;
+        // mappedPair is e.g. "cc", "ss", "sh", etc.
+        const suitMap = { c: "♣", s: "♠", h: "♥", d: "♦" };
+        const mappedSuit1 = suitMap[mappedPair[0]];
+        const mappedSuit2 = suitMap[mappedPair[1]];
+        const mappedGroupName =
+          value1 +
+          (suitToEmoji[mappedSuit1] || mappedSuit1) +
+          value2 +
+          (suitToEmoji[mappedSuit2] || mappedSuit2);
+        const mappedGroupNameNorm = normalizeName(mappedGroupName);
+        console.log(mappedGroupNameNorm);
+        // Log the mapped groupName and normalized version
+        console.log(
+          "[CardMemorisation] Mapped to black-first pair:",
+          mappedGroupName,
+          "| Normalized:",
+          mappedGroupNameNorm
+        );
+        groupName = mappedGroupName;
+        groupNameNorm = mappedGroupNameNorm;
+      }
+    }
+
     // Debug: log groupName and first imageSet item
     if (
       Array.isArray(imageSet) &&
@@ -328,7 +413,6 @@ export default function CardMemorisation({
       imageSet[0].images &&
       imageSet[0].images.length > 0
     ) {
-      // Log the group name and the first image name in the set
       // eslint-disable-next-line no-console
       console.log(
         "[CardMemorisation] groupName:",
@@ -341,9 +425,6 @@ export default function CardMemorisation({
         "[CardMemorisation] first imageSet[0].images[0].name:",
         imageSet[0].images[0].name
       );
-      // Log the entire imageSet for debugging
-      // eslint-disable-next-line no-console
-      console.log("[CardMemorisation] imageSet (full object):", imageSet);
     }
 
     // For multi-group patterns, use the appropriate image set for this pattern group
@@ -353,10 +434,8 @@ export default function CardMemorisation({
       groupingPattern.length > 1 &&
       patternGroupIdx < imageSetsToSearch.length
     ) {
-      // Use specific image set for this pattern group
       targetImageSet = imageSetsToSearch[patternGroupIdx];
     } else if (imageSetsToSearch.length > 0) {
-      // Single image set or fallback to first
       targetImageSet = imageSetsToSearch[0];
     }
 
@@ -364,12 +443,10 @@ export default function CardMemorisation({
 
     for (const set of setsToCheck) {
       if (set.images && Array.isArray(set.images)) {
-        // Try exact match first
         let found = set.images.find(
           (img) => normalizeName(img.name) === groupNameNorm
         );
         if (!found) {
-          // Try fallback: remove all spaces and variation selectors from both
           found = set.images.find(
             (img) => normalizeName(img.name) === groupNameNorm
           );
@@ -411,43 +488,50 @@ export default function CardMemorisation({
     ) {
       const interval = setInterval(() => {
         setMemoCountdownRemaining((prev) => {
-          if (prev <= 1) {
-            // Start memorization
-            setMemoStartTime(Date.now());
-            if (timedMode) {
-              setTimeRemaining(memorisationTime);
+          if (
+            (groupsPerLocation === "variable-black" ||
+              groupsPerLocation === "variable-red") &&
+            currentGroup.length === 2 &&
+            ["♥", "♦"].includes(currentGroup[0].suit)
+          ) {
+            // Get mapping table
+            const mappingTable = getRedToBlackMapping();
+            // Build pair key using single-letter suit codes to match mapping table
+            function suitToLetter(suit) {
+              if (suit === "♥") return "h";
+              if (suit === "♦") return "d";
+              if (suit === "♠") return "s";
+              if (suit === "♣") return "c";
+              return suit;
             }
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [
-    memoCountdownRemaining,
-    isPaused,
-    timedMode,
-    memorisationTime,
-    timeRemaining,
-  ]);
-
-  // Timer countdown effect
-  useEffect(() => {
-    if (
-      timedMode &&
-      timeRemaining !== null &&
-      timeRemaining > 0 &&
-      !showRecall &&
-      !isPaused
-    ) {
-      const interval = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            setMemoEndTime(Date.now());
-            setShowDetailsModal(false);
-            setShowRecall(true);
-            return 0;
+            const pairKey =
+              suitToLetter(currentGroup[0].suit) +
+              suitToLetter(currentGroup[1].suit);
+            const mappedPair = mappingTable[pairKey];
+            if (mappedPair) {
+              // Replace suits in groupName with mapped black suits
+              const value1 = currentGroup[0].value;
+              const value2 = currentGroup[1].value;
+              // mappedPair is e.g. "cc" or "ss"
+              const suitMap = { c: "♣", s: "♠" };
+              const mappedSuit1 = suitMap[mappedPair[0]];
+              const mappedSuit2 = suitMap[mappedPair[1]];
+              const mappedGroupName =
+                value1 +
+                (suitToEmoji[mappedSuit1] || mappedSuit1) +
+                value2 +
+                (suitToEmoji[mappedSuit2] || mappedSuit2);
+              const mappedGroupNameNorm = normalizeName(mappedGroupName);
+              // Log the mapped groupName and normalized version
+              console.log(
+                "[CardMemorisation] Mapped to black-first pair:",
+                mappedGroupName,
+                "| Normalized:",
+                mappedGroupNameNorm
+              );
+              groupName = mappedGroupName;
+              groupNameNorm = mappedGroupNameNorm;
+            }
           }
           return prev - 1;
         });
@@ -494,9 +578,13 @@ export default function CardMemorisation({
       showRecall
     ) {
       const interval = setInterval(() => {
-        setRecallCountdownRemaining((prev) => {
+        setMemoCountdownRemaining((prev) => {
           if (prev <= 1) {
-            // Countdown finished, show recall inputs
+            // Start memorization
+            setMemoStartTime(Date.now());
+            if (timedMode) {
+              setTimeRemaining(memorisationTime);
+            }
             return null;
           }
           return prev - 1;
@@ -504,45 +592,12 @@ export default function CardMemorisation({
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [recallCountdownRemaining, isPaused, showRecall]);
-
-  // Initialize recall countdown when recall mode starts
-  useEffect(() => {
-    if (showRecall && !recallCountdownInitialized.current) {
-      // Calculate recall countdown time
-      let countdownTime = 0;
-      if (recallCountdownMode === "remaining") {
-        // Use remaining memorization time
-        if (memoStartTime && memoEndTime) {
-          const elapsedMemo = (memoEndTime - memoStartTime) / 1000; // in seconds
-          const remainingMemo = Math.max(0, memorisationTime - elapsedMemo);
-          countdownTime = Math.ceil(remainingMemo);
-        } else if (memoStartTime) {
-          // Manual finish - calculate elapsed time
-          const elapsedMemo = (Date.now() - memoStartTime) / 1000;
-          const remainingMemo = Math.max(0, memorisationTime - elapsedMemo);
-          countdownTime = Math.ceil(remainingMemo);
-        }
-      } else {
-        // Use fixed countdown time
-        countdownTime = recallCountdownFixed;
-      }
-
-      if (countdownTime > 0) {
-        setRecallCountdownRemaining(countdownTime);
-        recallCountdownInitialized.current = true;
-      } else {
-        // No countdown, proceed directly
-        setRecallCountdownRemaining(null);
-        recallCountdownInitialized.current = true;
-      }
-    }
   }, [
+    memoCountdownRemaining,
+    timedMode,
+    timeRemaining,
     showRecall,
-    recallCountdownMode,
-    recallCountdownFixed,
-    memoStartTime,
-    memoEndTime,
+    isPaused,
     memorisationTime,
   ]);
 
