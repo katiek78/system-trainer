@@ -98,6 +98,24 @@ export default function CardTrainingSettings() {
     } catch (e) {
       console.error("Error parsing cardImageSets:", e);
     }
+    // Ensure imageSets length matches cardGroups length
+    let cardGroups = [];
+    if (cardGrouping && typeof cardGrouping === "string") {
+      cardGroups = cardGrouping
+        .split("-")
+        .map((s) => parseInt(s, 10))
+        .filter((n) => !isNaN(n) && n > 0);
+    } else if (typeof cardGrouping === "number" && cardGrouping > 0) {
+      cardGroups = [cardGrouping];
+    }
+    if (imageSets.length < cardGroups.length) {
+      imageSets = [
+        ...imageSets,
+        ...Array(cardGroups.length - imageSets.length).fill(""),
+      ];
+    } else if (imageSets.length > cardGroups.length) {
+      imageSets = imageSets.slice(0, cardGroups.length);
+    }
 
     // Restore card value and suit arrays
     let cardValues = [];
@@ -190,7 +208,7 @@ export default function CardTrainingSettings() {
   function handleImageSetChange(idx, val) {
     setSettings((prev) => {
       const arr = Array.isArray(prev.imageSets) ? [...prev.imageSets] : [];
-      arr[idx] = val;
+      arr[idx] = val; // val is the imageSet._id
       localStorage.setItem("cardImageSets", JSON.stringify(arr));
       return { ...prev, imageSets: arr };
     });
@@ -393,6 +411,18 @@ export default function CardTrainingSettings() {
     );
     localStorage.setItem("cardRecallCountdown", settings.recallCountdown);
 
+    // Store only image set IDs for selection
+    if (Array.isArray(settings.imageSets)) {
+      localStorage.setItem("cardImageSets", JSON.stringify(settings.imageSets));
+    } else if (settings.imageSet) {
+      localStorage.setItem(
+        "cardImageSets",
+        JSON.stringify([settings.imageSet])
+      );
+    } else {
+      localStorage.setItem("cardImageSets", JSON.stringify([]));
+    }
+
     // Only save if there are options
     if (!options || options.length === 0) {
       if (!suppressAlert) alert("No journey options to save.");
@@ -423,38 +453,22 @@ export default function CardTrainingSettings() {
   }
 
   function handleStart() {
-    handleSave({ suppressAlert: true }).then(async (saved) => {
+    handleSave({ suppressAlert: true }).then((saved) => {
       if (!saved) return;
-      // Store full image set info for hint bar (with images array)
-      let imageSetsToStore = [];
-      if (settings.imageSet) {
-        try {
-          const res = await fetch(`/api/imageSets/${settings.imageSet}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.data) {
-              // Use same shape as before but with images array
-              imageSetsToStore = [
-                {
-                  id: data.data._id,
-                  name: data.data.name,
-                  count: data.data.images.length,
-                  images: data.data.images,
-                },
-              ];
-            }
-          }
-        } catch (e) {
-          // fallback to summary only
-          const selectedImageSet = userImageSets.find(
-            (set) => set.id === settings.imageSet
-          );
-          if (selectedImageSet) {
-            imageSetsToStore = [selectedImageSet];
-          }
-        }
+      // Store only image set IDs for selection
+      if (Array.isArray(settings.imageSets)) {
+        localStorage.setItem(
+          "cardImageSets",
+          JSON.stringify(settings.imageSets)
+        );
+      } else if (settings.imageSet) {
+        localStorage.setItem(
+          "cardImageSets",
+          JSON.stringify([settings.imageSet])
+        );
+      } else {
+        localStorage.setItem("cardImageSets", JSON.stringify([]));
       }
-      localStorage.setItem("cardImageSets", JSON.stringify(imageSetsToStore));
       router.push(
         `/training/cards?mode=${settings.mode}&decks=${
           settings.decks
@@ -805,7 +819,27 @@ export default function CardTrainingSettings() {
                 {cardGroups &&
                   cardGroups.length > 0 &&
                   cardGroups.map((len, idx) => {
-                    const sets = setsForGroupLength(len);
+                    // Only allow image sets with setType matching group length
+                    const validTypes = [`${len}c`, `${len}cv`];
+                    const sets = setsForGroupLength(len).filter((set) =>
+                      validTypes.includes(set.setType)
+                    );
+                    // If saved value is not in filtered sets, fallback to blank
+                    // savedValue should be imageSet._id
+                    const savedValue = settings.imageSets[idx];
+                    const selectedValue = sets.some(
+                      (set) => set._id === savedValue
+                    )
+                      ? savedValue
+                      : "";
+                    console.log(
+                      `Dropdown group ${idx}: savedValue=`,
+                      savedValue,
+                      "selectedValue=",
+                      selectedValue,
+                      "validSetIds=",
+                      sets.map((s) => s._id)
+                    );
                     return (
                       <div key={idx} className="mb-4">
                         <label className="block text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">
@@ -813,7 +847,7 @@ export default function CardTrainingSettings() {
                         </label>
                         <select
                           className="p-2 border rounded w-full bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                          value={settings.imageSets[idx] || ""}
+                          value={selectedValue}
                           onChange={(e) =>
                             handleImageSetChange(idx, e.target.value)
                           }
