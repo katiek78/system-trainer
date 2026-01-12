@@ -1160,8 +1160,16 @@ export default function CardMemorisation({
             })}
           </div>
 
-          {/* Focus box for current group (mobile only) */}
+          {/* Deck indicator and focus box for current group (mobile only) */}
           <div className="block sm:hidden mb-6">
+            {/* Deck indicator for mobile */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mb-2">
+                <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 px-3 py-1 rounded-full text-xs font-semibold shadow">
+                  Deck {page + 1} of {totalPages}
+                </span>
+              </div>
+            )}
             <div className="flex justify-center">
               <div className="border-2 border-yellow-500 rounded-lg bg-yellow-100 dark:bg-yellow-900 p-4 flex gap-2 items-center min-w-[120px]">
                 {currentGroup.map((card, idx) => {
@@ -1178,14 +1186,14 @@ export default function CardMemorisation({
                       src={filename}
                       alt={`${card.value}${card.suit}`}
                       style={{
-                        width: 40,
-                        height: 58,
+                        width: 64,
+                        height: 92,
                         objectFit: "contain",
-                        marginLeft: idx === 0 ? 0 : -20,
+                        marginLeft: idx === 0 ? 0 : -32,
                         zIndex: idx,
-                        borderRadius: 4,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                        border: "1px solid #bbb",
+                        borderRadius: 6,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                        border: "1.5px solid #bbb",
                         background: "#fff",
                       }}
                     />
