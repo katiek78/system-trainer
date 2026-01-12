@@ -857,6 +857,21 @@ export default function CardTrainingSettings() {
           </button>
         </div>
       </form>
+
+      {/* Attribution for card images */}
+      <div className="mt-8 text-xs text-gray-500 dark:text-gray-400 text-center">
+        Standard cards: Copyright 2015 Chris Aguilar conjurenation@gmail.com,
+        <br />
+        Licensed under{" "}
+        <a
+          href="https://www.gnu.org/licenses/lgpl-3.0.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-blue-600 dark:text-blue-400"
+        >
+          LGPL 3
+        </a>
+      </div>
     </div>
   );
 }
