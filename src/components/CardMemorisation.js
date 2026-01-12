@@ -157,8 +157,6 @@ export default function CardMemorisation({
     );
   }, [page, cardsOnPage.length, totalGroups]);
 
-  // Journey navigation state (for cycling journeys)
-  const [journeyIdx, setJourneyIdx] = useState(0);
   // Helper to get all points from all journeys
   const allPoints = journey.flatMap((j) =>
     Array.isArray(j.points) ? j.points : []
@@ -167,17 +165,21 @@ export default function CardMemorisation({
   const journeysWithPoints = journey.filter(
     (j) => Array.isArray(j.points) && j.points.length > 0
   );
-  // Helper to get current journey (for variable logic)
+  // Compute current journey index from page and system logic
+  let currentJourneyIdx = 0;
+  if (
+    groupsPerLocation === "variable-black" ||
+    groupsPerLocation === "variable-red"
+  ) {
+    if (journeysWithPoints.length > 0) {
+      currentJourneyIdx = page % journeysWithPoints.length;
+    }
+  }
+  // For non-variable systems, you may want to use a different mapping if needed
   const currentJourney =
     journeysWithPoints.length > 0
-      ? journeysWithPoints[journeyIdx % journeysWithPoints.length]
+      ? journeysWithPoints[currentJourneyIdx]
       : null;
-
-  // When journey or journeyIdx changes, reset page/highlightIdx
-  useEffect(() => {
-    setPage(0);
-    setHighlightIdx(0);
-  }, [journeyIdx, journey]);
 
   // Get current group of cards (within deck)
   const start = highlightIdx * groupSize;
@@ -605,45 +607,8 @@ export default function CardMemorisation({
         setShowRecall(true);
       } else if (e.key === "ArrowRight" && !showRecall) {
         if (highlightIdx === totalGroups - 1) {
-          // At end of group, go to next journey for variable logic, else next page
-          if (
-            groupsPerLocation === "variable-black" ||
-            groupsPerLocation === "variable-red"
-          ) {
-            setJourneyIdx((idx) => {
-              // eslint-disable-next-line no-console
-              console.log(
-                "[CardMemorisation] DEBUG: About to move to NEXT journey. idx:",
-                idx,
-                "journeysWithPoints.length:",
-                journeysWithPoints.length,
-                "current:",
-                journeysWithPoints[idx]?.name || "?"
-              );
-              const newIdx =
-                journeysWithPoints.length > 0
-                  ? (idx + 1) % journeysWithPoints.length
-                  : 0;
-              // eslint-disable-next-line no-console
-              console.log(
-                "[CardMemorisation] Moving to NEXT journey (variable logic):",
-                newIdx,
-                journeysWithPoints[newIdx]?.name || "?"
-              );
-              return newIdx;
-            });
-            setPage(0);
-            setHighlightIdx(0);
-          } else {
-            // Non-variable: go to next page or cycle
-            if (page < totalPages - 1) {
-              setPage((p) => p + 1);
-              setHighlightIdx(0);
-            } else {
-              setPage(0);
-              setHighlightIdx(0);
-            }
-          }
+          setPage((p) => p + 1);
+          setHighlightIdx(0);
         } else {
           setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
         }
@@ -855,13 +820,67 @@ export default function CardMemorisation({
           onClose={() => setShowDetailsModal(false)}
         >
           <div style={{ textAlign: "center", minWidth: 200 }}>
-            <div className="mb-2 p-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 rounded text-base">
-              <b>
-                {currentPoint && currentPoint.name ? currentPoint.name : "-"}
-              </b>
-              {currentPoint && currentPoint.memoItem
-                ? ` - ${currentPoint.memoItem}`
-                : ""}
+            {/* Yellow info box for location and memo item */}
+            {currentPoint && (currentPoint.name || currentPoint.memoItem) && (
+              <div className="mb-2 p-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 rounded text-base">
+                <b>{currentPoint.name || "-"}</b>
+                {currentPoint.memoItem ? ` - ${currentPoint.memoItem}` : ""}
+              </div>
+            )}
+
+            {/* Purple info box for group details (cards and their text, if available) */}
+            {currentGroup && currentGroup.length > 0 && (
+              <div className="mb-2 p-2 bg-purple-100 dark:bg-purple-800 text-purple-900 dark:text-purple-100 rounded text-sm">
+                <div className="flex justify-center gap-2 flex-wrap">
+                  {currentGroup.map((card, idx) => {
+                    const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
+                    const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
+                    let valueNum = valueMap[card.value] || card.value;
+                    if (!valueNum.match(/^\d+$/)) valueNum = "01";
+                    if (valueNum.length === 1) valueNum = "0" + valueNum;
+                    const suit = suitMap[card.suit] || "s";
+                    const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
+                    return (
+                      <span
+                        key={idx}
+                        className="flex flex-col items-center mx-1"
+                      >
+                        <img
+                          src={filename}
+                          alt={`${card.value}${card.suit}`}
+                          style={{
+                            width: 40,
+                            height: 58,
+                            objectFit: "contain",
+                            background: "#fff",
+                          }}
+                        />
+                        <span className="font-mono text-xs mt-1">
+                          {card.value}
+                          {card.suit}
+                        </span>
+                        {card.text && (
+                          <span className="text-xs text-gray-700 dark:text-gray-200">
+                            {card.text}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Location image or street view, with overlays */}
+            <div
+              style={{
+                margin: "16px 0",
+                position: "relative",
+                display: "inline-block",
+                width: 320,
+                height: 200,
+              }}
+            >
               {locationUrl ? (
                 isLocationStreetView(locationUrl) ? (
                   <EmbedStreetView
@@ -926,46 +945,6 @@ export default function CardMemorisation({
                   }}
                 />
               )}
-            </div>
-            <div className="mb-2">
-              <div>Current Group:</div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 8,
-                  marginTop: 8,
-                }}
-              >
-                {currentGroup.map((card, idx) => {
-                  // Map card to filename: s01.png, h11.png, etc.
-                  const suitMap = { "♠": "s", "♥": "h", "♦": "d", "♣": "c" };
-                  const valueMap = { A: "01", J: "11", Q: "12", K: "13" };
-                  let valueNum = valueMap[card.value] || card.value;
-                  if (!valueNum.match(/^\d+$/)) valueNum = "01";
-                  if (valueNum.length === 1) valueNum = "0" + valueNum;
-                  const suit = suitMap[card.suit] || "s";
-                  const filename = `/assets/Card images 1/${suit}${valueNum}.png`;
-                  return (
-                    <img
-                      key={idx}
-                      src={filename}
-                      alt={`${card.value}${card.suit}`}
-                      style={{
-                        width: 40,
-                        height: 58,
-                        objectFit: "contain",
-                        marginLeft: idx === 0 ? 0 : -20,
-                        zIndex: idx,
-                        borderRadius: 4,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                        border: "1px solid #bbb",
-                        background: "#fff",
-                      }}
-                    />
-                  );
-                })}
-              </div>
             </div>
           </div>
         </SimpleModal>
@@ -1130,7 +1109,9 @@ export default function CardMemorisation({
                     height: 62,
                     marginRight: 16,
                     marginBottom: 8,
+                    cursor: "pointer",
                   }}
+                  onClick={() => setHighlightIdx(groupIdx)}
                 >
                   {isHighlighted && (
                     <div
@@ -1214,8 +1195,6 @@ export default function CardMemorisation({
             </div>
           </div>
 
-          {/* Removed overlapped card images for current group (main memorisation view) as requested */}
-          {/* Paging controls (desktop only, like numbers) */}
           {totalPages > 1 && (
             <div className="mt-4 text-center hidden sm:block">
               <button
@@ -1263,32 +1242,21 @@ export default function CardMemorisation({
               </span>
               <button
                 onClick={() => {
-                  if (page < totalPages - 1) {
-                    setPage((p) => p + 1);
-                  } else {
-                    if (
-                      groupsPerLocation === "variable-black" ||
-                      groupsPerLocation === "variable-red"
-                    ) {
-                      setJourneyIdx((idx) => {
-                        const newIdx =
-                          journeysWithPoints.length > 0
-                            ? (idx + 1) % journeysWithPoints.length
-                            : 0;
-                        // eslint-disable-next-line no-console
-                        console.log(
-                          "[CardMemorisation] Moving to NEXT journey (variable logic):",
-                          newIdx,
-                          journeysWithPoints[newIdx]?.name || "?"
-                        );
-                        return newIdx;
-                      });
-                    } else {
-                      setPage(0);
-                      setHighlightIdx(0);
-                    }
-                  }
+                  // Always increment page, never reset
+                  setPage((p) => p + 1);
                   setHighlightIdx(0);
+                  // If variable system and at end of journey, increment journeyIdx
+                  if (
+                    (groupsPerLocation === "variable-black" ||
+                      groupsPerLocation === "variable-red") &&
+                    page === totalPages - 1
+                  ) {
+                    const newIdx =
+                      journeysWithPoints.length > 0
+                        ? (journeyIdx + 1) % journeysWithPoints.length
+                        : 0;
+                    setJourneyIdx(newIdx);
+                  }
                 }}
                 disabled={
                   page === totalPages - 1 &&
