@@ -245,14 +245,13 @@ export default function CardMemorisation({
   // Keyboard navigation (arrows for navIdx, PgUp/PgDn for deck)
   useEffect(() => {
     function handleKeyDown(e) {
-      console.log(showRecall, navigateBy);
       if (
         memoCountdownRemaining !== null ||
         (showRecall && recallCountdownRemaining !== null)
       ) {
         return;
       }
-      if (e.key === "d" && !e.repeat && !showRecall) {
+      if (e.key === "d" && !e.repeat) {
         setShowDetailsModal((prev) => !prev);
       } else if (
         e.key === "Enter" &&
@@ -284,7 +283,6 @@ export default function CardMemorisation({
       } else if (!showRecall && navigateBy === "location") {
         if (e.key === "ArrowRight") {
           //navigate forward by location
-          console.log("about to navigate forward by loc", navIdx, navRanges);
           setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
         } else if (e.key === "ArrowLeft") {
           //navigate backward by location
@@ -571,7 +569,7 @@ export default function CardMemorisation({
     ) {
       // Get mapping table
       const mappingTable = getRedToBlackMapping();
-      console.log(mappingTable);
+
       // Build pair key using suit letters (h, d, s, c)
       function suitToLetter(suit) {
         if (suit === "♥") return "h";
@@ -583,7 +581,7 @@ export default function CardMemorisation({
       const pairKey =
         suitToLetter(currentGroup[0].suit) + suitToLetter(currentGroup[1].suit);
       const mappedPair = mappingTable[pairKey];
-      console.log("Mapped pair for", pairKey, "is", mappedPair);
+
       if (mappedPair) {
         // Replace suits in groupName with mapped black suits
         const value1 = currentGroup[0].value;
@@ -704,13 +702,7 @@ export default function CardMemorisation({
                 value2 +
                 (suitToEmoji[mappedSuit2] || mappedSuit2);
               const mappedGroupNameNorm = normalizeName(mappedGroupName);
-              // Log the mapped groupName and normalized version
-              console.log(
-                "[CardMemorisation] Mapped to black-first pair:",
-                mappedGroupName,
-                "| Normalized:",
-                mappedGroupNameNorm
-              );
+
               groupName = mappedGroupName;
               groupNameNorm = mappedGroupNameNorm;
             }
@@ -976,6 +968,20 @@ export default function CardMemorisation({
     memoEndTime,
   ]);
 
+  // 1) Card click: navigate to location containing clicked group
+  function handleGroupClick(groupIdx) {
+    if (navigateBy === "location" && navRanges) {
+      const locIdx = navRanges.findIndex((arr) => arr.includes(groupIdx));
+      if (locIdx !== -1) {
+        setNavIdx(locIdx);
+        // Optionally, setHighlightIdx to groupIdx for immediate feedback
+        setHighlightIdx(groupIdx);
+        return;
+      }
+    }
+    // Default: highlight by image
+    setHighlightIdx(groupIdx);
+  }
   function handleExitToSettings() {
     router.push("/training/cardsSettings");
   }
@@ -1312,7 +1318,7 @@ export default function CardMemorisation({
                     marginBottom: 8,
                     cursor: "pointer",
                   }}
-                  onClick={() => setHighlightIdx(groupIdx)}
+                  onClick={() => handleGroupClick(groupIdx)}
                 >
                   {isHighlighted && (
                     <div
