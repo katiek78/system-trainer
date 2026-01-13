@@ -251,7 +251,7 @@ export default function CardMemorisation({
       ) {
         return;
       }
-      if (e.key === "d" && !e.repeat) {
+      if (e.key === "d" && !e.repeat && !showRecall) {
         setShowDetailsModal((prev) => !prev);
       } else if (
         e.key === "Enter" &&
@@ -267,19 +267,90 @@ export default function CardMemorisation({
       } else if (!showRecall && navigateBy === "image") {
         if (e.key === "ArrowRight") {
           //Navigate forward by image
-          setHighlightIdx((idx) => {
-            const next = Math.min(idx + 1, totalGroups - 1);
-            setNavIdx(next);
-            return next;
-          });
+          if (highlightIdx === totalGroups - 1) {
+            setPage((p) => p + 1);
+            setHighlightIdx(0);
+          } else {
+            setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
+          }
         } else if (e.key === "ArrowLeft") {
           //Navigate backward by image
-          setHighlightIdx((idx) => {
-            const prev = Math.max(idx - 1, 0);
-            setNavIdx(prev);
-            return prev;
-          });
+          const atFirstGroupOfFirstDeck = highlightIdx === 0 && page === 0;
+          if (atFirstGroupOfFirstDeck) {
+            // Do nothing: already at the start, cannot go left
+            return;
+          }
+          if (highlightIdx === 0) {
+            // At first group, go to previous page or previous journey
+            if (page > 0) {
+              setPage((p) => p - 1);
+              // Need to set highlightIdx to last group of previous page
+              // Since each page is a new deck, just set to last group
+              setHighlightIdx(totalGroups - 1);
+            } else {
+              // At first page, but not at absolute start (should not happen due to check above)
+              // Defensive: do nothing
+              return;
+            }
+          } else {
+            setHighlightIdx((idx) => Math.max(idx - 1, 0));
+          }
+        } else if (e.key === "ArrowDown" && !showRecall) {
+          setHighlightIdx((idx) =>
+            Math.min(idx + GROUPS_PER_ROW, totalGroups - 1)
+          );
+        } else if (e.key === "ArrowUp" && !showRecall) {
+          setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
+        } else if (e.key === "PageDown" && !showRecall) {
+          if (
+            groupsPerLocation === "variable-black" ||
+            groupsPerLocation === "variable-red"
+          ) {
+            setJourneyIdx((idx) => {
+              const newIdx =
+                journeysWithPoints.length > 0
+                  ? (idx + 1) % journeysWithPoints.length
+                  : 0;
+              return newIdx;
+            });
+            setPage(0);
+            setHighlightIdx(0);
+          } else {
+            if (page < totalPages - 1) {
+              setPage((p) => p + 1);
+              setHighlightIdx(0);
+            } else {
+              setPage(0);
+              setHighlightIdx(0);
+            }
+          }
         }
+      } else if (e.key === "PageUp" && !showRecall) {
+        if (page > 0) {
+          setPage((p) => p - 1);
+          setHighlightIdx(0);
+        } else {
+          // At first page
+          if (
+            groupsPerLocation === "variable-black" ||
+            groupsPerLocation === "variable-red"
+          ) {
+            setJourneyIdx((idx) => {
+              const newIdx =
+                journeysWithPoints.length > 0
+                  ? (idx - 1 + journeysWithPoints.length) %
+                    journeysWithPoints.length
+                  : 0;
+              return newIdx;
+            });
+          } else {
+            setPage(totalPages - 1);
+            setHighlightIdx(totalGroups - 1);
+          }
+        }
+      } else if ((e.key === " " || e.code === "Space") && !showRecall) {
+        setPage(0);
+        setHighlightIdx(0);
       } else if (!showRecall && navigateBy === "location") {
         if (e.key === "ArrowRight") {
           //navigate forward by location
@@ -289,6 +360,7 @@ export default function CardMemorisation({
           setNavIdx((idx) => Math.max(idx - 1, 0));
         }
       } else if (e.key === "ArrowDown" && !showRecall) {
+        e.preventDefault();
         if (navigateBy === "image") {
           setHighlightIdx((idx) => {
             const next = Math.min(idx + GROUPS_PER_ROW, totalGroups - 1);
@@ -299,6 +371,7 @@ export default function CardMemorisation({
           setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
         }
       } else if (e.key === "ArrowUp" && !showRecall) {
+        e.preventDefault();
         if (navigateBy === "image") {
           setHighlightIdx((idx) => {
             const prev = Math.max(idx - GROUPS_PER_ROW, 0);
@@ -830,142 +903,6 @@ export default function CardMemorisation({
     memoCountdown,
     timeRemaining,
     memoCountdownRemaining,
-  ]);
-
-  // Keyboard navigation (arrows for group, PgUp/PgDn for deck)
-  useEffect(() => {
-    function handleKeyDown(e) {
-      // Don't handle keys during countdowns
-      if (
-        memoCountdownRemaining !== null ||
-        (showRecall && recallCountdownRemaining !== null)
-      ) {
-        return;
-      }
-      if (e.key === "d" && !e.repeat && !showRecall) {
-        setShowDetailsModal((prev) => !prev);
-      } else if (
-        e.key === "Enter" &&
-        !showRecall &&
-        memoCountdownRemaining === null
-      ) {
-        // Enter to start recall mode
-        e.preventDefault();
-        if (!memoEndTime && memoStartTime) {
-          setMemoEndTime(Date.now());
-        }
-        setShowDetailsModal(false);
-        setShowRecall(true);
-      } else if (e.key === "ArrowRight" && !showRecall) {
-        if (highlightIdx === totalGroups - 1) {
-          setPage((p) => p + 1);
-          setHighlightIdx(0);
-        } else {
-          setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
-        }
-      } else if (e.key === "ArrowLeft" && !showRecall) {
-        // Only allow navigation if NOT at the absolute first group of the first deck
-        const atFirstGroupOfFirstDeck = highlightIdx === 0 && page === 0;
-        if (atFirstGroupOfFirstDeck) {
-          // Do nothing: already at the start, cannot go left
-          return;
-        }
-        if (highlightIdx === 0) {
-          // At first group, go to previous page or previous journey
-          if (page > 0) {
-            setPage((p) => p - 1);
-            // Need to set highlightIdx to last group of previous page
-            // Since each page is a new deck, just set to last group
-            setHighlightIdx(totalGroups - 1);
-          } else {
-            // At first page, but not at absolute start (should not happen due to check above)
-            // Defensive: do nothing
-            return;
-          }
-        } else {
-          setHighlightIdx((idx) => Math.max(idx - 1, 0));
-        }
-      } else if (e.key === "ArrowDown" && !showRecall) {
-        setHighlightIdx((idx) =>
-          Math.min(idx + GROUPS_PER_ROW, totalGroups - 1)
-        );
-      } else if (e.key === "ArrowUp" && !showRecall) {
-        setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
-      } else if (e.key === "PageDown" && !showRecall) {
-        if (
-          groupsPerLocation === "variable-black" ||
-          groupsPerLocation === "variable-red"
-        ) {
-          setJourneyIdx((idx) => {
-            const newIdx =
-              journeysWithPoints.length > 0
-                ? (idx + 1) % journeysWithPoints.length
-                : 0;
-            return newIdx;
-          });
-          setPage(0);
-          setHighlightIdx(0);
-        } else {
-          if (page < totalPages - 1) {
-            setPage((p) => p + 1);
-            setHighlightIdx(0);
-          } else {
-            setPage(0);
-            setHighlightIdx(0);
-          }
-        }
-      } else if (e.key === "PageUp" && !showRecall) {
-        if (page > 0) {
-          setPage((p) => p - 1);
-          setHighlightIdx(0);
-        } else {
-          // At first page
-          if (
-            groupsPerLocation === "variable-black" ||
-            groupsPerLocation === "variable-red"
-          ) {
-            setJourneyIdx((idx) => {
-              const newIdx =
-                journeysWithPoints.length > 0
-                  ? (idx - 1 + journeysWithPoints.length) %
-                    journeysWithPoints.length
-                  : 0;
-              return newIdx;
-            });
-          } else {
-            setPage(totalPages - 1);
-            setHighlightIdx(totalGroups - 1);
-          }
-        }
-      } else if ((e.key === " " || e.code === "Space") && !showRecall) {
-        setPage(0);
-        setHighlightIdx(0);
-      } else if (
-        e.key === "Enter" &&
-        highlightIdx === totalGroups - 1 &&
-        page === totalPages - 1
-      ) {
-        if (onFinish) onFinish();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    highlightIdx,
-    totalGroups,
-    onFinish,
-    page,
-    totalPages,
-    GROUPS_PER_ROW,
-    groupsPerLocation,
-    journeysWithPoints.length,
-    groupSize,
-    totalGroups,
-    showRecall,
-    memoCountdownRemaining,
-    recallCountdownRemaining,
-    memoStartTime,
-    memoEndTime,
   ]);
 
   // 1) Card click: navigate to location containing clicked group

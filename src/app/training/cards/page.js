@@ -61,7 +61,6 @@ function CardsContent() {
         }
       }
 
-
       // Fetch image set data (always fetch full objects if only IDs are present)
       let imageSets = [];
       if (imageSet && typeof window !== "undefined") {
@@ -70,7 +69,11 @@ function CardsContent() {
           try {
             const parsed = JSON.parse(storedImageSets);
             // If parsed is an array of strings (IDs), fetch each full object
-            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+            if (
+              Array.isArray(parsed) &&
+              parsed.length > 0 &&
+              typeof parsed[0] === "string"
+            ) {
               imageSets = await Promise.all(
                 parsed.map(async (id) => {
                   try {
@@ -93,7 +96,12 @@ function CardsContent() {
                 })
               );
               imageSets = imageSets.filter(Boolean);
-            } else if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].images) {
+            } else if (
+              Array.isArray(parsed) &&
+              parsed.length > 0 &&
+              typeof parsed[0] === "object" &&
+              parsed[0].images
+            ) {
               // Already full objects
               imageSets = parsed;
             } else {

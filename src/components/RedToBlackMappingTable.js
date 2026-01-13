@@ -26,27 +26,16 @@ const suitSymbols = {
   c: "♣",
 };
 
+// Use emoji for suits, safe for <option>
+const suitEmojis = {
+  h: "♥️",
+  d: "♦️",
+  s: "♠️",
+  c: "♣️",
+};
 function getPairLabel(pair) {
   if (pair.length === 2) {
-    // Render each suit with color
-    return (
-      <>
-        <span
-          style={{
-            color: pair[0] === "h" || pair[0] === "d" ? "red" : undefined,
-          }}
-        >
-          {suitSymbols[pair[0]]}
-        </span>
-        <span
-          style={{
-            color: pair[1] === "h" || pair[1] === "d" ? "red" : undefined,
-          }}
-        >
-          {suitSymbols[pair[1]]}
-        </span>
-      </>
-    );
+    return `${suitEmojis[pair[0]]}${suitEmojis[pair[1]]}`;
   }
   return pair;
 }
