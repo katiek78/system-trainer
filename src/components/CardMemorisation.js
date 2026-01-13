@@ -121,22 +121,81 @@ export default function CardMemorisation({
   const CARDS_PER_DECK = 52;
   const totalPages = decks;
   const [page, setPage] = useState(0);
-  const [cardsOnPage, setCardsOnPage] = useState(() =>
-    shuffle(generateDecks(1))
+
+  // Generate all decks at the start and keep them stable during the memorisation attempt
+  const [deckList, setDeckList] = useState(() =>
+    Array.from({ length: totalPages }, () => shuffle(generateDecks(1)))
   );
 
+  const [cardsOnPage, setCardsOnPage] = useState(
+    deckList && deckList.length > 0 ? deckList[0] : shuffle(generateDecks(1))
+  );
+
+  // If totalPages changes, adjust deckList while preserving existing decks where possible
   useEffect(() => {
-    // On every page change, generate a new shuffled deck
-    setCardsOnPage(shuffle(generateDecks(1)));
-  }, [page]);
+    setDeckList((prev) => {
+      if (prev.length === totalPages) return prev;
+      const newList = Array.from(
+        { length: totalPages },
+        (_, i) => prev[i] || shuffle(generateDecks(1))
+      );
+      console.debug(
+        `[Cards] deckList adjusted -> totalPages=${totalPages}, decksInitialized=${newList.length}`
+      );
+      return newList;
+    });
+  }, [totalPages]);
+
+  // Keep cardsOnPage in sync with the selected page's deck; do NOT reshuffle on page changes
+  useEffect(() => {
+    if (deckList && deckList.length > 0) {
+      setCardsOnPage(deckList[page]);
+    }
+  }, [page, deckList]);
 
   // Highlight state (grouping within current deck)
   const [highlightIdx, setHighlightIdx] = useState(0);
   const groupSize = Number(grouping) || 1;
   const totalGroups = Math.ceil(cardsOnPage.length / groupSize);
 
-  // Calculate groups per row for up/down navigation
-  const GROUPS_PER_ROW = Math.ceil(10 / groupSize); // 10 columns in grid
+  // Calculate groups per row for up/down navigation (measured from DOM)
+  const gridRef = useRef(null);
+  // When we request a page change that should also set navIdx on the new page
+  const pendingNavIdxOnPageChange = useRef(null);
+  const [groupsPerRow, setGroupsPerRow] = useState(
+    Math.max(1, Math.ceil(10 / groupSize))
+  );
+
+  useEffect(() => {
+    function updateGroupsPerRow() {
+      const container = gridRef.current;
+      if (!container) {
+        setGroupsPerRow(Math.max(1, Math.ceil(10 / groupSize)));
+        return;
+      }
+      const children = Array.from(container.children);
+      if (children.length === 0) {
+        setGroupsPerRow(Math.max(1, Math.ceil(10 / groupSize)));
+        return;
+      }
+      const firstTop = children[0].offsetTop;
+      let count = 0;
+      for (const child of children) {
+        if (child.offsetTop === firstTop) count++;
+        else break;
+      }
+      if (count <= 0) count = Math.max(1, Math.ceil(10 / groupSize));
+      console.debug(
+        `[Cards] updateGroupsPerRow -> groupsPerRow=${count} (number of groups in the first visual row), firstTop=${firstTop}px (top offset of first row), children=${children.length} (total group elements found), groupSize=${groupSize} (cards per group), totalGroups=${totalGroups} (total number of groups)`
+      );
+      setGroupsPerRow(count);
+    }
+
+    // Initialize and update on resize
+    updateGroupsPerRow();
+    window.addEventListener("resize", updateGroupsPerRow);
+    return () => window.removeEventListener("resize", updateGroupsPerRow);
+  }, [cardsOnPage.length, groupSize, totalGroups]);
 
   // Clamp highlightIdx to valid range when page/cardsOnPage/totalGroups change
   useEffect(() => {
@@ -159,48 +218,137 @@ export default function CardMemorisation({
     Array.isArray(j.points) ? j.points : []
   );
 
-  let navRanges;
-  if (
-    navigateBy === "location" &&
-    allPoints.length > 0 &&
-    (groupsPerLocation === "variable-black" ||
-      groupsPerLocation === "variable-red")
-  ) {
-    // Use variable system mapping
-    const map = getVariableLocationMap(
-      cardsOnPage,
-      groupSize,
-      allPoints,
-      groupsPerLocation
-    );
-    // Build navRanges: for each location, collect all group indices that map to it
-    navRanges = Array.from({ length: allPoints.length }, (_, locIdx) =>
-      map
-        .map((mappedLocIdx, groupIdx) =>
-          mappedLocIdx === locIdx ? groupIdx : null
-        )
-        .filter((idx) => idx !== null)
-    );
-  } else if (navigateBy === "location" && allPoints.length > 0) {
-    // Non-variable: original logic
-    navRanges = allPoints.map((_, idx) => {
-      return cardsOnPage
-        .map((_, groupIdx) => {
-          const groupNumber = page * totalGroups + groupIdx;
-          const locIdx = groupNumber % allPoints.length;
-          return locIdx === idx ? groupIdx : null;
-        })
-        .filter((idx) => idx !== null);
+  // Precompute navRanges per page (do not mutate per render). Group locations in the order they appear in each deck.
+  const navRangesPerPage = React.useMemo(() => {
+    return (deckList || []).map((cardsOnThisPage, pIdx) => {
+      const totalGroupsForPage = Math.ceil(cardsOnThisPage.length / groupSize);
+
+      if (navigateBy === "location" && allPoints.length > 0) {
+        const ranges = [];
+        const locIndexMap = new Map(); // global loc -> index in ranges
+
+        if (
+          groupsPerLocation === "variable-black" ||
+          groupsPerLocation === "variable-red"
+        ) {
+          const map = getVariableLocationMap(
+            cardsOnThisPage,
+            groupSize,
+            allPoints,
+            groupsPerLocation
+          );
+          for (
+            let g = 0;
+            g < Math.ceil(cardsOnThisPage.length / groupSize);
+            g++
+          ) {
+            const loc = map[g];
+            if (!locIndexMap.has(loc)) {
+              locIndexMap.set(loc, ranges.length);
+              ranges.push([]);
+            }
+            ranges[locIndexMap.get(loc)].push(g);
+          }
+        } else {
+          for (let g = 0; g < totalGroupsForPage; g++) {
+            const groupNumber = pIdx * totalGroupsForPage + g;
+            const loc = groupNumber % allPoints.length;
+            if (!locIndexMap.has(loc)) {
+              locIndexMap.set(loc, ranges.length);
+              ranges.push([]);
+            }
+            ranges[locIndexMap.get(loc)].push(g);
+          }
+        }
+
+        return ranges; // only locations that actually exist in this deck, in order
+      }
+
+      // Default: image navigation - each group is its own location
+      return Array.from({ length: totalGroupsForPage }, (_, idx) => [idx]);
     });
-  } else {
-    navRanges = Array.from({ length: totalGroups }, (_, idx) => [idx]);
+  }, [deckList, groupSize, groupsPerLocation, navigateBy, allPoints.length]);
+
+  // deckStarts removed — not needed. Deck start computation can be derived from precomputed navRangesPerPage if needed.
+
+  // navRangesPerPage is precomputed above; we'll select per-page ranges next
+
+  // Select precomputed ranges for current page
+  const navRanges = (navRangesPerPage && navRangesPerPage[page]) || [];
+  if (typeof window !== "undefined") {
+    try {
+      console.debug(
+        `[Cards] navRanges selected -> page=${page}, navRangesLength=${navRanges.length}`
+      );
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   // Helper: get current nav index (for UI)
   const [navIdx, setNavIdx] = useState(0);
   useEffect(() => {
-    setNavIdx(0);
+    // If a page change requested a specific navIdx (e.g., previous page's last location), honor it and also set the highlight to the first group of that location.
+    if (pendingNavIdxOnPageChange.current !== null) {
+      if (pendingNavIdxOnPageChange.current === "last") {
+        const targetNav =
+          navRanges && navRanges.length ? navRanges.length - 1 : 0;
+        console.debug(
+          `[Cards] page change -> honoring pending navIdx=last -> setting navIdx=${targetNav}`
+        );
+        setNavIdx(targetNav);
+        // Set highlight to first group of that location if available
+        const targetGroup =
+          navRanges && navRanges[targetNav]
+            ? navRanges[targetNav][0]
+            : undefined;
+        if (typeof targetGroup !== "undefined") {
+          setHighlightIdx(targetGroup);
+          console.debug(
+            `[Cards] page change -> setting highlightIdx=${targetGroup} for navIdx=${targetNav}`
+          );
+        }
+      } else if (typeof pendingNavIdxOnPageChange.current === "number") {
+        const targetNav = pendingNavIdxOnPageChange.current;
+        console.debug(
+          `[Cards] page change -> honoring pending navIdx=${targetNav}`
+        );
+        setNavIdx(targetNav);
+        const targetGroup =
+          navRanges && navRanges[targetNav]
+            ? navRanges[targetNav][0]
+            : undefined;
+        if (typeof targetGroup !== "undefined") {
+          setHighlightIdx(targetGroup);
+          console.debug(
+            `[Cards] page change -> setting highlightIdx=${targetGroup} for navIdx=${targetNav}`
+          );
+        }
+      } else {
+        setNavIdx(0);
+        const targetGroup =
+          navRanges && navRanges[0] ? navRanges[0][0] : undefined;
+        if (typeof targetGroup !== "undefined") setHighlightIdx(targetGroup);
+      }
+      pendingNavIdxOnPageChange.current = null;
+    } else {
+      setNavIdx(0);
+      const targetGroup =
+        navRanges && navRanges[0] ? navRanges[0][0] : undefined;
+      if (typeof targetGroup !== "undefined") setHighlightIdx(targetGroup);
+    }
   }, [navigateBy, page]);
+
+  // Trace navIdx changes for debugging
+  useEffect(() => {
+    console.debug(
+      `[Cards] navIdx effect -> navIdx=${navIdx}, navRangesLength=${
+        navRanges.length
+      }, currentGroups=${JSON.stringify(
+        navRanges[navIdx] || []
+      )}, page=${page}, highlightIdx=${highlightIdx}`
+    );
+  }, [navIdx, navRanges.length, page, highlightIdx]);
 
   // When navigating by location, highlight the first group in that location only if highlightIdx is not already in that location
   useEffect(() => {
@@ -209,9 +357,23 @@ export default function CardMemorisation({
       navRanges[navIdx] &&
       navRanges[navIdx][0] !== undefined
     ) {
-      // Only update highlightIdx if it's not already in the current location
-      if (!navRanges[navIdx].includes(highlightIdx)) {
-        setHighlightIdx(navRanges[navIdx][0]);
+      const currentLocGroups = navRanges[navIdx] || [];
+      // console.debug(
+      //   `[Cards] location effect -> navIdx=${navIdx} (current location index), groups for this location=${JSON.stringify(
+      //     currentLocGroups
+      //   )}, current highlightIdx=${highlightIdx}`
+      // );
+      if (!currentLocGroups.includes(highlightIdx)) {
+        // console.debug(
+        //   `[Cards] location effect -> highlight not in current location; setting highlightIdx to first group ${
+        //     currentLocGroups[0]
+        //   } of this location (groups=${JSON.stringify(currentLocGroups)})`
+        // );
+        setHighlightIdx(currentLocGroups[0]);
+      } else {
+        console.debug(
+          `[Cards] location effect -> highlightIdx ${highlightIdx} already belongs to the current location`
+        );
       }
     }
   }, [navigateBy, navIdx, navRanges]);
@@ -232,7 +394,44 @@ export default function CardMemorisation({
       navRanges[navIdx] &&
       navRanges[navIdx][0] !== undefined
     ) {
-      setHighlightIdx(navRanges[navIdx][0]);
+      const targetGroup = navRanges[navIdx] ? navRanges[navIdx][0] : undefined;
+      console.debug(
+        `[Cards] enforce location highlight -> navIdx=${navIdx}, setting highlightIdx to first group of that location: ${targetGroup}`
+      );
+      if (typeof targetGroup !== "undefined") {
+        setHighlightIdx(targetGroup);
+        // Try to bring that group into view on desktop
+        try {
+          if (
+            gridRef &&
+            gridRef.current &&
+            gridRef.current.children &&
+            gridRef.current.children[targetGroup]
+          ) {
+            const el = gridRef.current.children[targetGroup];
+            el.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "nearest",
+            });
+            console.debug(
+              `[Cards] enforce location highlight -> scrolled group ${targetGroup} into view (children=${gridRef.current.children.length})`
+            );
+          } else {
+            console.debug(
+              `[Cards] enforce location highlight -> group ${targetGroup} element not found for scrolling (children=${
+                gridRef && gridRef.current ? gridRef.current.children.length : 0
+              })`
+            );
+          }
+        } catch (e) {
+          console.debug(
+            `[Cards] enforce location highlight -> scroll failed: ${
+              e && e.message ? e.message : e
+            }`
+          );
+        }
+      }
     }
   }, [navigateBy, navIdx, navRanges]);
 
@@ -273,10 +472,26 @@ export default function CardMemorisation({
         setShowRecall(true);
       } else if (!showRecall && navigateBy === "image") {
         if (e.key === "ArrowRight") {
-          //Navigate forward by image
+          // Navigate forward by image
+          console.debug(
+            `[Cards][ImageNav] ArrowRight pressed -> highlightIdx=${highlightIdx}, totalGroups=${totalGroups}, page=${page}, totalPages=${totalPages}`
+          );
           if (highlightIdx === totalGroups - 1) {
-            setPage((p) => p + 1);
-            setHighlightIdx(0);
+            if (page < totalPages - 1) {
+              console.debug(
+                `[Cards][ImageNav] ArrowRight -> at last group of page, advancing to next page ${
+                  page + 1
+                }`
+              );
+              setPage((p) => p + 1);
+              setHighlightIdx(0);
+            } else {
+              console.debug(
+                `[Cards][ImageNav] ArrowRight -> at last group and last page; wrapping to first page`
+              );
+              setPage(0);
+              setHighlightIdx(0);
+            }
           } else {
             setHighlightIdx((idx) => Math.min(idx + 1, totalGroups - 1));
           }
@@ -304,31 +519,97 @@ export default function CardMemorisation({
           }
         } else if (e.key === "ArrowDown" && !showRecall) {
           setHighlightIdx((idx) => {
-            const row = Math.floor(idx / GROUPS_PER_ROW);
-            const col = idx % GROUPS_PER_ROW;
+            const row = Math.floor(idx / groupsPerRow);
+            const col = idx % groupsPerRow;
             const nextRow = row + 1;
-            const nextIdx = nextRow * GROUPS_PER_ROW + col;
+            const nextIdx = nextRow * groupsPerRow + col;
+
+            // Additional concise trace requested by user:
+            // - groupsPerRow
+            // - first card group of the current location
+            // - card group index directly below it
+            // - which location that belongs to
+            const curLoc = navRanges.findIndex((arr) => arr.includes(idx));
+            const firstGroupOfCurLoc =
+              curLoc !== -1 ? navRanges[curLoc] && navRanges[curLoc][0] : idx;
+            const targetGroupBelow = Math.min(nextIdx, totalGroups - 1);
+            const targetLoc = navRanges.findIndex((arr) =>
+              arr.includes(targetGroupBelow)
+            );
+            console.debug(
+              `[Cards][NAV-SHORT] mode=image, groupsPerRow=${groupsPerRow}, highlightedIdx=${idx}, curLoc=${curLoc}, firstGroupOfCurLoc=${firstGroupOfCurLoc}, targetGroupBelow=${targetGroupBelow}, targetLoc=${targetLoc}`
+            );
+
+            // Log decision details for debugging
+            console.debug(
+              `[Cards][ImageNav] ArrowDown -> currentIdx=${idx}, row=${row}, col=${col}, groupsPerRow=${groupsPerRow}, tentativeNextIdx=${nextIdx}, totalGroups=${totalGroups}`
+            );
+
             // Clamp to last group if nextIdx exceeds totalGroups
             if (nextIdx >= totalGroups) {
               // If the next row is incomplete, go to the last group
-              if (row === Math.floor((totalGroups - 1) / GROUPS_PER_ROW)) {
+              if (row === Math.floor((totalGroups - 1) / groupsPerRow)) {
+                console.debug(
+                  `[Cards][ImageNav] ArrowDown -> next row is beyond last visual row; keeping idx=${idx}`
+                );
                 return idx; // already in last row
               }
               // Go to last group in the last row if col is too high
+              console.debug(
+                `[Cards][ImageNav] ArrowDown -> nextIdx out of range; moving to last group ${
+                  totalGroups - 1
+                }`
+              );
               return totalGroups - 1;
             }
+            console.debug(
+              `[Cards][ImageNav] ArrowDown -> moving highlightIdx to ${nextIdx}`
+            );
             return nextIdx;
           });
         } else if (e.key === "ArrowUp" && !showRecall) {
           setHighlightIdx((idx) => {
-            const row = Math.floor(idx / GROUPS_PER_ROW);
-            const col = idx % GROUPS_PER_ROW;
-            if (row === 0) return idx; // already in first row
-            const prevIdx = (row - 1) * GROUPS_PER_ROW + col;
+            const row = Math.floor(idx / groupsPerRow);
+            const col = idx % groupsPerRow;
+
+            // Additional concise trace requested by user
+            const curLoc = navRanges.findIndex((arr) => arr.includes(idx));
+            const firstGroupOfCurLoc =
+              curLoc !== -1 ? navRanges[curLoc] && navRanges[curLoc][0] : idx;
+            const prevRow = row - 1;
+            const targetGroupAbove =
+              prevRow >= 0 ? prevRow * groupsPerRow + col : null;
+            const targetLoc =
+              targetGroupAbove !== null
+                ? navRanges.findIndex((arr) => arr.includes(targetGroupAbove))
+                : -1;
+            console.debug(
+              `[Cards][NAV-SHORT] mode=image, groupsPerRow=${groupsPerRow}, highlightedIdx=${idx}, curLoc=${curLoc}, firstGroupOfCurLoc=${firstGroupOfCurLoc}, targetGroupAbove=${targetGroupAbove}, targetLoc=${targetLoc}`
+            );
+
+            // Log decision details for debugging
+            console.debug(
+              `[Cards][ImageNav] ArrowUp -> currentIdx=${idx}, row=${row}, col=${col}, groupsPerRow=${groupsPerRow}`
+            );
+            if (row === 0) {
+              console.debug(
+                `[Cards][ImageNav] ArrowUp -> already in first row; keeping idx=${idx}`
+              );
+              return idx; // already in first row
+            }
+            const prevIdx = (row - 1) * groupsPerRow + col;
             // Clamp to last group if prevIdx exceeds totalGroups
             if (prevIdx >= totalGroups) {
+              console.debug(
+                `[Cards][ImageNav] ArrowUp -> prevIdx ${prevIdx} exceeds totalGroups; moving to last group ${
+                  totalGroups - 1
+                }`
+              );
               return totalGroups - 1;
             }
+            console.debug(
+              `[Cards][ImageNav] ArrowUp -> moving highlightIdx to ${prevIdx}`
+            );
             return prevIdx;
           });
         } else if (e.key === "PageDown" && !showRecall) {
@@ -382,20 +663,184 @@ export default function CardMemorisation({
         setPage(0);
         setHighlightIdx(0);
       } else if (!showRecall && navigateBy === "location") {
+        console.debug(
+          `[Cards][LocationNav] keydown=${
+            e.key
+          } -> navIdx=${navIdx}, groupsPerRow=${groupsPerRow}, navRangesLength=${
+            navRanges.length
+          }, currentGroups=${JSON.stringify(navRanges[navIdx] || [])}`
+        );
         if (e.key === "ArrowRight") {
-          //navigate forward by location (next location in navRanges)
-          setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
-        } else if (e.key === "ArrowLeft") {
-          //navigate backward by location (previous location in navRanges)
-          setNavIdx((idx) => Math.max(idx - 1, 0));
-        } else if (e.key === "ArrowDown") {
-          // move down by row in navRanges
-          setNavIdx((idx) =>
-            Math.min(idx + GROUPS_PER_ROW, navRanges.length - 1)
+          // navigate forward by location
+          console.debug(
+            `[Cards][LocationNav] ArrowRight pressed -> current navIdx=${navIdx}, navRangesLength=${navRanges.length}, page=${page}, totalPages=${totalPages}`
           );
+
+          if (navIdx < navRanges.length - 1) {
+            // Move to next location on the same page
+            const nextIdx = navIdx + 1;
+            console.debug(
+              `[Cards][LocationNav] ArrowRight -> moving to navIdx=${nextIdx}, groups=${JSON.stringify(
+                navRanges[nextIdx]
+              )}`
+            );
+            setNavIdx(nextIdx);
+          } else {
+            // At last location of this page: go to next page (or wrap to first)
+            if (page < totalPages - 1) {
+              console.debug(
+                `[Cards][LocationNav] ArrowRight -> at last location on page ${page}; advancing to page ${
+                  page + 1
+                } and navIdx=0`
+              );
+              setPage((p) => p + 1);
+              setNavIdx(0);
+            } else {
+              console.debug(
+                `[Cards][LocationNav] ArrowRight -> at last location and last page; no-op (no wrapping)`
+              );
+              // No action: do not wrap to first page
+            }
+          }
+        } else if (e.key === "ArrowLeft") {
+          // navigate backward by location; if at first location, go to previous page's last location
+          console.debug(
+            `[Cards][LocationNav] ArrowLeft pressed -> current navIdx=${navIdx}, page=${page}`
+          );
+
+          if (navIdx > 0) {
+            const prevIdx = navIdx - 1;
+            console.debug(
+              `[Cards][LocationNav] ArrowLeft -> moving to navIdx=${prevIdx}, groups=${JSON.stringify(
+                navRanges[prevIdx]
+              )}`
+            );
+            setNavIdx(prevIdx);
+          } else {
+            // At first location of this page
+            if (page > 0) {
+              console.debug(
+                `[Cards][LocationNav] ArrowLeft -> at first location of page ${page}; moving to previous page ${
+                  page - 1
+                } and selecting its last location`
+              );
+              // Request previous page and set navIdx to last location when page changes
+              pendingNavIdxOnPageChange.current = "last";
+              setPage((p) => p - 1);
+            } else {
+              console.debug(
+                `[Cards][LocationNav] ArrowLeft -> at first location of first page; no-op`
+              );
+            }
+          }
+        } else if (e.key === "ArrowDown") {
+          // Move down: pick the group directly below the *first* group of the current location,
+          // then find which location contains that group and navigate there.
+          setNavIdx((idx) => {
+            const currentGroups = navRanges[idx] || [];
+            if (!currentGroups.length) {
+              console.debug(
+                `[Cards][LocationNav] ArrowDown -> no groups at current navIdx=${idx}; no-op`
+              );
+              return idx;
+            }
+
+            const firstGroup = currentGroups[0];
+            const row = Math.floor(firstGroup / groupsPerRow);
+            const col = firstGroup % groupsPerRow;
+            const nextRow = row + 1;
+            const lastRow = Math.floor((totalGroups - 1) / groupsPerRow);
+            console.debug(
+              `[Cards][LocationNav] ArrowDown -> navIdx=${idx}, firstGroup=${firstGroup}, row=${row}, col=${col}, groupsPerRow=${groupsPerRow}, totalGroups=${totalGroups}, lastRow=${lastRow}`
+            );
+
+            if (nextRow > lastRow) {
+              console.debug(
+                `[Cards][LocationNav] ArrowDown -> already on last row; no-op`
+              );
+              return idx;
+            }
+
+            const targetGroup = Math.min(
+              nextRow * groupsPerRow + col,
+              totalGroups - 1
+            );
+
+            // concise trace for user
+            const conciseTargetLoc = navRanges.findIndex((arr) =>
+              arr.includes(targetGroup)
+            );
+            console.debug(
+              `[Cards][NAV-SHORT] mode=location, groupsPerRow=${groupsPerRow}, navIdx=${idx}, firstGroup=${firstGroup}, targetGroupBelow=${targetGroup}, targetLoc=${conciseTargetLoc}`
+            );
+
+            const targetLoc = conciseTargetLoc;
+            if (targetLoc !== -1) {
+              console.debug(
+                `[Cards][LocationNav] ArrowDown -> targetGroup=${targetGroup} belongs to loc=${targetLoc} (groups=${JSON.stringify(
+                  navRanges[targetLoc]
+                )}). Navigating to loc=${targetLoc}`
+              );
+              return targetLoc;
+            }
+
+            // Fallback: if direct mapping failed, advance by groupsPerRow in location index (old behavior)
+            const fallback = Math.min(idx + groupsPerRow, navRanges.length - 1);
+            console.debug(
+              `[Cards][LocationNav] ArrowDown -> targetGroup ${targetGroup} not mapped to a location; falling back to navIdx=${fallback}`
+            );
+            return fallback;
+          });
         } else if (e.key === "ArrowUp") {
-          // move up by row in navRanges
-          setNavIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
+          // Move up: find the group directly above the first group of the current location, then map to its location
+          setNavIdx((idx) => {
+            const currentGroups = navRanges[idx] || [];
+            if (!currentGroups.length) {
+              console.debug(
+                `[Cards][LocationNav] ArrowUp -> no groups at current navIdx=${idx}; no-op`
+              );
+              return idx;
+            }
+            const firstGroup = currentGroups[0];
+            const row = Math.floor(firstGroup / groupsPerRow);
+            const col = firstGroup % groupsPerRow;
+            const prevRow = row - 1;
+
+            console.debug(
+              `[Cards][LocationNav] ArrowUp -> navIdx=${idx}, firstGroup=${firstGroup}, row=${row}, col=${col}, groupsPerRow=${groupsPerRow}`
+            );
+
+            if (prevRow < 0) {
+              console.debug(
+                `[Cards][LocationNav] ArrowUp -> already on first row; no-op`
+              );
+              return idx;
+            }
+
+            const targetGroup = prevRow * groupsPerRow + col;
+            const conciseTargetLoc = navRanges.findIndex((arr) =>
+              arr.includes(targetGroup)
+            );
+            console.debug(
+              `[Cards][NAV-SHORT] mode=location, groupsPerRow=${groupsPerRow}, navIdx=${idx}, firstGroup=${firstGroup}, targetGroupAbove=${targetGroup}, targetLoc=${conciseTargetLoc}`
+            );
+            const targetLoc = conciseTargetLoc;
+            if (targetLoc !== -1) {
+              console.debug(
+                `[Cards][LocationNav] ArrowUp -> targetGroup=${targetGroup} belongs to loc=${targetLoc} (groups=${JSON.stringify(
+                  navRanges[targetLoc]
+                )}). Navigating to loc=${targetLoc}`
+              );
+              return targetLoc;
+            }
+
+            // Fallback: if direct mapping failed, step backward by groupsPerRow
+            const fallback = Math.max(idx - groupsPerRow, 0);
+            console.debug(
+              `[Cards][LocationNav] ArrowUp -> targetGroup ${targetGroup} not mapped to a location; falling back to navIdx=${fallback}`
+            );
+            return fallback;
+          });
         }
       } else if (e.key === "PageDown" && !showRecall) {
         if (page < totalPages - 1) {
@@ -439,7 +884,7 @@ export default function CardMemorisation({
     navigateBy,
     highlightIdx,
     totalGroups,
-    GROUPS_PER_ROW,
+    groupsPerRow,
   ]);
 
   // // Helper to get all points from all journeys
@@ -926,6 +1371,11 @@ export default function CardMemorisation({
     if (navigateBy === "location" && navRanges) {
       const locIdx = navRanges.findIndex((arr) => arr.includes(groupIdx));
       if (locIdx !== -1) {
+        console.debug(
+          `[Cards] handleGroupClick -> clicked groupIdx=${groupIdx}. Found location locIdx=${locIdx} with groups=${JSON.stringify(
+            navRanges[locIdx] || []
+          )}. Setting navIdx=${locIdx} and highlightIdx=${groupIdx}`
+        );
         setNavIdx(locIdx);
         // Optionally, setHighlightIdx to groupIdx for immediate feedback
         setHighlightIdx(groupIdx);
@@ -933,6 +1383,9 @@ export default function CardMemorisation({
       }
     }
     // Default: highlight by image
+    console.debug(
+      `[Cards] handleGroupClick -> clicked groupIdx=${groupIdx} (navigateBy=${navigateBy}), highlighting that individual group`
+    );
     setHighlightIdx(groupIdx);
   }
   function handleExitToSettings() {
@@ -1247,6 +1700,7 @@ export default function CardMemorisation({
           </div>
           {/* Card List (grid, desktop only) - groups overlapped horizontally */}
           <div
+            ref={gridRef}
             className="flex flex-wrap gap-4 mb-6 hidden sm:flex"
             style={{ minHeight: 62 }}
           >

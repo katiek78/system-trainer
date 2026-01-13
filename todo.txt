@@ -1,0 +1,9 @@
+Cards
+Backward navigation doesn't work
+JOurney hints box should just show journey location and memoItem (i.e. person)
+Details box doesn't show all the images (at least in variable systems)
+Focus box
+
+Cards and Numbers
+Focus box can't show image if navigating by location (because this doesn't make sense)
+, and . should navigate pages
