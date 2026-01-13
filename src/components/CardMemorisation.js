@@ -251,6 +251,13 @@ export default function CardMemorisation({
       ) {
         return;
       }
+
+      // Always prevent default for handled navigation keys
+      const navKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+      if (navKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+
       if (e.key === "d" && !e.repeat && !showRecall) {
         setShowDetailsModal((prev) => !prev);
       } else if (
@@ -296,11 +303,34 @@ export default function CardMemorisation({
             setHighlightIdx((idx) => Math.max(idx - 1, 0));
           }
         } else if (e.key === "ArrowDown" && !showRecall) {
-          setHighlightIdx((idx) =>
-            Math.min(idx + GROUPS_PER_ROW, totalGroups - 1)
-          );
+          setHighlightIdx((idx) => {
+            const row = Math.floor(idx / GROUPS_PER_ROW);
+            const col = idx % GROUPS_PER_ROW;
+            const nextRow = row + 1;
+            const nextIdx = nextRow * GROUPS_PER_ROW + col;
+            // Clamp to last group if nextIdx exceeds totalGroups
+            if (nextIdx >= totalGroups) {
+              // If the next row is incomplete, go to the last group
+              if (row === Math.floor((totalGroups - 1) / GROUPS_PER_ROW)) {
+                return idx; // already in last row
+              }
+              // Go to last group in the last row if col is too high
+              return totalGroups - 1;
+            }
+            return nextIdx;
+          });
         } else if (e.key === "ArrowUp" && !showRecall) {
-          setHighlightIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
+          setHighlightIdx((idx) => {
+            const row = Math.floor(idx / GROUPS_PER_ROW);
+            const col = idx % GROUPS_PER_ROW;
+            if (row === 0) return idx; // already in first row
+            const prevIdx = (row - 1) * GROUPS_PER_ROW + col;
+            // Clamp to last group if prevIdx exceeds totalGroups
+            if (prevIdx >= totalGroups) {
+              return totalGroups - 1;
+            }
+            return prevIdx;
+          });
         } else if (e.key === "PageDown" && !showRecall) {
           if (
             groupsPerLocation === "variable-black" ||
@@ -353,33 +383,19 @@ export default function CardMemorisation({
         setHighlightIdx(0);
       } else if (!showRecall && navigateBy === "location") {
         if (e.key === "ArrowRight") {
-          //navigate forward by location
+          //navigate forward by location (next location in navRanges)
           setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
         } else if (e.key === "ArrowLeft") {
-          //navigate backward by location
+          //navigate backward by location (previous location in navRanges)
           setNavIdx((idx) => Math.max(idx - 1, 0));
-        }
-      } else if (e.key === "ArrowDown" && !showRecall) {
-        e.preventDefault();
-        if (navigateBy === "image") {
-          setHighlightIdx((idx) => {
-            const next = Math.min(idx + GROUPS_PER_ROW, totalGroups - 1);
-            setNavIdx(next);
-            return next;
-          });
-        } else {
-          setNavIdx((idx) => Math.min(idx + 1, navRanges.length - 1));
-        }
-      } else if (e.key === "ArrowUp" && !showRecall) {
-        e.preventDefault();
-        if (navigateBy === "image") {
-          setHighlightIdx((idx) => {
-            const prev = Math.max(idx - GROUPS_PER_ROW, 0);
-            setNavIdx(prev);
-            return prev;
-          });
-        } else {
-          setNavIdx((idx) => Math.max(idx - 1, 0));
+        } else if (e.key === "ArrowDown") {
+          // move down by row in navRanges
+          setNavIdx((idx) =>
+            Math.min(idx + GROUPS_PER_ROW, navRanges.length - 1)
+          );
+        } else if (e.key === "ArrowUp") {
+          // move up by row in navRanges
+          setNavIdx((idx) => Math.max(idx - GROUPS_PER_ROW, 0));
         }
       } else if (e.key === "PageDown" && !showRecall) {
         if (page < totalPages - 1) {

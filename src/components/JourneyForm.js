@@ -1,9 +1,11 @@
+"use client";
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import { mutate } from "swr";
 
 const JourneyForm = ({ userId, formId, journeyForm, forNewJourney = true }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -14,7 +16,7 @@ const JourneyForm = ({ userId, formId, journeyForm, forNewJourney = true }) => {
 
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
-    const { id } = router.query;
+    const id = params?.id;
     const { ...formDataToStore } = form;
 
     try {
@@ -35,7 +37,7 @@ const JourneyForm = ({ userId, formId, journeyForm, forNewJourney = true }) => {
       const { data } = await res.json();
 
       mutate(`/api/journeys/${id}`, data, false); // Update the local data without a revalidation
-      router.push({ pathname: `/journeys/${id}` });
+      router.push(`/journeys/${id}`);
     } catch (error) {
       setMessage("Failed to update journey");
     }

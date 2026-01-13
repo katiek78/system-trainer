@@ -1,5 +1,6 @@
+"use client";
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import { mutate } from "swr";
 
 const JourneyFolderForm = ({
@@ -9,6 +10,7 @@ const JourneyFolderForm = ({
   forNewJourneyFolder = true,
 }) => {
   const router = useRouter();
+  const params = useParams();
   const contentType = "application/json";
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -19,7 +21,7 @@ const JourneyFolderForm = ({
 
   /* The PUT method edits an existing entry in the mongodb database. */
   const putData = async (form) => {
-    const { id } = router.query;
+    const id = params?.id;
     const { ...formDataToStore } = form;
 
     try {
@@ -40,7 +42,7 @@ const JourneyFolderForm = ({
       const { data } = await res.json();
 
       mutate(`/api/journeys/folders/${id}`, data, false); // Update the local data without a revalidation
-      router.push({ pathname: `/journeys/folders/${id}` });
+      router.push(`/journeys/folders/${id}`);
     } catch (error) {
       setMessage("Failed to update journey folder");
     }

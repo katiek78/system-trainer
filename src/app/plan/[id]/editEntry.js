@@ -1,5 +1,5 @@
 import { withPageAuthRequired, getSession } from "@auth0/nextjs-auth0";
-import { useRouter } from "next/router"
+import { useRouter, useParams } from "next/navigation"
 import useSWR from 'swr'
 import dbConnect from "@/lib/dbConnect";
 import PlanEntryForm from "@/components/PlanEntryForm"
@@ -13,7 +13,8 @@ const fetcher = (url) =>
 const EditPlanEntry = ({user}) => {
         
     const router = useRouter()
-    const { id } = router.query
+    const params = useParams()
+    const id = params?.id
     const {
       data: entry,
       error,
